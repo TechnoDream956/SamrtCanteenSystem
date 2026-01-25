@@ -1,4 +1,5 @@
-const API_BASE = "http://127.0.0.1:5000";
+const API_BASE = "https://smartcanteensystem.onrender.com";
+;
 
 // DEMO order id (real system me auto generate hoga)
 let CURRENT_ORDER_ID = 101;
