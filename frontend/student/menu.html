@@ -1,18 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Menu</title>
-    <link rel="stylesheet" href="../common/style.css">
+<title>Menu</title>
+<link rel="stylesheet" href="../common/style.css">
 </head>
+
 <body>
 
-<h2>Menu</h2>
+<div class="navbar">Menu</div>
 
-<div class="card">
-    <p>Tea – ₹15 – 4 min</p>
-    <button onclick="placeOrder('Tea', 15, 4)">Order</button>
+<div class="container">
+
+<div class="grid">
+
+<div class="menuItem">
+<h3>Maggi</h3>
+<p>₹50 • 8 min</p>
+<button onclick="orderItem('Maggi',50,8)">Order</button>
+</div>
+
+<div class="menuItem">
+<h3>Masala Dosa</h3>
+<p>₹80 • 12 min</p>
+<button onclick="orderItem('Masala Dosa',80,12)">Order</button>
+</div>
+
+<div class="menuItem">
+<h3>Burger</h3>
+<p>₹90 • 10 min</p>
+<button onclick="orderItem('Burger',90,10)">Order</button>
+</div>
+
+<div class="menuItem">
+<h3>Paneer Roll</h3>
+<p>₹120 • 15 min</p>
+<button onclick="orderItem('Paneer Roll',120,15)">Order</button>
+</div>
+
+</div>
+
 </div>
 
 <script src="../common/app.js"></script>
+
 </body>
 </html>

@@ -1,51 +1,117 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import time
 
 app = Flask(__name__)
+CORS(app)
+
 orders = {}
+
+canteens = {
+1:"Maggi Hotspot",
+2:"Southern Stories",
+3:"SnapEats",
+4:"Infinity Kitchen"
+}
 
 @app.route("/")
 def home():
-    return "Campus Canteen System Running"
+    return "Smart Canteen API Running"
 
-@app.route("/order/create", methods=["POST"])
+@app.route("/order/create",methods=["POST"])
 def create_order():
-    data = request.json
-    orders[data["order_id"]] = {
-        "status": "CREATED",
-        "expected_time": data["expected_time"],
-        "base_price": data["price"],
-        "accepted_time": None,
-        "ready_time": None
+
+    data=request.json
+
+    oid=int(time.time()*1000)
+
+    orders[oid]={
+
+        "order_id":oid,
+
+        "canteen_id":int(data["canteen_id"]),   # IMPORTANT FIX
+
+        "item":data["item"],
+
+        "price":data["price"],
+
+        "expected_time":data["expected_time"],
+
+        "status":"WAITING",
+
+        "accepted_time":None,
+
+        "ready_time":None
+
     }
-    return jsonify({"msg": "Order Created"})
 
-@app.route("/order/accept", methods=["POST"])
+    return jsonify({"order_id":oid})
+
+@app.route("/canteen/orders/<int:canteen_id>")
+def get_orders(canteen_id):
+
+    result=[]
+
+    for o in orders.values():
+
+        if int(o["canteen_id"]) == int(canteen_id):
+
+            result.append(o)
+
+    return jsonify(result)
+
+@app.route("/order/status/<int:order_id>")
+def order_status(order_id):
+
+    if order_id not in orders:
+        return jsonify({"error":"not found"})
+
+    return jsonify(orders[order_id])
+
+@app.route("/order/accept",methods=["POST"])
 def accept():
-    oid = request.json["order_id"]
-    orders[oid]["status"] = "ACCEPTED"
-    orders[oid]["accepted_time"] = time.time()
-    return jsonify({"msg": "Order Accepted"})
 
-@app.route("/order/ready", methods=["POST"])
+    oid=request.json["order_id"]
+    o=orders[oid]
+
+    if o["status"]=="WAITING":
+        o["status"]="ACCEPTED"
+        o["accepted_time"]=time.time()
+
+    return jsonify({"status":o["status"]})
+
+@app.route("/order/preparing",methods=["POST"])
+def preparing():
+
+    oid=request.json["order_id"]
+    o=orders[oid]
+
+    if o["status"]=="ACCEPTED":
+        o["status"]="PREPARING"
+
+    return jsonify({"status":o["status"]})
+
+@app.route("/order/ready",methods=["POST"])
 def ready():
-    oid = request.json["order_id"]
-    orders[oid]["status"] = "READY"
-    orders[oid]["ready_time"] = time.time()
-    return jsonify({"msg": "Order Ready"})
 
-@app.route("/order/complete", methods=["POST"])
+    oid=request.json["order_id"]
+    o=orders[oid]
+
+    if o["status"]=="PREPARING":
+        o["status"]="READY"
+        o["ready_time"]=time.time()
+
+    return jsonify({"status":o["status"]})
+
+@app.route("/order/complete",methods=["POST"])
 def complete():
-    oid = request.json["order_id"]
-    o = orders[oid]
-    actual = int((o["ready_time"] - o["accepted_time"]) / 60)
-    delay = max(0, actual - o["expected_time"])
-    discount = min(delay * 2, o["base_price"] // 2)
-    final_price = o["base_price"] - discount
-    return jsonify({
-        "delay": delay,
-        "final_price": final_price
-    })
 
-if __name__ == "__main__":
-    app.run()
+    oid=request.json["order_id"]
+    o=orders[oid]
+
+    if o["status"]=="READY":
+        o["status"]="COMPLETED"
+
+    return jsonify(o)
+
+app.run(port=5000)

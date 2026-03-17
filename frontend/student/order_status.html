@@ -1,20 +1,39 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Order Status</title>
-    <link rel="stylesheet" href="../common/style.css">
+<title>Order Status</title>
+<link rel="stylesheet" href="../common/style.css">
 </head>
 
-<body>
+<body onload="pollStudent()">
 
-    <h1>Order Status</h1>
+<div class="navbar">
+Order Status
+</div>
 
-    <div class="card" id="statusBox">
-        Waiting for canteen...
-    </div>
+<div class="container">
 
-    <script src="../common/app.js"></script>
+<div class="card">
+
+<h2>Your Order</h2>
+
+<p>Status:
+<span id="status" class="status WAITING">WAITING</span>
+</p>
+
+<p>Item: <span id="item"></span></p>
+
+<p>Price: ₹<span id="price"></span></p>
+
+<p>Expected Time: <span id="expected"></span> min</p>
+
+<p>Actual Time: <span id="actual">-</span> min</p>
+
+</div>
+
+</div>
+
+<script src="../common/app.js"></script>
+
 </body>
-
 </html>

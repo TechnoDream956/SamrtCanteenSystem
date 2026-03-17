@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Canteen Dashboard</title>
-    <link rel="stylesheet" href="../common/style.css">
+<title>Canteen Dashboard</title>
+<link rel="stylesheet" href="../common/style.css">
 </head>
-<body>
 
-<h2>Canteen Dashboard</h2>
+<body onload="loadOrders()">
 
-<div class="card">
-    <p>Order #101 – Tea</p>
-    <button onclick="acceptOrder()">Accept</button>
-    <button onclick="markReady()">Mark Ready</button>
-    <button onclick="completeOrder()">Complete</button>
+<div class="navbar">Canteen Dashboard</div>
+
+<div class="container">
+
+<div id="orders"></div>
+
 </div>
 
 <script src="../common/app.js"></script>
+
 </body>
 </html>
