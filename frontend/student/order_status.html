@@ -1,36 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Order Status</title>
-<link rel="stylesheet" href="../common/style.css">
-
-<!-- ✅ Load once + protect before render -->
-<script src="../common/app.js"></script>
-<script>
-protectPage("student")
-</script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Track your Smart Canteen order in real time.">
+  <title>Order Status — Smart Canteen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common/style.css">
+  <script src="../common/app.js"></script>
+  <script>protectPage("student")</script>
 </head>
-
 <body onload="pollStudent()">
 
-<div class="navbar">Your Order</div>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <div class="logo-icon">🍽️</div>
+    SmartCanteen
+  </a>
+  <div class="navbar-actions">
+    <a href="index.html"><button class="btn-ghost btn-sm">← Order More</button></a>
+    <button class="btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
 
-<div class="container">
+<div class="container" style="max-width:700px">
 
-<div class="card">
+  <div class="page-header" style="text-align:center">
+    <h1>Your Order 🎯</h1>
+    <p class="text-muted">We'll update this page automatically every few seconds</p>
+  </div>
 
-<p>Status: <span id="status" class="status WAITING">WAITING</span></p>
+  <!-- STATUS BIG CHIP -->
+  <div style="text-align:center;margin:24px 0;">
+    <span id="status-text" class="status WAITING" style="font-size:15px;padding:8px 22px;">WAITING</span>
+  </div>
 
-<div id="items"></div>
+  <!-- ANIMATED TRACKER -->
+  <div class="tracker-wrap">
+    <div class="status-tracker">
+      <div class="tracker-step active" id="step-0">
+        <div class="tracker-dot active" id="dot-0">⏳</div>
+        <div class="tracker-label">Waiting</div>
+      </div>
+      <div class="tracker-step" id="step-1">
+        <div class="tracker-dot" id="dot-1">✅</div>
+        <div class="tracker-label">Accepted</div>
+      </div>
+      <div class="tracker-step" id="step-2">
+        <div class="tracker-dot" id="dot-2">👨‍🍳</div>
+        <div class="tracker-label">Preparing</div>
+      </div>
+      <div class="tracker-step" id="step-3">
+        <div class="tracker-dot" id="dot-3">🔔</div>
+        <div class="tracker-label">Ready</div>
+      </div>
+      <div class="tracker-step" id="step-4">
+        <div class="tracker-dot" id="dot-4">🎉</div>
+        <div class="tracker-label">Done</div>
+      </div>
+    </div>
+  </div>
 
-<p>Total: ₹<span id="price"></span></p>
+  <!-- ORDER DETAILS CARD -->
+  <div class="card" style="margin-top:8px">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px">
+      <div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:4px">Order Total</div>
+        <div style="font-size:26px;font-weight:800;color:var(--accent)" id="price">—</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:4px">Expected Time</div>
+        <div style="font-size:26px;font-weight:800" id="expected">—</div>
+      </div>
+    </div>
 
-<p>Expected Time: <span id="expected"></span> min</p>
+    <hr>
 
-<p>Actual Time: <span id="actual">-</span> min</p>
+    <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:12px">Items Ordered</div>
+    <ul id="items" style="list-style:none;display:flex;flex-direction:column;gap:6px;font-size:15px">
+      <li style="color:var(--text-dim)">Loading your order...</li>
+    </ul>
+  </div>
 
-</div>
+  <div style="text-align:center;margin-top:28px;color:var(--text-dim);font-size:13px">
+    🔄 Auto-refreshing every 2.5 seconds
+  </div>
 
 </div>
 

@@ -1,52 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Canteen Register</title>
-<link rel="stylesheet" href="../common/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Register your canteen on Smart Canteen System.">
+  <title>Canteen Register — Smart Canteen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common/style.css">
+  <script src="../common/app.js"></script>
 </head>
-
 <body>
 
-<div class="navbar">Canteen Register</div>
+<nav class="navbar">
+  <a class="navbar-brand" href="../student/index.html">
+    <div class="logo-icon">🍽️</div>
+    SmartCanteen
+  </a>
+</nav>
 
-<div class="container">
+<div class="auth-container">
+  <div class="auth-card">
+    <div style="font-size:44px;margin-bottom:18px;">🏪</div>
+    <h2>Register Your Canteen</h2>
+    <p class="subtitle">Set up your canteen staff account to manage orders</p>
 
-<input id="name" placeholder="Owner Name"><br><br>
-<input id="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
+    <div class="form-group">
+      <label for="name">Owner / Staff Name</label>
+      <input id="name" type="text" placeholder="Your name" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input id="email" type="email" placeholder="staff@canteen.edu" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Create a password" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label for="canteen">Select Your Canteen</label>
+      <select id="canteen">
+        <option value="1">🍜 Maggi Hotspot</option>
+        <option value="2">🥗 Southern Stories</option>
+        <option value="3">⚡ SnapEats</option>
+        <option value="4">🌟 Infinity Kitchen</option>
+      </select>
+    </div>
 
-<select id="canteen">
-<option value="1">Maggi Hotspot</option>
-<option value="2">Southern Stories</option>
-<option value="3">SnapEats</option>
-<option value="4">Infinity Kitchen</option>
-</select><br><br>
+    <button class="btn-full" onclick="doRegister()" id="regBtn">Register Canteen →</button>
+    <div id="msg" class="msg msg-error"></div>
 
-<button onclick="register()">Register</button>
-
-<p id="msg"></p>
-
+    <p class="switch-link">Already registered? <a href="login.html">Login to dashboard</a></p>
+  </div>
 </div>
 
 <script>
-function register(){
+function doRegister(){
+  const name      = document.getElementById("name").value.trim()
+  const email     = document.getElementById("email").value.trim()
+  const password  = document.getElementById("password").value
+  const canteen   = document.getElementById("canteen").value
+  const btn       = document.getElementById("regBtn")
+  const msg       = document.getElementById("msg")
 
-fetch("http://127.0.0.1:5000/register",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-name:name.value,
-email:email.value,
-password:password.value,
-role:"canteen",
-canteen_id:canteen.value
-})
-})
-.then(r=>r.json())
-.then(d=>{
-msg.innerText = d.msg || d.error
-})
+  msg.className = "msg msg-error"; msg.innerText = ""
+
+  if(!name || !email || !password){
+    msg.innerText = "Please fill in all fields."
+    msg.className = "msg msg-error show"; return
+  }
+
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner"></span>&nbsp;Registering...'
+
+  fetch(API + "/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, role: "canteen", canteen_id: canteen })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if(d.error){
+      msg.innerText = d.error
+      msg.className = "msg msg-error show"
+      btn.disabled = false; btn.innerHTML = "Register Canteen →"; return
+    }
+    msg.innerText = "✅ Registered! Redirecting to login..."
+    msg.className = "msg msg-success show"
+    setTimeout(() => window.location = "login.html", 1500)
+  })
+  .catch(() => {
+    msg.innerText = "Could not connect to server."
+    msg.className = "msg msg-error show"
+    btn.disabled = false; btn.innerHTML = "Register Canteen →"
+  })
 }
+
+document.addEventListener("keydown", e => { if(e.key === "Enter") doRegister() })
 </script>
 
 </body>

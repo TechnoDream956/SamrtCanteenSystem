@@ -1,66 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Canteens</title>
-<link rel="stylesheet" href="../common/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart Canteen System — Order freshly made food from your campus canteen without the wait.">
+  <title>Smart Canteen — Campus Food, Instantly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common/style.css">
 </head>
 <body>
 
-<div class="navbar" style="display:flex; justify-content:space-between; align-items:center;">
-    <div>Select Canteen</div>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <div class="logo-icon">🍽️</div>
+    SmartCanteen
+  </a>
+  <div class="navbar-actions">
+    <a href="login.html"><button class="btn-ghost" id="nav-login-btn">Login</button></a>
+    <a href="register.html"><button id="nav-register-btn">Get Started</button></a>
+  </div>
+</nav>
 
-    <div>
-        <a href="login.html">
-            <button style="margin-right:10px;">Login</button>
-        </a>
-        <a href="register.html">
-            <button>Register</button>
-        </a>
+<div class="hero">
+  <h1>What's cooking<br>today? 🍳</h1>
+  <p>Browse the menu, skip the queue, and get your food when it's ready.</p>
+</div>
+
+<div class="container">
+  <div class="page-header">
+    <p class="text-muted">🏫 Choose a canteen to get started</p>
+  </div>
+
+  <div class="grid">
+
+    <div class="menuItem" id="canteen-card-1" onclick="openCanteen(1)">
+      <span class="emoji">🍜</span>
+      <h3>Maggi Hotspot</h3>
+      <p>Noodles · Snacks · Quick bites</p>
+      <button class="btn-sm" style="margin-top:16px;pointer-events:none">Browse Menu →</button>
     </div>
-</div>
 
-<div class="container grid">
+    <div class="menuItem" id="canteen-card-2" onclick="openCanteen(2)">
+      <span class="emoji">🥗</span>
+      <h3>Southern Stories</h3>
+      <p>Dosa · Idli · Filter Coffee</p>
+      <button class="btn-sm" style="margin-top:16px;pointer-events:none">Browse Menu →</button>
+    </div>
 
-<div class="menuItem">
-<h3>Maggi Hotspot</h3>
-<button onclick="openCanteen(1)">Open</button>
-</div>
+    <div class="menuItem" id="canteen-card-3" onclick="openCanteen(3)">
+      <span class="emoji">⚡</span>
+      <h3>SnapEats</h3>
+      <p>Burgers · Wraps · Combos</p>
+      <button class="btn-sm" style="margin-top:16px;pointer-events:none">Browse Menu →</button>
+    </div>
 
-<div class="menuItem">
-<h3>Southern Stories</h3>
-<button onclick="openCanteen(2)">Open</button>
-</div>
+    <div class="menuItem" id="canteen-card-4" onclick="openCanteen(4)">
+      <span class="emoji">🌟</span>
+      <h3>Infinity Kitchen</h3>
+      <p>Meals · Thali · Desserts</p>
+      <button class="btn-sm" style="margin-top:16px;pointer-events:none">Browse Menu →</button>
+    </div>
 
-<div class="menuItem">
-<h3>SnapEats</h3>
-<button onclick="openCanteen(3)">Open</button>
-</div>
+  </div>
 
-<div class="menuItem">
-<h3>Infinity Kitchen</h3>
-<button onclick="openCanteen(4)">Open</button>
-</div>
-
+  <div style="margin-top:48px;text-align:center;color:var(--text-dim);font-size:13px;">
+    Are you canteen staff? <a href="../canteen/login.html" style="color:var(--accent);text-decoration:none;font-weight:600;">Login to dashboard →</a>
+  </div>
 </div>
 
 <script>
 function openCanteen(canteenId){
+  const token = localStorage.getItem("token")
+  if(!token || token === "undefined" || token === null){
+    localStorage.setItem("redirectAfterLogin", "menu.html?canteen=" + canteenId)
+    window.location = "login.html"
+    return
+  }
+  window.location = "menu.html?canteen=" + canteenId
+}
 
-    const token = localStorage.getItem("token")
+// Show logged-in state in navbar
+const user = JSON.parse(localStorage.getItem("user") || "null")
+if(user && user.name){
+  const actions = document.querySelector(".navbar-actions")
+  actions.innerHTML = `
+    <span class="navbar-user">👋 ${user.name}</span>
+    <button class="btn-ghost btn-sm" onclick="logout()">Logout</button>
+  `
+}
 
-    // 🚫 STRICT CHECK
-    if(!token || token === "undefined" || token === null){
-
-        alert("Login required to access canteen")
-
-        localStorage.setItem("redirectAfterLogin", "menu.html?canteen=" + canteenId)
-
-        window.location = "login.html"
-        return
-    }
-
-    // ✅ ALLOW
-    window.location = "menu.html?canteen=" + canteenId
+function logout(){
+  localStorage.clear()
+  location.reload()
 }
 </script>
 

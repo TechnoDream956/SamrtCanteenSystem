@@ -1,24 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Canteen Dashboard</title>
-<link rel="stylesheet" href="../common/style.css">
-
-<!-- ✅ Load JS + Protect BEFORE page renders -->
-<script src="../common/app.js"></script>
-<script>
-protectPage("canteen")
-</script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Canteen order management dashboard — Smart Canteen System.">
+  <title>Dashboard — Smart Canteen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common/style.css">
+  <script src="../common/app.js"></script>
+  <script>protectPage("canteen")</script>
 </head>
-
 <body onload="loadOrders()">
 
-<div class="navbar">Canteen Dashboard</div>
+<nav class="navbar">
+  <a class="navbar-brand" href="dashboard.html">
+    <div class="logo-icon">🍽️</div>
+    SmartCanteen
+  </a>
+  <div class="navbar-actions">
+    <span class="navbar-user" id="nav-user"></span>
+    <button class="btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
 
 <div class="container">
-<div id="orders"></div>
+
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div>
+      <h1>Order Dashboard 📋</h1>
+      <p class="text-muted">Live view of all incoming orders — auto-refreshes every 2.5s</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:999px;font-size:13px;font-weight:600;color:#22c55e">
+      <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;animation:trackerPulse 2s infinite;display:inline-block"></span>
+      Live
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-chip">
+      <div class="stat-num" style="color:#fbbf24" id="stat-waiting">—</div>
+      <div class="stat-label">Waiting</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num" style="color:#a78bfa" id="stat-preparing">—</div>
+      <div class="stat-label">Preparing</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-num" style="color:#22c55e" id="stat-ready">—</div>
+      <div class="stat-label">Ready for Pickup</div>
+    </div>
+  </div>
+
+  <!-- ORDERS GRID -->
+  <div class="grid" id="orders" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
+    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-dim)">
+      <span class="spinner" style="width:32px;height:32px;border-width:3px"></span>
+      <div style="margin-top:16px">Loading orders...</div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+// Show current user in navbar
+const user = JSON.parse(localStorage.getItem("user") || "null")
+if(user) document.getElementById("nav-user").textContent = "🏪 " + user.name
+</script>
 
 </body>
 </html>

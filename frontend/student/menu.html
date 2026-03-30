@@ -1,51 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Menu</title>
-<link rel="stylesheet" href="../common/style.css">
-
-<!-- ✅ Load once + protect -->
-<script src="../common/app.js"></script>
-<script>
-protectPage("student")
-</script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse the menu and order food from your campus canteen.">
+  <title>Menu — Smart Canteen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../common/style.css">
+  <script src="../common/app.js"></script>
+  <script>protectPage("student")</script>
 </head>
-
 <body>
 
-<div class="navbar">Menu</div>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">
+    <div class="logo-icon">🍽️</div>
+    SmartCanteen
+  </a>
+  <div class="navbar-actions">
+    <span class="navbar-user" id="nav-user"></span>
+    <button class="btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</nav>
 
 <div class="container">
+  <div class="page-header">
+    <h1 id="canteen-name">Loading menu...</h1>
+    <p class="text-muted">Add items to your cart and place your order</p>
+  </div>
 
-<div class="grid">
+  <div class="menu-layout">
 
-<div class="menuItem">
-<h3>Maggi</h3>
-<p>₹50 • 8 min</p>
-<button onclick="addToCart('Maggi',50,8)">Add</button>
+    <!-- ── FOOD ITEMS ── -->
+    <div>
+      <div class="grid" id="food-grid">
+
+        <div class="foodCard" id="item-maggi">
+          <div class="food-emoji">🍜</div>
+          <h4>Maggi</h4>
+          <div class="badges">
+            <span class="badge badge-price">₹50</span>
+            <span class="badge badge-time">⏱ 8 min</span>
+          </div>
+          <button class="btn-sm mt-8" onclick="addToCart('Maggi', 50, 8)">+ Add to Cart</button>
+        </div>
+
+        <div class="foodCard" id="item-dosa">
+          <div class="food-emoji">🥞</div>
+          <h4>Masala Dosa</h4>
+          <div class="badges">
+            <span class="badge badge-price">₹80</span>
+            <span class="badge badge-time">⏱ 12 min</span>
+          </div>
+          <button class="btn-sm mt-8" onclick="addToCart('Masala Dosa', 80, 12)">+ Add to Cart</button>
+        </div>
+
+        <div class="foodCard" id="item-burger">
+          <div class="food-emoji">🍔</div>
+          <h4>Cheese Burger</h4>
+          <div class="badges">
+            <span class="badge badge-price">₹90</span>
+            <span class="badge badge-time">⏱ 10 min</span>
+          </div>
+          <button class="btn-sm mt-8" onclick="addToCart('Cheese Burger', 90, 10)">+ Add to Cart</button>
+        </div>
+
+        <div class="foodCard" id="item-sandwich">
+          <div class="food-emoji">🥪</div>
+          <h4>Veg Sandwich</h4>
+          <div class="badges">
+            <span class="badge badge-price">₹60</span>
+            <span class="badge badge-time">⏱ 7 min</span>
+          </div>
+          <button class="btn-sm mt-8" onclick="addToCart('Veg Sandwich', 60, 7)">+ Add to Cart</button>
+        </div>
+
+        <div class="foodCard" id="item-chai">
+          <div class="food-emoji">☕</div>
+          <h4>Cutting Chai</h4>
+          <div class="badges">
+            <span class="badge badge-price">₹15</span>
+            <span class="badge badge-time">⏱ 3 min</span>
+          </div>
+          <button class="btn-sm mt-8" onclick="addToCart('Cutting Chai', 15, 3)">+ Add to Cart</button>
+        </div>
+
+        <div class="foodCard" id="item-samosa">
+          <div class="food-emoji">🥟</div>
+          <h4>Samosa (2 pcs)</h4>
+          <div class="badges">
+            <span class="badge badge-price">₹20</span>
+            <span class="badge badge-time">⏱ 2 min</span>
+          </div>
+          <button class="btn-sm mt-8" onclick="addToCart('Samosa', 20, 2)">+ Add to Cart</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── CART PANEL ── -->
+    <div class="cart-panel">
+      <h3>🛒 Your Cart <span class="cart-count">0</span></h3>
+      <div id="cart">
+        <div class="cart-empty">🛒<br>Your cart is empty<br><span style="font-size:12px">Add items from the menu</span></div>
+      </div>
+      <div class="cart-total" id="cart-total-row" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:17px;">
+        <span>Total</span>
+        <span id="cart-total" style="color:var(--accent)">₹0</span>
+      </div>
+      <button class="btn-full mt-16" onclick="checkout()" id="checkoutBtn">🛒 Place Order</button>
+    </div>
+
+  </div>
 </div>
 
-<div class="menuItem">
-<h3>Dosa</h3>
-<p>₹80 • 12 min</p>
-<button onclick="addToCart('Dosa',80,12)">Add</button>
-</div>
+<script>
+// Show canteen name
+const params = new URLSearchParams(window.location.search)
+const canteenId = params.get("canteen")
+const canteenNames = { "1":"Maggi Hotspot", "2":"Southern Stories", "3":"SnapEats", "4":"Infinity Kitchen" }
+document.getElementById("canteen-name").textContent = canteenNames[canteenId] || "Menu"
 
-<div class="menuItem">
-<h3>Burger</h3>
-<p>₹90 • 10 min</p>
-<button onclick="addToCart('Burger',90,10)">Add</button>
-</div>
-
-</div>
-
-<h3>Cart</h3>
-<div id="cart"></div>
-
-<button onclick="checkout()">Place Order</button>
-
-</div>
+// Show user
+const user = JSON.parse(localStorage.getItem("user") || "null")
+if(user) document.getElementById("nav-user").textContent = "👋 " + user.name
+</script>
 
 </body>
 </html>
