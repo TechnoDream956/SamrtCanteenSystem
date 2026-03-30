@@ -32,7 +32,7 @@
     </div>
     <div class="form-group">
       <label for="email">Email Address</label>
-      <input id="email" type="email" placeholder="staff@canteen.edu" autocomplete="email">
+      <input id="email" type="email" placeholder="staff@bennett.edu.in" autocomplete="email">
     </div>
     <div class="form-group">
       <label for="password">Password</label>
@@ -68,6 +68,11 @@ function doRegister(){
 
   if(!name || !email || !password){
     msg.innerText = "Please fill in all fields."
+    msg.className = "msg msg-error show"; return
+  }
+
+  if (!email.toLowerCase().endsWith("@bennett.edu.in")) {
+    msg.innerText = "⚠️ Only @bennett.edu.in emails are allowed."
     msg.className = "msg msg-error show"; return
   }
 

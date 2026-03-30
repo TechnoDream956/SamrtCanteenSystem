@@ -61,6 +61,11 @@ function doRegister(){
     msg.className = "msg msg-error show"; return
   }
 
+  if (!email.toLowerCase().endsWith("@bennett.edu.in")) {
+    msg.innerText = "⚠️ Only @bennett.edu.in emails are allowed."
+    msg.className = "msg msg-error show"; return
+  }
+
   btn.disabled = true
   btn.innerHTML = '<span class="spinner"></span>&nbsp;Creating account...'
 
