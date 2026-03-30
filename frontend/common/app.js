@@ -1,9 +1,9 @@
 // ══════════════════════════════════════════════════
-// API URL — Change this after deploying to Render!
+// API URL — Render backend (live)
 // Local:   http://127.0.0.1:5001
-// Render:  https://your-app-name.onrender.com
+// Render:  https://samrtcanteensystem.onrender.com
 // ══════════════════════════════════════════════════
-const API = "http://127.0.0.1:5001"
+const API = "https://samrtcanteensystem.onrender.com"
 
 // ─── HELPERS ───
 function authHeaders(){
