@@ -3,6 +3,13 @@
 <head>
 <title>Canteen Dashboard</title>
 <link rel="stylesheet" href="../common/style.css">
+
+<!-- ✅ Load JS + Protect BEFORE page renders -->
+<script src="../common/app.js"></script>
+<script>
+protectPage("canteen")
+</script>
+
 </head>
 
 <body onload="loadOrders()">
@@ -10,12 +17,8 @@
 <div class="navbar">Canteen Dashboard</div>
 
 <div class="container">
-
 <div id="orders"></div>
-
 </div>
-
-<script src="../common/app.js"></script>
 
 </body>
 </html>

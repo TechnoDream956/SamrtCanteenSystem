@@ -3,27 +3,28 @@
 <head>
 <title>Order Status</title>
 <link rel="stylesheet" href="../common/style.css">
+
+<!-- ✅ Load once + protect before render -->
+<script src="../common/app.js"></script>
+<script>
+protectPage("student")
+</script>
+
 </head>
 
 <body onload="pollStudent()">
 
-<div class="navbar">
-Order Status
-</div>
+<div class="navbar">Your Order</div>
 
 <div class="container">
 
 <div class="card">
 
-<h2>Your Order</h2>
+<p>Status: <span id="status" class="status WAITING">WAITING</span></p>
 
-<p>Status:
-<span id="status" class="status WAITING">WAITING</span>
-</p>
+<div id="items"></div>
 
-<p>Item: <span id="item"></span></p>
-
-<p>Price: ₹<span id="price"></span></p>
+<p>Total: ₹<span id="price"></span></p>
 
 <p>Expected Time: <span id="expected"></span> min</p>
 
@@ -32,8 +33,6 @@ Order Status
 </div>
 
 </div>
-
-<script src="../common/app.js"></script>
 
 </body>
 </html>

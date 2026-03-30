@@ -1,117 +1,296 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import time
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3, time, json, os
 
 app = Flask(__name__)
 CORS(app)
 
-orders = {}
+# ---------------- SECURITY ----------------
+app.config["JWT_SECRET_KEY"] = "CHANGE_THIS_SECRET_IN_PROD"
+jwt = JWTManager(app)
 
-canteens = {
-1:"Maggi Hotspot",
-2:"Southern Stories",
-3:"SnapEats",
-4:"Infinity Kitchen"
-}
+# ---------------- DB PATH ----------------
+DB_PATH = os.path.join(os.path.dirname(__file__), "canteen.db")
+print("DB PATH:", DB_PATH)
 
-@app.route("/")
-def home():
-    return "Smart Canteen API Running"
+# ---------------- DB CONNECT ----------------
+def db_conn():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
 
-@app.route("/order/create",methods=["POST"])
+# ---------------- INIT DB (FIXED) ----------------
+def init_db():
+    conn = db_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT UNIQUE,
+        password TEXT,
+        role TEXT,
+        canteen_id INTEGER
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS canteens(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS orders(
+        order_id INTEGER PRIMARY KEY,
+        canteen_id INTEGER,
+        student_id INTEGER,
+        items TEXT,
+        items_count INTEGER,
+        price REAL,
+        expected_time INTEGER,
+        status TEXT,
+        created_time REAL,
+        accepted_time REAL,
+        ready_time REAL
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+# ---------------- CALL INIT ----------------
+init_db()
+
+# ---------------- SEED ----------------
+def seed():
+    conn = db_conn()
+    cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM canteens")
+    if cur.fetchone()[0] == 0:
+        cur.executemany("INSERT INTO canteens(name) VALUES(?)", [
+            ("Maggi Hotspot",),
+            ("Southern Stories",),
+            ("SnapEats",),
+            ("Infinity Kitchen",)
+        ])
+        conn.commit()
+
+    conn.close()
+
+seed()
+
+# ---------------- PRIORITY ----------------
+def calc_priority(o):
+    waiting = time.time() - o["created_time"]
+    return (o["expected_time"]*2) + (o["items_count"]*3) - (waiting/10)
+
+# ---------------- REGISTER ----------------
+import sqlite3
+
+@app.route("/register", methods=["POST"])
+def register():
+    d = request.json
+    conn = db_conn()
+    cur = conn.cursor()
+
+    try:
+        hashed = generate_password_hash(d["password"])
+
+        cur.execute("""
+        INSERT INTO users(name,email,password,role,canteen_id)
+        VALUES(?,?,?,?,?)
+        """,(d["name"], d["email"], hashed, d["role"], d.get("canteen_id")))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"msg":"registered"})
+
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"error":"user already exists"}), 400
+
+    except Exception as e:
+        conn.close()
+        print("REGISTER ERROR:", e)   # 👈 IMPORTANT DEBUG
+        return jsonify({"error": str(e)}), 500
+
+# ---------------- LOGIN ----------------
+@app.route("/login", methods=["POST"])
+def login():
+    d = request.json
+    conn = db_conn()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM users WHERE email=?", (d["email"],))
+    u = cur.fetchone()
+
+    conn.close()
+
+    if not u or not check_password_hash(u[3], d["password"]):
+        return jsonify({"error":"invalid credentials"}), 401
+
+    token = create_access_token(identity={
+        "id": u[0],
+        "role": u[4],
+        "canteen_id": u[5]
+    })
+
+    return jsonify({
+        "token": token,
+        "id": u[0],
+        "name": u[1],
+        "role": u[4],
+        "canteen_id": u[5]
+    })
+
+# ---------------- CREATE ORDER ----------------
+@app.route("/order/create", methods=["POST"])
+@jwt_required()
 def create_order():
+    user = get_jwt_identity()
+    if user["role"] != "student":
+        return jsonify({"error":"only students"}), 403
 
-    data=request.json
+    d = request.json
+    conn = db_conn()
+    cur = conn.cursor()
 
-    oid=int(time.time()*1000)
+    oid = int(time.time()*1000)
+    items = d["items"]
 
-    orders[oid]={
+    total_price = sum(i["price"] for i in items)
+    total_time  = sum(i["time"] for i in items)
 
-        "order_id":oid,
+    cur.execute("""
+    INSERT INTO orders VALUES(?,?,?,?,?,?,?,?,?,?,?)
+    """,(oid, d["canteen_id"], user["id"],
+         json.dumps(items), len(items),
+         total_price, total_time,
+         "WAITING", time.time(), None, None))
 
-        "canteen_id":int(data["canteen_id"]),   # IMPORTANT FIX
+    conn.commit()
+    conn.close()
 
-        "item":data["item"],
+    return jsonify({"order_id": oid})
 
-        "price":data["price"],
+# ---------------- CANTEEN ORDERS ----------------
+@app.route("/canteen/orders", methods=["GET"])
+@jwt_required()
+def canteen_orders():
+    user = get_jwt_identity()
+    if user["role"] != "canteen":
+        return jsonify({"error":"only canteen"}), 403
 
-        "expected_time":data["expected_time"],
+    conn = db_conn()
+    cur = conn.cursor()
 
-        "status":"WAITING",
+    cur.execute("SELECT * FROM orders WHERE canteen_id=?", (user["canteen_id"],))
+    rows = cur.fetchall()
+    conn.close()
 
-        "accepted_time":None,
+    result = []
 
-        "ready_time":None
+    for r in rows:
+        o = {
+            "order_id": r[0],
+            "canteen_id": r[1],
+            "student_id": r[2],
+            "items": json.loads(r[3]),
+            "items_count": r[4],
+            "price": r[5],
+            "expected_time": r[6],
+            "status": r[7],
+            "created_time": r[8]
+        }
+        o["priority"] = round(calc_priority(o), 2)
+        result.append(o)
 
-    }
+    result.sort(key=lambda x: x["priority"])
 
-    return jsonify({"order_id":oid})
-
-@app.route("/canteen/orders/<int:canteen_id>")
-def get_orders(canteen_id):
-
-    result=[]
-
-    for o in orders.values():
-
-        if int(o["canteen_id"]) == int(canteen_id):
-
-            result.append(o)
+    for i,o in enumerate(result):
+        o["queue_position"] = i+1
 
     return jsonify(result)
 
-@app.route("/order/status/<int:order_id>")
-def order_status(order_id):
+# ---------------- STATUS ----------------
+@app.route("/order/status/<int:oid>")
+@jwt_required()
+def order_status(oid):
+    conn = db_conn()
+    cur = conn.cursor()
 
-    if order_id not in orders:
-        return jsonify({"error":"not found"})
+    cur.execute("SELECT * FROM orders WHERE order_id=?", (oid,))
+    r = cur.fetchone()
 
-    return jsonify(orders[order_id])
+    conn.close()
 
-@app.route("/order/accept",methods=["POST"])
+    if not r:
+        return jsonify({})
+
+    return jsonify({
+        "status": r[7],
+        "items": json.loads(r[3]),
+        "price": r[5],
+        "expected_time": r[6]
+    })
+
+# ---------------- STATE MACHINE ----------------
+def allowed(cur, nxt):
+    flow = {
+        "WAITING":["ACCEPTED"],
+        "ACCEPTED":["PREPARING"],
+        "PREPARING":["READY"],
+        "READY":["COMPLETED"],
+        "COMPLETED":[]
+    }
+    return nxt in flow.get(cur,[])
+
+def set_status(oid, nxt):
+    conn = db_conn()
+    cur = conn.cursor()
+
+    cur.execute("SELECT status FROM orders WHERE order_id=?", (oid,))
+    r = cur.fetchone()
+
+    if not r:
+        conn.close()
+        return False
+
+    if allowed(r[0], nxt):
+        cur.execute("UPDATE orders SET status=? WHERE order_id=?", (nxt, oid))
+        conn.commit()
+
+    conn.close()
+    return True
+
+@app.route("/order/accept", methods=["POST"])
+@jwt_required()
 def accept():
+    set_status(request.json["order_id"], "ACCEPTED")
+    return jsonify({"ok":1})
 
-    oid=request.json["order_id"]
-    o=orders[oid]
-
-    if o["status"]=="WAITING":
-        o["status"]="ACCEPTED"
-        o["accepted_time"]=time.time()
-
-    return jsonify({"status":o["status"]})
-
-@app.route("/order/preparing",methods=["POST"])
+@app.route("/order/preparing", methods=["POST"])
+@jwt_required()
 def preparing():
+    set_status(request.json["order_id"], "PREPARING")
+    return jsonify({"ok":1})
 
-    oid=request.json["order_id"]
-    o=orders[oid]
-
-    if o["status"]=="ACCEPTED":
-        o["status"]="PREPARING"
-
-    return jsonify({"status":o["status"]})
-
-@app.route("/order/ready",methods=["POST"])
+@app.route("/order/ready", methods=["POST"])
+@jwt_required()
 def ready():
+    set_status(request.json["order_id"], "READY")
+    return jsonify({"ok":1})
 
-    oid=request.json["order_id"]
-    o=orders[oid]
-
-    if o["status"]=="PREPARING":
-        o["status"]="READY"
-        o["ready_time"]=time.time()
-
-    return jsonify({"status":o["status"]})
-
-@app.route("/order/complete",methods=["POST"])
+@app.route("/order/complete", methods=["POST"])
+@jwt_required()
 def complete():
+    set_status(request.json["order_id"], "COMPLETED")
+    return jsonify({"ok":1})
 
-    oid=request.json["order_id"]
-    o=orders[oid]
-
-    if o["status"]=="READY":
-        o["status"]="COMPLETED"
-
-    return jsonify(o)
-
-app.run(port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

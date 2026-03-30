@@ -1,43 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Smart Campus Canteen</title>
+<title>Canteens</title>
 <link rel="stylesheet" href="../common/style.css">
 </head>
-
 <body>
 
-<div class="navbar">Smart Campus Canteen</div>
+<div class="navbar" style="display:flex; justify-content:space-between; align-items:center;">
+    <div>Select Canteen</div>
 
-<div class="container">
+    <div>
+        <a href="login.html">
+            <button style="margin-right:10px;">Login</button>
+        </a>
+        <a href="register.html">
+            <button>Register</button>
+        </a>
+    </div>
+</div>
 
-<h2>Select Canteen</h2>
+<div class="container grid">
 
-<div class="grid">
-
-<div class="card">
+<div class="menuItem">
 <h3>Maggi Hotspot</h3>
-<a href="menu.html?canteen=1"><button>View Menu</button></a>
+<button onclick="openCanteen(1)">Open</button>
 </div>
 
-<div class="card">
+<div class="menuItem">
 <h3>Southern Stories</h3>
-<a href="menu.html?canteen=2"><button>View Menu</button></a>
+<button onclick="openCanteen(2)">Open</button>
 </div>
 
-<div class="card">
+<div class="menuItem">
 <h3>SnapEats</h3>
-<a href="menu.html?canteen=3"><button>View Menu</button></a>
+<button onclick="openCanteen(3)">Open</button>
 </div>
 
-<div class="card">
+<div class="menuItem">
 <h3>Infinity Kitchen</h3>
-<a href="menu.html?canteen=4"><button>View Menu</button></a>
+<button onclick="openCanteen(4)">Open</button>
 </div>
 
 </div>
 
-</div>
+<script>
+function openCanteen(canteenId){
+
+    const token = localStorage.getItem("token")
+
+    // 🚫 STRICT CHECK
+    if(!token || token === "undefined" || token === null){
+
+        alert("Login required to access canteen")
+
+        localStorage.setItem("redirectAfterLogin", "menu.html?canteen=" + canteenId)
+
+        window.location = "login.html"
+        return
+    }
+
+    // ✅ ALLOW
+    window.location = "menu.html?canteen=" + canteenId
+}
+</script>
 
 </body>
 </html>

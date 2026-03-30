@@ -3,6 +3,13 @@
 <head>
 <title>Menu</title>
 <link rel="stylesheet" href="../common/style.css">
+
+<!-- ✅ Load once + protect -->
+<script src="../common/app.js"></script>
+<script>
+protectPage("student")
+</script>
+
 </head>
 
 <body>
@@ -16,32 +23,29 @@
 <div class="menuItem">
 <h3>Maggi</h3>
 <p>₹50 • 8 min</p>
-<button onclick="orderItem('Maggi',50,8)">Order</button>
+<button onclick="addToCart('Maggi',50,8)">Add</button>
 </div>
 
 <div class="menuItem">
-<h3>Masala Dosa</h3>
+<h3>Dosa</h3>
 <p>₹80 • 12 min</p>
-<button onclick="orderItem('Masala Dosa',80,12)">Order</button>
+<button onclick="addToCart('Dosa',80,12)">Add</button>
 </div>
 
 <div class="menuItem">
 <h3>Burger</h3>
 <p>₹90 • 10 min</p>
-<button onclick="orderItem('Burger',90,10)">Order</button>
-</div>
-
-<div class="menuItem">
-<h3>Paneer Roll</h3>
-<p>₹120 • 15 min</p>
-<button onclick="orderItem('Paneer Roll',120,15)">Order</button>
+<button onclick="addToCart('Burger',90,10)">Add</button>
 </div>
 
 </div>
 
-</div>
+<h3>Cart</h3>
+<div id="cart"></div>
 
-<script src="../common/app.js"></script>
+<button onclick="checkout()">Place Order</button>
+
+</div>
 
 </body>
 </html>
