@@ -626,9 +626,8 @@
     <li><a href="#canteens">Canteens</a></li>
     <li><a href="#features">Features</a></li>
   </ul>
-  <div class="nav-btns">
-    <a href="login.html"><button class="btn-ghost">Login</button></a>
-    <a href="register.html"><button class="btn-solid"><span>Register →</span></button></a>
+  <div class="nav-btns" id="navBtns">
+    <!-- Populated by JS based on login state -->
   </div>
 </nav>
 
@@ -918,7 +917,54 @@ document.querySelectorAll('.canteen-card').forEach(card=>{
   });
 });
 
-/* ── Smooth scroll ── */
+/* ── Navbar: show user or login buttons ── */
+(function updateNav(){
+  const token = localStorage.getItem('token');
+  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  const btns  = document.getElementById('navBtns');
+  if(token && user && user.name){
+    const firstName = user.name.split(' ')[0];
+    btns.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="
+          display:flex;align-items:center;gap:8px;
+          padding:8px 16px;
+          background:rgba(255,159,74,0.1);
+          border:0.5px solid rgba(255,159,74,0.3);
+          border-radius:9999px;
+          font-family:'Space Grotesk',sans-serif;
+          font-size:13px;font-weight:700;
+        ">
+          <span style="font-size:16px;">👋</span>
+          <span style="background:linear-gradient(90deg,#ff9f4a,#ffe393);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+            ${firstName}
+          </span>
+        </div>
+        <button onclick="logout()" style="
+          padding:8px 18px;
+          background:rgba(239,68,68,0.1);
+          border:0.5px solid rgba(239,68,68,0.3);
+          color:#fca5a5;
+          font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;
+          border-radius:9999px;cursor:pointer;
+          transition:all 0.25s;
+        " onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+          Sign Out
+        </button>
+      </div>`;
+  } else {
+    btns.innerHTML = `
+      <a href="login.html"><button class="btn-ghost" style="cursor:pointer">Login</button></a>
+      <a href="register.html"><button class="btn-solid" style="cursor:pointer"><span>Register →</span></button></a>`;
+  }
+})();
+
+function logout(){
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('order');
+  window.location.reload();
+}
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
   a.addEventListener('click',e=>{
     e.preventDefault();

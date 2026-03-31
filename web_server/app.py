@@ -32,13 +32,22 @@ def init_db():
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users(
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        name       TEXT,
-        email      TEXT UNIQUE,
-        password   TEXT,
-        role       TEXT DEFAULT 'student',
-        canteen_id INTEGER
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        name        TEXT,
+        email       TEXT UNIQUE,
+        password    TEXT,
+        role        TEXT DEFAULT 'student',
+        canteen_id  INTEGER,
+        registered_at REAL,
+        last_login  REAL
     )""")
+
+    # Add columns if upgrading existing DB (safe to run multiple times)
+    for col, defval in [("registered_at", "0"), ("last_login", "0")]:
+        try:
+            cur.execute(f"ALTER TABLE users ADD COLUMN {col} REAL DEFAULT {defval}")
+        except Exception:
+            pass
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS canteens(
@@ -97,6 +106,8 @@ def health():
 def health_check():
     return jsonify({"status": "ok"})
 
+ALLOWED_DOMAIN = "@bennett.edu.in"
+
 # ── REGISTER ──────────────────────────────────────────────────────────────────
 @app.route("/register", methods=["POST"])
 def register():
@@ -104,16 +115,23 @@ def register():
     conn = db_conn()
     cur  = conn.cursor()
 
-    # Default role to "student" if the frontend doesn't send one
+    email = (d.get("email") or "").strip().lower()
+
+    # ── Domain restriction ──────────────────────────────────────────────────
+    if not email.endswith(ALLOWED_DOMAIN):
+        conn.close()
+        return jsonify({"error": f"Only {ALLOWED_DOMAIN} email addresses are allowed."}), 400
+
     role       = d.get("role", "student")
     canteen_id = d.get("canteen_id", None)
+    now        = time.time()
 
     try:
         hashed = generate_password_hash(d["password"])
         cur.execute("""
-            INSERT INTO users(name, email, password, role, canteen_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (d["name"], d["email"], hashed, role, canteen_id))
+            INSERT INTO users(name, email, password, role, canteen_id, registered_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (d["name"], email, hashed, role, canteen_id, now))
         conn.commit()
         conn.close()
         return jsonify({"msg": "registered"})
@@ -130,15 +148,21 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     d    = request.json
+    email = (d.get("email") or "").strip().lower()
     conn = db_conn()
     cur  = conn.cursor()
 
-    cur.execute("SELECT * FROM users WHERE email = ?", (d["email"],))
+    cur.execute("SELECT * FROM users WHERE email = ?", (email,))
     u = cur.fetchone()
-    conn.close()
 
     if not u or not check_password_hash(u["password"], d["password"]):
-        return jsonify({"error": "Invalid email or password"}), 401
+        conn.close()
+        return jsonify({"msg": "Invalid email or password"}), 401
+
+    # Record last login time
+    cur.execute("UPDATE users SET last_login = ? WHERE id = ?", (time.time(), u["id"]))
+    conn.commit()
+    conn.close()
 
     token = create_access_token(identity={
         "id":         u["id"],
@@ -147,11 +171,15 @@ def login():
     })
 
     return jsonify({
-        "token":      token,
-        "id":         u["id"],
-        "name":       u["name"],
-        "role":       u["role"],
-        "canteen_id": u["canteen_id"]
+        "access_token": token,
+        "user": {
+            "id":          u["id"],
+            "name":        u["name"],
+            "email":       email,
+            "role":        u["role"],
+            "canteen_id":  u["canteen_id"],
+            "last_login":  time.time()
+        }
     })
 
 # ── CREATE ORDER ──────────────────────────────────────────────────────────────

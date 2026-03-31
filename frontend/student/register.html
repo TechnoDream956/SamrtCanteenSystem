@@ -353,8 +353,9 @@
 
       <div class="input-group">
         <label>Student Email</label>
-        <input id="email" type="email" placeholder="you@university.edu" autocomplete="email" />
+        <input id="email" type="email" placeholder="you@bennett.edu.in" autocomplete="email" />
         <span class="input-icon">✉️</span>
+        <div style="font-size:11px;color:#acaab5;margin-top:4px;">🔒 Only @bennett.edu.in emails are accepted</div>
       </div>
 
       <div class="input-group">
@@ -440,6 +441,14 @@ function register(){
   if(!fname||!lname||!email||!pass){
     msgEl.className='msg msg-error';
     msgEl.textContent='⚠️ Please fill in all fields.';
+    return;
+  }
+
+  // Domain restriction
+  if(!email.toLowerCase().endsWith('@bennett.edu.in')){
+    msgEl.className='msg msg-error';
+    msgEl.textContent='❌ Only @bennett.edu.in email addresses are allowed.';
+    document.getElementById('email').focus();
     return;
   }
 
