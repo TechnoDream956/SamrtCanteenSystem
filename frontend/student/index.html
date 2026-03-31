@@ -1,720 +1,954 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>B.U Eats — Campus Food Ordering</title>
-  <meta name="description" content="Order delicious food from your campus canteens instantly. B.U Eats delivers hot meals right to your seat." />
-  <link rel="stylesheet" href="../common/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B.U Eats | Campus Food Ordering</title>
+  <meta name="description" content="Order from your favourite campus canteens instantly. B.U Eats — skip the queue, enjoy the food."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    /* ── Hero ─────────────────────────────── */
-    .hero {
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      --bg:          #0d0d16;
+      --bg-low:      #13121c;
+      --bg-card:     #1f1e2b;
+      --bg-high:     #252532;
+      --primary:     #ff9f4a;
+      --primary-2:   #fd8b00;
+      --secondary:   #c97cff;
+      --tertiary:    #8eff71;
+      --amber:       #ffe393;
+      --on-surface:  #e7e4f0;
+      --muted:       #acaab5;
+      --outline:     #484751;
+      --radius:      12px;
+      --radius-lg:   20px;
+      --radius-full: 9999px;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg);
+      color: var(--on-surface);
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-      padding-top: 72px;
+      overflow-x: hidden;
+      cursor: none;
     }
 
-    .hero-bg {
-      position: absolute;
-      inset: 0;
-      background: url('../assets/hero_food.png') center/cover no-repeat;
-      opacity: 0.12;
-      filter: blur(2px);
-      transform: scale(1.05);
-      animation: heroBgBreath 8s ease-in-out infinite alternate;
-    }
-
-    @keyframes heroBgBreath {
-      0%   { opacity: 0.10; transform: scale(1.05); }
-      100% { opacity: 0.18; transform: scale(1.10); }
-    }
-
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        135deg,
-        rgba(8,8,16,0.95) 0%,
-        rgba(8,8,16,0.7) 50%,
-        rgba(8,8,16,0.85) 100%
-      );
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      max-width: 700px;
-      animation: heroIn 1s cubic-bezier(0.4, 0, 0.2, 1) both;
-    }
-
-    @keyframes heroIn {
-      from { opacity: 0; transform: translateY(40px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 18px;
-      background: rgba(255,107,53,0.12);
-      border: 1px solid rgba(255,107,53,0.3);
-      border-radius: 50px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--orange);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 28px;
-      animation: badgePulse 2s ease-in-out infinite;
-    }
-
-    @keyframes badgePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.3); }
-      50%       { box-shadow: 0 0 0 8px rgba(255,107,53,0); }
-    }
-
-    .badge-dot {
+    /* ── Custom cursor ─────────────────────────────────────── */
+    #cursor-dot {
       width: 8px; height: 8px;
-      background: var(--orange);
+      background: var(--primary);
       border-radius: 50%;
-      animation: dotBlink 1s ease-in-out infinite;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none; z-index: 9999;
+      transition: transform 0.1s ease;
+    }
+    #cursor-ring {
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(255,159,74,0.5);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none; z-index: 9998;
+      transition: width 0.3s ease, height 0.3s ease, left 0.12s ease, top 0.12s ease, opacity 0.3s ease;
+    }
+    body:hover #cursor-ring { opacity: 1; }
+
+    /* ── Scrollbar ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 5px; }
+
+    /* ── Background: ambient orbs ───────────────────────────── */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0;
+      animation: orbFloat ease-in-out infinite;
+    }
+    .orb-1 { width: 600px; height: 600px; background: rgba(255,140,0,0.08); top: -200px; left: -150px; animation-duration: 12s; animation-delay: 0s; }
+    .orb-2 { width: 500px; height: 500px; background: rgba(144,0,222,0.07); bottom: -150px; right: -100px; animation-duration: 15s; animation-delay: -5s; }
+    .orb-3 { width: 350px; height: 350px; background: rgba(142,255,113,0.04); top: 50%; left: 50%; transform: translate(-50%,-50%); animation-duration: 10s; animation-delay: -3s; }
+
+    @keyframes orbFloat {
+      0%,100% { opacity: 0.6; transform: translateY(0) scale(1); }
+      50%      { opacity: 1;   transform: translateY(-30px) scale(1.05); }
     }
 
-    @keyframes dotBlink {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.4; transform: scale(0.7); }
+    /* ── Canvas for particles ──────────────────────────────── */
+    #particle-canvas {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
     }
+
+    /* ── Navbar ───────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 72px;
+      background: rgba(13,13,22,0.7);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 0.5px solid rgba(72,71,81,0.3);
+      transition: background 0.3s ease;
+    }
+    nav.scrolled { background: rgba(13,13,22,0.95); }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px; font-weight: 800;
+      color: var(--on-surface);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .nav-logo-badge {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(255,140,0,0.4);
+      animation: logoPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes logoPulse {
+      0%,100% { box-shadow: 0 0 20px rgba(255,140,0,0.3); }
+      50%      { box-shadow: 0 0 40px rgba(255,140,0,0.6); }
+    }
+    .logo-gradient {
+      background: linear-gradient(90deg, var(--primary), var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .nav-links {
+      display: flex; gap: 32px; list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px; font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: color 0.2s ease;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 1.5px;
+      background: linear-gradient(90deg, var(--primary), var(--amber));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    .nav-links a:hover { color: var(--on-surface); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .nav-btns { display: flex; align-items: center; gap: 12px; }
+
+    .btn-ghost {
+      padding: 9px 22px;
+      background: transparent;
+      border: 0.5px solid rgba(255,159,74,0.4);
+      color: var(--primary);
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px; font-weight: 700;
+      border-radius: var(--radius-full);
+      cursor: none;
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+    }
+    .btn-ghost:hover {
+      background: rgba(255,159,74,0.1);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(255,159,74,0.25);
+    }
+
+    .btn-solid {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border: none;
+      color: #2a1400;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px; font-weight: 800;
+      border-radius: var(--radius-full);
+      cursor: none;
+      position: relative; overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(255,140,0,0.3);
+    }
+    .btn-solid::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 200%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+    .btn-solid:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,140,0,0.5); }
+    .btn-solid span { position: relative; z-index: 1; }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 60px;
+      padding: 100px 80px 60px;
+    }
+    @media (max-width: 1000px) {
+      .hero { grid-template-columns: 1fr; padding: 100px 32px 60px; }
+      .hero-visual { display: none; }
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px;
+      background: rgba(255,159,74,0.08);
+      border: 0.5px solid rgba(255,159,74,0.25);
+      border-radius: var(--radius-full);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px; font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: eyebrowGlow 3s ease-in-out infinite;
+    }
+    @keyframes eyebrowGlow {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,159,74,0); }
+      50%      { box-shadow: 0 0 0 6px rgba(255,159,74,0); border-color: rgba(255,159,74,0.5); }
+    }
+    .eyebrow-dot {
+      width: 7px; height: 7px; background: var(--primary); border-radius: 50%;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.6)} }
 
     .hero h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(48px, 8vw, 84px);
-      font-weight: 900;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(44px, 6vw, 80px);
+      font-weight: 800;
       line-height: 1.05;
-      margin-bottom: 24px;
       letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+    .hero h1 .word { display: inline-block; overflow: hidden; }
+    .hero h1 .word span {
+      display: inline-block;
+      animation: wordReveal 0.8s cubic-bezier(0.4,0,0.2,1) both;
+    }
+    .hero h1 .word:nth-child(1) span { animation-delay: 0.1s; }
+    .hero h1 .word:nth-child(2) span { animation-delay: 0.2s; }
+    .hero h1 .word:nth-child(3) span { animation-delay: 0.3s; animation-name: wordRevealGrad; }
+    .hero h1 .word:nth-child(4) span { animation-delay: 0.4s; animation-name: wordRevealGrad; }
+
+    @keyframes wordReveal {
+      from { transform: translateY(110%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes wordRevealGrad {
+      from { transform: translateY(110%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
     }
 
-    .hero h1 .line-2 {
-      display: block;
-      background: linear-gradient(90deg, var(--orange) 0%, var(--amber) 50%, var(--orange) 100%);
+    .gradient-text {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--amber) 50%, var(--primary) 100%);
       background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradientShift 4s linear infinite;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: gradientMove 4s linear infinite;
     }
+    @keyframes gradientMove { to { background-position: 200% center; } }
 
-    @keyframes gradientShift {
-      0%   { background-position: 0% center; }
-      100% { background-position: 200% center; }
+    .hero-sub {
+      font-size: 17px; color: var(--muted); line-height: 1.75; margin-bottom: 40px;
+      max-width: 480px;
+      animation: fadeUp 0.8s ease 0.6s both;
     }
-
-    .hero p {
-      font-size: 18px;
-      color: var(--text-muted);
-      line-height: 1.7;
-      margin-bottom: 40px;
-      max-width: 520px;
-    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
 
     .hero-cta {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      animation: fadeUp 0.8s ease 0.75s both;
     }
 
-    .btn-explore {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
+    .btn-hero {
+      display: inline-flex; align-items: center; gap: 10px;
       padding: 16px 36px;
-      background: linear-gradient(135deg, var(--orange), var(--amber));
-      border: none;
-      color: white;
-      font-family: 'Poppins', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      border-radius: 50px;
-      cursor: pointer;
-      overflow: hidden;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border: none; color: #1a0a00;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px; font-weight: 800;
+      border-radius: var(--radius-full);
+      cursor: none; text-decoration: none;
+      position: relative; overflow: hidden;
       transition: all 0.35s ease;
-      box-shadow: 0 8px 30px rgba(255,107,53,0.45);
-      text-decoration: none;
+      box-shadow: 0 8px 32px rgba(255,140,0,0.4);
     }
-
-    .btn-explore::before {
+    .btn-hero::before {
       content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 200%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s ease;
+      position: absolute; top: 0; left: -100%; width: 200%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: shimmer 2s infinite;
+    }
+    .btn-hero:hover {
+      transform: translateY(-4px) scale(1.04);
+      box-shadow: 0 16px 48px rgba(255,140,0,0.6);
+    }
+    .btn-hero-icon { font-size: 20px; animation: rocketAnim 1.5s ease-in-out infinite; }
+    @keyframes rocketAnim {
+      0%,100%{ transform:translateY(0) rotate(0); }
+      50%    { transform:translateY(-5px) rotate(-8deg); }
     }
 
-    .btn-explore:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 16px 50px rgba(255,107,53,0.6); }
-    .btn-explore:hover::before { left: 100%; }
-    .btn-explore-icon { font-size: 20px; animation: rocketShake 1.5s ease-in-out infinite; }
-
-    @keyframes rocketShake {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      25%       { transform: translateY(-4px) rotate(-10deg); }
-      75%       { transform: translateY(2px) rotate(5deg); }
+    .btn-outline-hero {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 15px 32px;
+      background: rgba(255,159,74,0.07);
+      border: 0.5px solid rgba(255,159,74,0.35);
+      color: var(--primary);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px; font-weight: 700;
+      border-radius: var(--radius-full);
+      cursor: none; text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .btn-outline-hero:hover {
+      background: rgba(255,159,74,0.14);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255,159,74,0.2);
     }
 
     .hero-stats {
-      display: flex;
-      gap: 32px;
-      margin-top: 60px;
-      padding-top: 40px;
-      border-top: 1px solid var(--glass-border);
+      display: flex; gap: 36px; margin-top: 56px; padding-top: 40px;
+      border-top: 0.5px solid rgba(72,71,81,0.4);
+      animation: fadeUp 0.8s ease 0.9s both;
+    }
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-label {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;
     }
 
-    .stat-item { text-align: left; }
-    .stat-number {
-      font-family: 'Outfit', sans-serif;
-      font-size: 32px;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--orange), var(--amber));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-
-    /* Floating food emojis */
-    .floating-emojis { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
-    .emoji-float {
-      position: absolute;
-      font-size: 28px;
-      animation: emojiFloat linear infinite;
-      filter: blur(0px);
-      opacity: 0.15;
+    /* ── Hero visual: orbiting food ────────────────────────── */
+    .hero-visual {
+      position: relative; width: 100%; aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeUp 0.8s ease 0.5s both;
     }
 
-    @keyframes emojiFloat {
-      0%   { transform: translateY(110%) rotate(0deg); opacity: 0; }
-      10%  { opacity: 0.2; }
-      90%  { opacity: 0.1; }
-      100% { transform: translateY(-10%) rotate(360deg); opacity: 0; }
-    }
-
-    /* ── Section ─────────────────────────── */
-    .section {
-      padding: 100px 0;
+    .visual-core {
       position: relative;
-      z-index: 1;
+      width: 220px; height: 220px;
+      background: linear-gradient(135deg, rgba(255,140,0,0.15), rgba(253,139,0,0.05));
+      border: 0.5px solid rgba(255,159,74,0.2);
+      border-radius: var(--radius-lg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 90px;
+      box-shadow: 0 0 80px rgba(255,140,0,0.2), inset 0 0 40px rgba(255,140,0,0.05);
+      backdrop-filter: blur(20px);
+      animation: coreFloat 5s ease-in-out infinite;
+    }
+    @keyframes coreFloat {
+      0%,100%{ transform:translateY(0) rotate(0deg); }
+      33%    { transform:translateY(-12px) rotate(2deg); }
+      66%    { transform:translateY(6px) rotate(-1deg); }
     }
 
-    .section-header {
-      text-align: center;
-      margin-bottom: 60px;
-    }
+    .orbit { position: absolute; border-radius: 50%; border: 0.5px dashed rgba(255,159,74,0.15); }
+    .orbit-1 { width: 300px; height: 300px; animation: spin 12s linear infinite; }
+    .orbit-2 { width: 420px; height: 420px; animation: spin 20s linear infinite reverse; border-color: rgba(201,124,255,0.1); }
+    .orbit-3 { width: 540px; height: 540px; animation: spin 30s linear infinite; border-color: rgba(142,255,113,0.06); }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .section-tag {
+    .orbit-item {
+      position: absolute;
+      width: 52px; height: 52px;
+      background: rgba(31,30,43,0.8);
+      border: 0.5px solid rgba(72,71,81,0.5);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    /* place items on orbit rings */
+    .orbit-1 .orbit-item:nth-child(1) { top: -26px; left: calc(50% - 26px); }
+    .orbit-1 .orbit-item:nth-child(2) { bottom: -26px; left: calc(50% - 26px); }
+    .orbit-2 .orbit-item:nth-child(1) { top: -26px; left: calc(50% - 26px); }
+    .orbit-2 .orbit-item:nth-child(2) { bottom: -26px; left: calc(50% - 26px); }
+    .orbit-2 .orbit-item:nth-child(3) { left: -26px; top: calc(50% - 26px); }
+    .orbit-2 .orbit-item:nth-child(4) { right: -26px; top: calc(50% - 26px); }
+
+    /* Glow halo */
+    .visual-glow {
+      position: absolute; width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,140,0,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glowPulse 4s ease-in-out infinite;
+    }
+    @keyframes glowPulse { 0%,100%{opacity:0.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.15)} }
+
+    /* ── Section ───────────────────────────────────────────── */
+    section { position: relative; z-index: 1; padding: 100px 80px; }
+    @media (max-width: 800px) { section { padding: 80px 24px; } }
+
+    .section-eyebrow {
       display: inline-block;
-      padding: 4px 16px;
-      background: rgba(255,107,53,0.1);
-      border: 1px solid rgba(255,107,53,0.25);
-      border-radius: 50px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--orange);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px; font-weight: 700;
+      color: var(--primary); letter-spacing: 2.5px; text-transform: uppercase;
+      margin-bottom: 14px;
+      opacity: 0; transform: translateY(16px); transition: all 0.6s ease;
+    }
+    .section-eyebrow.visible { opacity: 1; transform: none; }
+
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(30px, 4vw, 48px);
+      font-weight: 800; letter-spacing: -1px; line-height: 1.15;
+      margin-bottom: 14px;
+      opacity: 0; transform: translateY(20px); transition: all 0.6s ease 0.1s;
+    }
+    .section-title.visible { opacity: 1; transform: none; }
+
+    .section-sub {
+      font-size: 16px; color: var(--muted); line-height: 1.7; max-width: 480px;
+      margin-bottom: 60px;
+      opacity: 0; transform: translateY(16px); transition: all 0.6s ease 0.2s;
+    }
+    .section-sub.visible { opacity: 1; transform: none; }
+
+    /* ── Canteen grid ──────────────────────────────────────── */
+    .canteen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
 
-    .section-header h2 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(32px, 5vw, 52px);
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -1px;
-      margin-bottom: 16px;
-    }
-
-    .section-header p {
-      font-size: 16px;
-      color: var(--text-muted);
-      max-width: 500px;
-      margin: 0 auto;
-      line-height: 1.7;
-    }
-
-    /* ── Canteen Cards ───────────────────── */
     .canteen-card {
       position: relative;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 32px;
-      cursor: pointer;
+      background: var(--bg-card);
+      border: 0.5px solid rgba(72,71,81,0.4);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
       overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      animation: cardIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+      cursor: none;
+      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+      transform-style: preserve-3d;
+
+      opacity: 0; transform: translateY(30px) scale(0.97);
     }
+    .canteen-card.visible { opacity: 1; transform: none; }
 
-    .canteen-card:nth-child(1) { animation-delay: 0.1s; --card-color: #ff6b35; --card-glow: rgba(255,107,53,0.3); }
-    .canteen-card:nth-child(2) { animation-delay: 0.2s; --card-color: #10b981; --card-glow: rgba(16,185,129,0.3); }
-    .canteen-card:nth-child(3) { animation-delay: 0.3s; --card-color: #a855f7; --card-glow: rgba(168,85,247,0.3); }
-    .canteen-card:nth-child(4) { animation-delay: 0.4s; --card-color: #06b6d4; --card-glow: rgba(6,182,212,0.3); }
-
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(30px) scale(0.96); }
-      to   { opacity: 1; transform: translateY(0)   scale(1); }
-    }
-
+    /* top glow bar */
     .canteen-card::before {
       content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, var(--card-glow), transparent);
-      opacity: 0;
-      transition: opacity 0.4s ease;
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
+      opacity: 0; transition: opacity 0.4s;
+    }
+
+    /* radial glow on hover */
+    .canteen-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--card-glow), transparent);
+      opacity: 0; transition: opacity 0.4s;
       border-radius: inherit;
     }
 
-    .canteen-card::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--card-color), transparent);
-      opacity: 0;
-      transition: opacity 0.4s ease;
-      border-radius: 2px;
-    }
-
     .canteen-card:hover {
-      transform: translateY(-10px) scale(1.02);
-      border-color: var(--card-color);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px var(--card-color), 0 0 60px var(--card-glow);
+      transform: translateY(-10px) scale(1.02) rotateX(2deg);
+      border-color: var(--card-accent);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 0.5px var(--card-accent), 0 0 60px var(--card-glow);
     }
-
     .canteen-card:hover::before { opacity: 1; }
     .canteen-card:hover::after  { opacity: 1; }
 
+    .canteen-card:nth-child(1) { --card-accent: #ff9f4a; --card-glow: rgba(255,159,74,0.15); transition-delay: 0.05s; }
+    .canteen-card:nth-child(2) { --card-accent: #8eff71; --card-glow: rgba(142,255,113,0.12); transition-delay: 0.10s; }
+    .canteen-card:nth-child(3) { --card-accent: #c97cff; --card-glow: rgba(201,124,255,0.15); transition-delay: 0.15s; }
+    .canteen-card:nth-child(4) { --card-accent: #06b6d4; --card-glow: rgba(6,182,212,0.12);   transition-delay: 0.20s; }
+
+    .canteen-badge {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 10px; font-weight: 700;
+      color: var(--card-accent); letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
     .canteen-icon {
-      font-size: 52px;
-      margin-bottom: 20px;
-      display: block;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 4px 12px var(--card-glow));
+      font-size: 54px; display: block; margin-bottom: 18px;
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      filter: drop-shadow(0 8px 16px var(--card-glow));
     }
-
-    .canteen-card:hover .canteen-icon {
-      transform: scale(1.2) rotate(-5deg);
-    }
-
-    .canteen-number {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--card-color);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
+    .canteen-card:hover .canteen-icon { transform: scale(1.22) translateY(-4px) rotate(-6deg); }
 
     .canteen-name {
-      font-family: 'Outfit', sans-serif;
-      font-size: 24px;
-      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
       margin-bottom: 10px;
-      letter-spacing: -0.5px;
     }
+    .canteen-desc { font-size: 13px; color: var(--muted); line-height: 1.65; margin-bottom: 18px; }
 
-    .canteen-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
-
-    .canteen-tags {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-
-    .tag {
+    .canteen-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+    .chip {
       padding: 4px 12px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--glass-border);
-      border-radius: 50px;
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 500;
+      background: var(--bg-high);
+      border-radius: var(--radius-full);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px; font-weight: 600;
+      color: var(--muted);
+      transition: all 0.25s;
     }
+    .canteen-card:hover .chip { border: 0.5px solid var(--card-accent); color: var(--card-accent); background: transparent; }
 
-    .canteen-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .canteen-foot {
+      display: flex; align-items: center; justify-content: space-between;
       padding-top: 20px;
-      border-top: 1px solid var(--glass-border);
-      margin-bottom: 20px;
+      border-top: 0.5px solid rgba(72,71,81,0.3);
+      margin-bottom: 18px;
     }
-
-    .meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
-    .meta-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; animation: metaBlink 1.5s ease-in-out infinite; }
-
-    @keyframes metaBlink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
+    .live-indicator { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--tertiary);
+      box-shadow: 0 0 8px var(--tertiary);
+      animation: blink 1.5s ease-in-out infinite;
     }
+    .time-label { font-size: 12px; color: var(--muted); }
 
-    /* Individual canteen button colors */
-    .canteen-card:nth-child(1) .btn-open { background: linear-gradient(135deg, #ff6b35, #ffd60a); box-shadow: 0 6px 24px rgba(255,107,53,0.4); }
-    .canteen-card:nth-child(2) .btn-open { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 6px 24px rgba(16,185,129,0.4); }
-    .canteen-card:nth-child(3) .btn-open { background: linear-gradient(135deg, #7c3aed, #ec4899); box-shadow: 0 6px 24px rgba(124,58,237,0.4); }
-    .canteen-card:nth-child(4) .btn-open { background: linear-gradient(135deg, #0891b2, #06b6d4); box-shadow: 0 6px 24px rgba(6,182,212,0.4); }
+    .btn-canteen {
+      position: relative; width: 100%;
+      padding: 13px;
+      border: none;
+      color: #1a0a00;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 800;
+      letter-spacing: 0.5px; text-transform: uppercase;
+      border-radius: 10px;
+      cursor: none; overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .canteen-card:nth-child(1) .btn-canteen { background: linear-gradient(135deg,#ff9f4a,#fd8b00); box-shadow: 0 6px 24px rgba(255,140,0,0.35); }
+    .canteen-card:nth-child(2) .btn-canteen { background: linear-gradient(135deg,#22c55e,#16a34a); box-shadow: 0 6px 24px rgba(34,197,94,0.35); }
+    .canteen-card:nth-child(3) .btn-canteen { background: linear-gradient(135deg,#c97cff,#9000de); box-shadow: 0 6px 24px rgba(201,124,255,0.35); }
+    .canteen-card:nth-child(4) .btn-canteen { background: linear-gradient(135deg,#22d3ee,#0891b2); box-shadow: 0 6px 24px rgba(6,182,212,0.35); }
 
-    .btn-open::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: inherit; }
-    .canteen-card:nth-child(1) .btn-open:hover { box-shadow: 0 12px 40px rgba(255,107,53,0.7); }
-    .canteen-card:nth-child(2) .btn-open:hover { box-shadow: 0 12px 40px rgba(16,185,129,0.7); }
-    .canteen-card:nth-child(3) .btn-open:hover { box-shadow: 0 12px 40px rgba(124,58,237,0.7); }
-    .canteen-card:nth-child(4) .btn-open:hover { box-shadow: 0 12px 40px rgba(6,182,212,0.7); }
+    .btn-canteen::before {
+      content: '';
+      position: absolute; top:0; left:-100%; width:200%; height:100%;
+      background: linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+      animation: shimmer 2.5s infinite;
+    }
+    .btn-canteen:hover { transform: translateY(-3px); filter: brightness(1.1); }
+    .btn-canteen span { position: relative; z-index:1; }
 
-    /* ── Features strip ──────────────────── */
+    /* ── Features strip ────────────────────────────────────── */
     .features-strip {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1px;
-      background: var(--glass-border);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 70px;
+      border: 0.5px solid rgba(72,71,81,0.3);
+      border-radius: var(--radius-lg);
       overflow: hidden;
-      margin-top: 80px;
     }
+    @media (max-width: 700px) { .features-strip { grid-template-columns: 1fr 1fr; } }
 
-    .feature-item {
+    .feature-cell {
       padding: 32px 24px;
-      background: var(--bg-secondary);
+      background: var(--bg-low);
       text-align: center;
-      transition: var(--transition);
+      border-right: 0.5px solid rgba(72,71,81,0.3);
+      transition: background 0.3s ease;
+      opacity: 0; transform: translateY(16px); transition: all 0.5s ease;
     }
-
-    .feature-item:hover { background: rgba(255,107,53,0.05); }
+    .feature-cell.visible { opacity: 1; transform: none; }
+    .feature-cell:last-child { border-right: none; }
+    .feature-cell:hover { background: rgba(255,159,74,0.05); }
     .feature-emoji { font-size: 36px; margin-bottom: 12px; display: block; }
-    .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-    .feature-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+    .feature-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px; font-weight: 700; margin-bottom: 6px;
+    }
+    .feature-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-    /* ── Footer ──────────────────────────── */
+    /* ── Footer ────────────────────────────────────────────── */
     footer {
-      position: relative;
-      z-index: 1;
-      border-top: 1px solid var(--glass-border);
-      padding: 40px 0;
-      text-align: center;
+      position: relative; z-index: 1;
+      border-top: 0.5px solid rgba(72,71,81,0.3);
+      padding: 48px 80px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;
     }
-
-    .footer-logo {
-      font-family: 'Outfit', sans-serif;
-      font-size: 28px;
-      font-weight: 900;
-      background: linear-gradient(90deg, var(--orange), var(--amber));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 12px;
+    @media (max-width: 700px) { footer { padding: 40px 24px; flex-direction: column; text-align: center; } }
+    .footer-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px; font-weight: 800;
     }
-
-    .footer-text { font-size: 13px; color: var(--text-muted); }
-    .footer-love { color: var(--orange); }
+    .footer-text { font-size: 12px; color: var(--muted); }
+    .footer-love { color: var(--primary); }
   </style>
 </head>
 <body>
 
-<!-- Background layers -->
-<div class="bg-mesh"></div>
-<div class="particles" id="particles"></div>
+<!-- Custom cursor -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- Ambient orbs -->
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- Particle canvas -->
+<canvas id="particle-canvas"></canvas>
 
 <!-- Navbar -->
-<nav class="navbar">
-  <a href="index.html" class="navbar-logo">
-    <div class="logo-icon">🍽️</div>
-    <div>
-      <div class="logo-text">B.U Eats</div>
-      <div class="logo-subtitle">Campus Food</div>
-    </div>
+<nav id="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-badge">🍽️</div>
+    <span><span class="logo-gradient">B.U</span> Eats</span>
   </a>
-  <div class="nav-actions">
-    <a href="login.html">
-      <button class="btn-login" id="nav-login"><span>Login</span></button>
-    </a>
-    <a href="register.html">
-      <button class="btn-register" id="nav-register"><span>Register</span></button>
-    </a>
+  <ul class="nav-links">
+    <li><a href="#canteens">Canteens</a></li>
+    <li><a href="#features">Features</a></li>
+  </ul>
+  <div class="nav-btns">
+    <a href="login.html"><button class="btn-ghost">Login</button></a>
+    <a href="register.html"><button class="btn-solid"><span>Register →</span></button></a>
   </div>
 </nav>
 
 <!-- Hero -->
-<section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-overlay"></div>
+<div class="hero">
+  <!-- Left content -->
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <div class="eyebrow-dot"></div>
+      Now Live · B.U Campus
+    </div>
 
-  <div class="floating-emojis" id="floatEmojis"></div>
+    <h1>
+      <span class="word"><span>Campus</span></span>&nbsp;
+      <span class="word"><span>Food,</span></span><br>
+      <span class="word"><span class="gradient-text">Ordered</span></span>&nbsp;
+      <span class="word"><span class="gradient-text">Instantly</span></span>
+    </h1>
 
-  <div class="container">
-    <div class="hero-content">
-      <div class="hero-badge">
-        <div class="badge-dot"></div>
-        Now Live on Campus
+    <p class="hero-sub">
+      Skip the queue. Browse 4 campus canteens, add items to your cart, 
+      and track your order live — all from your device.
+    </p>
+
+    <div class="hero-cta">
+      <a href="#canteens" class="btn-hero">
+        <span class="btn-hero-icon">🚀</span>
+        <span>Explore Canteens</span>
+      </a>
+      <a href="register.html" class="btn-outline-hero">Join Free</a>
+    </div>
+
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num" data-count="4">0</div>
+        <div class="stat-label">Canteens</div>
       </div>
-
-      <h1>
-        Campus food,<br>
-        <span class="line-2">Ordered Instantly</span>
-      </h1>
-
-      <p>
-        Skip the queue. Browse 4 campus canteens, order your favourite meals, 
-        and track them live — right from your phone or laptop.
-      </p>
-
-      <div class="hero-cta">
-        <a href="#canteens" class="btn-explore" id="explore-btn">
-          <span class="btn-explore-icon">🚀</span>
-          <span>Explore Canteens</span>
-        </a>
-        <a href="register.html">
-          <button class="btn-register" style="padding:16px 32px; font-size:15px;"><span>Join Free →</span></button>
-        </a>
+      <div>
+        <div class="stat-num" data-count="32">0</div>
+        <div class="stat-label">Menu Items</div>
       </div>
-
-      <div class="hero-stats">
-        <div class="stat-item">
-          <div class="stat-number" id="count-canteens">4</div>
-          <div class="stat-label">Canteens</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" id="count-items">100+</div>
-          <div class="stat-label">Menu Items</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" id="count-orders">Live</div>
-          <div class="stat-label">Order Tracking</div>
-        </div>
+      <div>
+        <div class="stat-num" data-text="Live">—</div>
+        <div class="stat-label">Tracking</div>
       </div>
     </div>
   </div>
-</section>
+
+  <!-- Right: orbiting food visual -->
+  <div class="hero-visual">
+    <div class="visual-glow"></div>
+
+    <div class="orbit orbit-1">
+      <div class="orbit-item">🍜</div>
+      <div class="orbit-item">☕</div>
+    </div>
+    <div class="orbit orbit-2">
+      <div class="orbit-item">🍛</div>
+      <div class="orbit-item">🍔</div>
+      <div class="orbit-item">🌮</div>
+      <div class="orbit-item">🍟</div>
+    </div>
+    <div class="orbit orbit-3"></div>
+
+    <div class="visual-core">🍽️</div>
+  </div>
+</div>
 
 <!-- Canteens Section -->
-<section class="section" id="canteens">
-  <div class="container">
-    <div class="section-header">
-      <div class="section-tag">🏪 Our Canteens</div>
-      <h2>Pick Your <span class="text-gradient">Favourite Spot</span></h2>
-      <p>Four amazing canteens, each with their own specialty menu and vibe.</p>
+<section id="canteens">
+  <div class="section-eyebrow reveal">🏪 Our Canteens</div>
+  <div class="section-title reveal">Pick Your <span class="gradient-text">Spot</span></div>
+  <div class="section-sub reveal">Four unique canteens, each with their own specialty. Login required to order.</div>
+
+  <div class="canteen-grid">
+
+    <div class="canteen-card reveal" onclick="openCanteen(1)" id="canteen-1">
+      <div class="canteen-badge">01 · Noodles & Snacks</div>
+      <span class="canteen-icon">🍜</span>
+      <div class="canteen-name">Maggi Hotspot</div>
+      <div class="canteen-desc">The legendary noodle hub. Loaded Maggi bowls, spicy variations, and quick bites that hit different between lectures.</div>
+      <div class="canteen-chips">
+        <span class="chip">🌶️ Spicy</span>
+        <span class="chip">⚡ Fast</span>
+        <span class="chip">🍜 Noodles</span>
+      </div>
+      <div class="canteen-foot">
+        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="time-label">⏱ ~5 mins</div>
+      </div>
+      <button class="btn-canteen"><span>Order Now →</span></button>
     </div>
 
-    <div class="grid-4">
-
-      <!-- Canteen 1 -->
-      <div class="canteen-card" onclick="openCanteen(1)" id="canteen-1">
-        <span class="canteen-icon">🍜</span>
-        <div class="canteen-number">01 · Canteen</div>
-        <div class="canteen-name">Maggi Hotspot</div>
-        <div class="canteen-desc">The legendary noodle hub. Loaded Maggi bowls, spicy variations, and quick bites that hit different between lectures.</div>
-        <div class="canteen-tags">
-          <span class="tag">🌶️ Spicy</span>
-          <span class="tag">⚡ Fast</span>
-          <span class="tag">🍜 Noodles</span>
-        </div>
-        <div class="canteen-meta">
-          <div class="meta-item"><div class="meta-dot"></div> Open Now</div>
-          <div class="meta-item">⏱ ~5 mins</div>
-        </div>
-        <button class="btn-open" id="btn-canteen-1"><span>Order Now</span></button>
+    <div class="canteen-card reveal" onclick="openCanteen(2)" id="canteen-2">
+      <div class="canteen-badge">02 · South Indian</div>
+      <span class="canteen-icon">🍛</span>
+      <div class="canteen-name">Southern Stories</div>
+      <div class="canteen-desc">Authentic South Indian flavours — crispy dosas, fluffy idlis, steaming sambhar, and filter coffee that wakes you up.</div>
+      <div class="canteen-chips">
+        <span class="chip">🥘 Authentic</span>
+        <span class="chip">☕ Coffee</span>
+        <span class="chip">🌿 Veg</span>
       </div>
-
-      <!-- Canteen 2 -->
-      <div class="canteen-card" onclick="openCanteen(2)" id="canteen-2">
-        <span class="canteen-icon">🍛</span>
-        <div class="canteen-number">02 · Canteen</div>
-        <div class="canteen-name">Southern Stories</div>
-        <div class="canteen-desc">Authentic South Indian flavours — crispy dosas, fluffy idlis, steaming sambhar, and filter coffee that wakes you up.</div>
-        <div class="canteen-tags">
-          <span class="tag">🥘 South Indian</span>
-          <span class="tag">☕ Coffee</span>
-          <span class="tag">🌿 Veg</span>
-        </div>
-        <div class="canteen-meta">
-          <div class="meta-item"><div class="meta-dot"></div> Open Now</div>
-          <div class="meta-item">⏱ ~8 mins</div>
-        </div>
-        <button class="btn-open" id="btn-canteen-2"><span>Order Now</span></button>
+      <div class="canteen-foot">
+        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="time-label">⏱ ~8 mins</div>
       </div>
-
-      <!-- Canteen 3 -->
-      <div class="canteen-card" onclick="openCanteen(3)" id="canteen-3">
-        <span class="canteen-icon">🍔</span>
-        <div class="canteen-number">03 · Canteen</div>
-        <div class="canteen-name">SnapEats</div>
-        <div class="canteen-desc">Campus fast food done right. Juicy burgers, loaded rolls, crispy fries, and milkshakes — fuel for long study sessions.</div>
-        <div class="canteen-tags">
-          <span class="tag">🍟 Fast Food</span>
-          <span class="tag">🥤 Shakes</span>
-          <span class="tag">🔥 Trending</span>
-        </div>
-        <div class="canteen-meta">
-          <div class="meta-item"><div class="meta-dot"></div> Open Now</div>
-          <div class="meta-item">⏱ ~6 mins</div>
-        </div>
-        <button class="btn-open" id="btn-canteen-3"><span>Order Now</span></button>
-      </div>
-
-      <!-- Canteen 4 -->
-      <div class="canteen-card" onclick="openCanteen(4)" id="canteen-4">
-        <span class="canteen-icon">🌮</span>
-        <div class="canteen-number">04 · Canteen</div>
-        <div class="canteen-name">Infinity Kitchen</div>
-        <div class="canteen-desc">A never-ending menu of Indian curries, rice specials, stuffed parathas, and fusion street bites for every craving.</div>
-        <div class="canteen-tags">
-          <span class="tag">🍚 Rice</span>
-          <span class="tag">🫓 Parathas</span>
-          <span class="tag">♾️ Variety</span>
-        </div>
-        <div class="canteen-meta">
-          <div class="meta-item"><div class="meta-dot"></div> Open Now</div>
-          <div class="meta-item">⏱ ~10 mins</div>
-        </div>
-        <button class="btn-open" id="btn-canteen-4"><span>Order Now</span></button>
-      </div>
-
+      <button class="btn-canteen"><span>Order Now →</span></button>
     </div>
 
-    <!-- Features strip -->
-    <div class="features-strip">
-      <div class="feature-item">
-        <span class="feature-emoji">⚡</span>
-        <div class="feature-title">Instant Orders</div>
-        <div class="feature-desc">Place orders in seconds from anywhere on campus</div>
+    <div class="canteen-card reveal" onclick="openCanteen(3)" id="canteen-3">
+      <div class="canteen-badge">03 · Fast Food</div>
+      <span class="canteen-icon">🍔</span>
+      <div class="canteen-name">SnapEats</div>
+      <div class="canteen-desc">Campus fast food done right. Juicy burgers, loaded rolls, crispy fries, and milkshakes — fuel for long study sessions.</div>
+      <div class="canteen-chips">
+        <span class="chip">🍟 Fast Food</span>
+        <span class="chip">🥤 Shakes</span>
+        <span class="chip">🔥 Trending</span>
       </div>
-      <div class="feature-item">
-        <span class="feature-emoji">📡</span>
-        <div class="feature-title">Live Tracking</div>
-        <div class="feature-desc">Know exactly when your food is ready</div>
+      <div class="canteen-foot">
+        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="time-label">⏱ ~6 mins</div>
       </div>
-      <div class="feature-item">
-        <span class="feature-emoji">🔒</span>
-        <div class="feature-title">Secure Login</div>
-        <div class="feature-desc">Safe and private student authentication</div>
+      <button class="btn-canteen"><span>Order Now →</span></button>
+    </div>
+
+    <div class="canteen-card reveal" onclick="openCanteen(4)" id="canteen-4">
+      <div class="canteen-badge">04 · Full Meals</div>
+      <span class="canteen-icon">🌮</span>
+      <div class="canteen-name">Infinity Kitchen</div>
+      <div class="canteen-desc">A never-ending menu of Indian curries, rice specials, stuffed parathas, and fusion street bites for every craving.</div>
+      <div class="canteen-chips">
+        <span class="chip">🍚 Rice</span>
+        <span class="chip">🫓 Parathas</span>
+        <span class="chip">♾️ Variety</span>
       </div>
-      <div class="feature-item">
-        <span class="feature-emoji">🍽️</span>
-        <div class="feature-title">Fresh Food</div>
-        <div class="feature-desc">Made to order, served hot every time</div>
+      <div class="canteen-foot">
+        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="time-label">⏱ ~10 mins</div>
       </div>
+      <button class="btn-canteen"><span>Order Now →</span></button>
+    </div>
+
+  </div>
+
+  <!-- Features strip -->
+  <div class="features-strip" id="features">
+    <div class="feature-cell reveal">
+      <span class="feature-emoji">⚡</span>
+      <div class="feature-title">Instant Orders</div>
+      <div class="feature-desc">Place orders in seconds from anywhere on campus</div>
+    </div>
+    <div class="feature-cell reveal">
+      <span class="feature-emoji">📡</span>
+      <div class="feature-title">Live Tracking</div>
+      <div class="feature-desc">Know exactly when your food is ready</div>
+    </div>
+    <div class="feature-cell reveal">
+      <span class="feature-emoji">🔒</span>
+      <div class="feature-title">Secure JWT</div>
+      <div class="feature-desc">Safe and private student authentication</div>
+    </div>
+    <div class="feature-cell reveal">
+      <span class="feature-emoji">🍽️</span>
+      <div class="feature-title">Fresh Food</div>
+      <div class="feature-desc">Made to order, served hot every time</div>
     </div>
   </div>
 </section>
 
 <!-- Footer -->
 <footer>
-  <div class="container">
-    <div class="footer-logo">B.U Eats</div>
-    <p class="footer-text">Made with <span class="footer-love">❤️</span> for the campus. Skip the queue, enjoy the food.</p>
-    <div class="divider" style="max-width:300px; margin:20px auto;"></div>
-    <p class="footer-text" style="font-size:11px;">© 2026 B.U Eats · Smart Canteen System</p>
+  <div>
+    <div class="footer-brand"><span class="gradient-text">B.U Eats</span></div>
+    <div class="footer-text" style="margin-top:6px;">Made with <span class="footer-love">❤️</span> for the campus.</div>
   </div>
+  <div class="footer-text">© 2026 B.U Eats · Smart Canteen System</div>
 </footer>
 
 <script>
-/* ── Floating particles ── */
-const pContainer = document.getElementById('particles');
-const colors = ['#ff6b35','#ffd60a','#7c3aed','#ec4899','#06b6d4','#10b981'];
-for(let i = 0; i < 25; i++){
-  const p = document.createElement('div');
-  p.className = 'particle';
-  const size = Math.random() * 5 + 2;
-  p.style.cssText = `
-    width:${size}px; height:${size}px;
-    left:${Math.random()*100}%;
-    background:${colors[Math.floor(Math.random()*colors.length)]};
-    animation-duration:${Math.random()*15+10}s;
-    animation-delay:${Math.random()*15}s;
-    border-radius:50%;
-  `;
-  pContainer.appendChild(p);
-}
+/* ── Custom cursor ── */
+const dot  = document.getElementById('cursor-dot');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  dot.style.left  = (mx-4)+'px';
+  dot.style.top   = (my-4)+'px';
+});
+(function animRing(){
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = (rx-18)+'px';
+  ring.style.top  = (ry-18)+'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a,button,.canteen-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{
+    ring.style.width='56px'; ring.style.height='56px';
+    ring.style.borderColor='rgba(255,159,74,0.7)';
+    dot.style.transform='scale(2)';
+  });
+  el.addEventListener('mouseleave',()=>{
+    ring.style.width='36px'; ring.style.height='36px';
+    ring.style.borderColor='rgba(255,159,74,0.5)';
+    dot.style.transform='scale(1)';
+  });
+});
 
-/* ── Floating food emojis ── */
-const floatEmojis = document.getElementById('floatEmojis');
-const foodEmojis = ['🍜','🍛','🍔','🌮','🍟','☕','🥘','🍱','🧋','🍩'];
-for(let i = 0; i < 12; i++){
-  const e = document.createElement('div');
-  e.className = 'emoji-float';
-  e.textContent = foodEmojis[Math.floor(Math.random()*foodEmojis.length)];
-  e.style.cssText = `
-    left:${Math.random()*100}%;
-    animation-duration:${Math.random()*20+15}s;
-    animation-delay:${Math.random()*20}s;
-    font-size:${Math.random()*20+18}px;
-  `;
-  floatEmojis.appendChild(e);
-}
+/* ── Particle canvas ── */
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width  = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize',()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+
+const COLORS = ['rgba(255,159,74,', 'rgba(201,124,255,', 'rgba(142,255,113,', 'rgba(255,227,147,'];
+const particles = Array.from({length:60},()=>({
+  x: Math.random()*canvas.width,
+  y: Math.random()*canvas.height,
+  r: Math.random()*1.6+0.4,
+  dx: (Math.random()-0.5)*0.4,
+  dy: -Math.random()*0.5-0.1,
+  c: COLORS[Math.floor(Math.random()*COLORS.length)],
+  a: Math.random()*0.5+0.1,
+}));
+
+(function drawParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x += p.dx; p.y += p.dy;
+    if(p.y < -5) { p.y = canvas.height+5; p.x = Math.random()*canvas.width; }
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle = p.c + p.a + ')';
+    ctx.fill();
+  });
+  requestAnimationFrame(drawParticles);
+})();
+
+/* ── Scroll-reveal ── */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting){
+      setTimeout(()=> e.target.classList.add('visible'), i*60);
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:0.12});
+revealEls.forEach(el=>{
+  el.classList.add('section-eyebrow','section-title','section-sub','canteen-card','feature-cell');
+  io.observe(el);
+});
+
+/* ── Scroll effects ── */
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY>40);
+});
+
+/* ── Count-up animation ── */
+document.querySelectorAll('[data-count]').forEach(el=>{
+  const target = +el.dataset.count;
+  let cur=0; const step=Math.ceil(target/30);
+  const iv = setInterval(()=>{
+    cur = Math.min(cur+step, target);
+    el.textContent = cur;
+    if(cur>=target) clearInterval(iv);
+  },40);
+});
+document.querySelectorAll('[data-text]').forEach(el=>{
+  setTimeout(()=>el.textContent=el.dataset.text, 800);
+});
+
+/* ── 3D tilt on canteen cards ── */
+document.querySelectorAll('.canteen-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top;
+    const cx=r.width/2, cy=r.height/2;
+    const rx=(y-cy)/cy*6, ry=(cx-x)/cx*6;
+    card.style.transform=`translateY(-10px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`;
+  });
+  card.addEventListener('mouseleave',()=>{
+    card.style.transform='';
+  });
+});
 
 /* ── Smooth scroll ── */
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
     e.preventDefault();
-    document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior:'smooth' });
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t) t.scrollIntoView({behavior:'smooth'});
   });
 });
 
-/* ── Canteen open logic ── */
+/* ── openCanteen logic ── */
 function openCanteen(id){
-  const token = localStorage.getItem('token');
-  if(!token || token === 'undefined'){
-    // Fancy shake animation on cards
-    const card = document.getElementById('canteen-'+id);
-    card.style.animation = 'none';
-    card.style.transform = 'translateX(0)';
-    let count = 0;
-    const shake = setInterval(()=>{
-      card.style.transform = count % 2 === 0 ? 'translateX(-8px)' : 'translateX(8px)';
-      count++;
-      if(count > 6){
-        clearInterval(shake);
-        card.style.transform = '';
-      }
-    }, 60);
+  const token=localStorage.getItem('token');
+  if(!token||token==='undefined'){
+    const card=document.getElementById('canteen-'+id);
+    card.style.animation='shake 0.4s ease';
+    setTimeout(()=>card.style.animation='',400);
     setTimeout(()=>{
-      localStorage.setItem('redirectAfterLogin', 'menu.html?canteen=' + id);
-      window.location = 'login.html';
-    }, 500);
+      localStorage.setItem('redirectAfterLogin','menu.html?canteen='+id);
+      window.location='login.html';
+    },450);
     return;
   }
-  window.location = 'menu.html?canteen=' + id;
+  window.location='menu.html?canteen='+id;
 }
+// inject shake keyframe
+const ks=document.createElement('style');
+ks.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
+document.head.appendChild(ks);
 
-/* ── Scroll-triggered card animations ── */
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if(e.isIntersecting) e.target.style.opacity = '1';
-  });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.canteen-card').forEach(c => observer.observe(c));
-
-/* ── Navbar scroll effect ── */
-window.addEventListener('scroll', ()=>{
-  const nav = document.querySelector('.navbar');
-  nav.style.background = window.scrollY > 50
-    ? 'rgba(8,8,16,0.95)'
-    : 'rgba(8,8,16,0.75)';
-});
+// Force all reveal elements visible after a delay (fallback)
+setTimeout(()=>document.querySelectorAll('.reveal').forEach(e=>e.classList.add('visible')),200);
 </script>
 </body>
 </html>
