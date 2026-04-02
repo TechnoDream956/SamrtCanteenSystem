@@ -153,53 +153,81 @@ def seed():
 
 seed()
 
-# ── In-memory OTP store {phone: {otp, expires}} ──────────────────────────────
-import random
+# ── In-memory OTP store {email: {otp, expires, verified}} ───────────────────
+import random, smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 otp_store = {}
 
-# ── SEND OTP ──────────────────────────────────────────────────────────────────
+SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+
+def send_email(to_addr, otp):
+    msg            = MIMEMultipart("alternative")
+    msg["Subject"] = f"🍽️ B.U Eats — Your Verification Code: {otp}"
+    msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
+    msg["To"]      = to_addr
+
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;">&#x1F37D;&#xFE0F;</div>
+        <h2 style="color:#ff9f4a;margin:8px 0;font-size:22px;">B.U Eats Verification</h2>
+        <p style="color:#9998aa;font-size:13px;">Use the code below to verify your email</p>
+      </div>
+      <div style="background:#1e1d2e;border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
+        <div style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ffe393;font-family:monospace;">{otp}</div>
+        <p style="color:#9998aa;font-size:12px;margin-top:8px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>. Do not share with anyone.</p>
+      </div>
+      <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
+    </div>"""
+
+    msg.attach(MIMEText(html, "html"))
+    with smtplib.SMTP("smtp.gmail.com", 587) as s:
+        s.starttls()
+        s.login(SMTP_EMAIL, SMTP_PASSWORD)
+        s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+
+# ── SEND OTP (email-based) ──────────────────────────────────────────────────────
 @app.route("/send-otp", methods=["POST"])
 def send_otp():
-    phone = (request.json.get("phone") or "").strip()
-    if not phone.isdigit() or len(phone) != 10:
-        return jsonify({"error": "Enter a valid 10-digit Indian mobile number"}), 400
+    email = (request.json.get("email") or "").strip().lower()
+    if not email.endswith("@bennett.edu.in"):
+        return jsonify({"error": "Only @bennett.edu.in emails are accepted."}), 400
 
     otp = str(random.randint(100000, 999999))
-    otp_store[phone] = {"otp": otp, "expires": time.time() + 600, "verified": False}
+    otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
-    api_key = os.environ.get("FAST2SMS_API_KEY", "")
-    dev_mode = not bool(api_key)
+    dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
 
     if not dev_mode:
-        import urllib.request, urllib.parse
-        msg = urllib.parse.quote(f"Your B.U Eats OTP is {otp}. Valid 10 min. Do not share.")
-        url = f"https://www.fast2sms.com/dev/bulkV2?authorization={api_key}&route=q&message={msg}&numbers={phone}&flash=0"
         try:
-            urllib.request.urlopen(url, timeout=8)
+            send_email(email, otp)
         except Exception as e:
-            return jsonify({"error": f"SMS failed: {str(e)}"}), 500
-        return jsonify({"msg": "OTP sent to your phone", "dev_mode": False})
+            return jsonify({"error": f"Email send failed: {str(e)}"}), 500
+        return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
 
-    # Dev mode — return OTP in response (for testing without SMS credits)
-    return jsonify({"msg": "DEV MODE: OTP generated", "dev_mode": True, "otp": otp})
+    # Dev mode — no SMTP configured, return OTP in response
+    return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
+                    "dev_mode": True, "otp": otp})
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
 @app.route("/verify-otp", methods=["POST"])
 def verify_otp():
-    phone = (request.json.get("phone") or "").strip()
+    email = (request.json.get("email") or "").strip().lower()
     otp   = (request.json.get("otp")   or "").strip()
 
-    record = otp_store.get(phone)
+    record = otp_store.get(email)
     if not record:
-        return jsonify({"error": "No OTP found. Request a new one."}), 400
+        return jsonify({"error": "No OTP found for this email. Request a new one."}), 400
     if time.time() > record["expires"]:
-        otp_store.pop(phone, None)
+        otp_store.pop(email, None)
         return jsonify({"error": "OTP expired. Request a new one."}), 400
     if record["otp"] != otp:
         return jsonify({"error": "Wrong OTP. Try again."}), 400
 
-    otp_store[phone]["verified"] = True
-    return jsonify({"msg": "Phone verified!"})
+    otp_store[email]["verified"] = True
+    return jsonify({"msg": "Email verified!"})
 
 # ── Priority algorithm ────────────────────────────────────────────────────────
 def calc_priority(o):
@@ -236,13 +264,11 @@ def register():
     if role == "student" and not email.endswith(ALLOWED_DOMAIN):
         return jsonify({"error": f"Only {ALLOWED_DOMAIN} emails are allowed for students."}), 400
 
-    # Validate phone OTP for students
+    # Validate email OTP for students
     if role == "student":
-        if not phone or not phone.isdigit() or len(phone) != 10:
-            return jsonify({"error": "A valid 10-digit phone number is required."}), 400
-        otp_record = otp_store.get(phone)
+        otp_record = otp_store.get(email)
         if not otp_record or not otp_record.get("verified"):
-            return jsonify({"error": "Phone not verified. Please verify OTP first."}), 400
+            return jsonify({"error": "Email not verified. Please verify your @bennett.edu.in email first."}), 400
 
     # Extract enrollment number from email prefix
     enrollment_no = email.split("@")[0].upper() if role == "student" else None
@@ -263,7 +289,7 @@ def register():
         conn.close()
         # Clear OTP after successful registration
         if role == "student":
-            otp_store.pop(phone, None)
+            otp_store.pop(email, None)
         return jsonify({"msg": "registered"})
 
     except Exception as e:
