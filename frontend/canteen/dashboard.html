@@ -1,24 +1,697 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Canteen Dashboard</title>
-<link rel="stylesheet" href="../common/style.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B.U Eats | Canteen Command Centre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-<!-- ✅ Load JS + Protect BEFORE page renders -->
+    :root {
+      --bg:        #0a0a14;
+      --bg-card:   #13121e;
+      --bg-high:   #1e1d2e;
+      --primary:   #ff9f4a;
+      --amber:     #ffe393;
+      --purple:    #c97cff;
+      --green:     #4fffb0;
+      --red:       #ff6b6b;
+      --blue:      #6bb8ff;
+      --muted:     #9998aa;
+      --outline:   rgba(72,71,81,0.4);
+      --text:      #e7e4f0;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated grid background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,159,74,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,159,74,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── Orbs ── */
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(80px);
+      pointer-events: none; z-index: 0;
+    }
+    .orb-1 { width: 400px; height: 400px; background: rgba(255,140,0,0.06); top:-100px; left:-100px; animation: orbF 12s ease-in-out infinite; }
+    .orb-2 { width: 350px; height: 350px; background: rgba(201,124,255,0.05); bottom:-100px; right:-100px; animation: orbF 15s ease-in-out infinite reverse; }
+    @keyframes orbF { 0%,100%{transform:scale(1) translateY(0)} 50%{transform:scale(1.1) translateY(-20px)} }
+
+    /* ── Top navbar ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(10,10,20,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--outline);
+    }
+    .hd-left { display: flex; align-items: center; gap: 14px; }
+    .hd-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #ff9f4a, #fd8b00);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px rgba(255,140,0,0.4);
+    }
+    .hd-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px; font-weight: 800;
+    }
+    .hd-title span { background: linear-gradient(90deg,#ff9f4a,#ffe393); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hd-canteen-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 500;
+      color: var(--primary);
+      background: rgba(255,159,74,0.08);
+      border: 0.5px solid rgba(255,159,74,0.25);
+      padding: 4px 10px; border-radius: 6px;
+    }
+
+    .hd-right { display: flex; align-items: center; gap: 16px; }
+    .live-dot { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--green); }
+    .live-dot::before { content:''; width:7px; height:7px; background:var(--green); border-radius:50%; animation: livePulse 1.4s ease-in-out infinite; box-shadow: 0 0 8px var(--green); }
+    @keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    #clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; font-weight: 600; color: var(--amber);
+    }
+
+    .staff-chip {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid var(--outline);
+      border-radius: 9999px;
+      font-size: 12px; font-weight: 700;
+    }
+    .staff-avatar {
+      width: 22px; height: 22px;
+      background: linear-gradient(135deg,#c97cff,#ff9f4a);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800;
+    }
+
+    .btn-logout {
+      padding: 7px 16px;
+      background: rgba(255,107,107,0.1);
+      border: 0.5px solid rgba(255,107,107,0.3);
+      color: #fca5a5;
+      font-family: 'Manrope',sans-serif; font-size: 12px; font-weight: 700;
+      border-radius: 9999px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,107,107,0.2); }
+
+    /* ── Main layout ── */
+    main {
+      position: relative; z-index: 1;
+      padding: 80px 24px 40px;
+      max-width: 1200px; margin: 0 auto;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--outline);
+      border-radius: 16px; padding: 20px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      border-radius: 16px 16px 0 0;
+    }
+    .stat-card.s-total::before { background: linear-gradient(90deg,#ff9f4a,#ffe393); }
+    .stat-card.s-wait::before  { background: linear-gradient(90deg,#ffe393,#ffb347); }
+    .stat-card.s-prep::before  { background: linear-gradient(90deg,#c97cff,#6bb8ff); }
+    .stat-card.s-done::before  { background: linear-gradient(90deg,#4fffb0,#6bb8ff); }
+
+    .stat-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 38px; font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(135deg,#ff9f4a,#ffe393);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .stat-card.s-prep .stat-num { background: linear-gradient(135deg,#c97cff,#6bb8ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-card.s-done .stat-num { background: linear-gradient(135deg,#4fffb0,#6bb8ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Section header ── */
+    .sec-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .sec-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px; font-weight: 800;
+    }
+    .algo-badge {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 14px;
+      background: rgba(201,124,255,0.08);
+      border: 0.5px solid rgba(201,124,255,0.25);
+      border-radius: 9999px;
+      font-size: 11px; font-weight: 700; color: var(--purple);
+      letter-spacing: 0.5px;
+    }
+    .refresh-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      background: rgba(255,159,74,0.08);
+      border: 0.5px solid rgba(255,159,74,0.25);
+      border-radius: 9999px;
+      font-size: 11px; font-weight: 700; color: var(--primary);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: rgba(255,159,74,0.15); }
+    .refresh-btn.spinning svg { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Order queue ── */
+    .order-queue { display: flex; flex-direction: column; gap: 14px; }
+
+    .order-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--outline);
+      border-radius: 18px; padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 16px; align-items: center;
+      transition: all 0.3s ease;
+      position: relative; overflow: hidden;
+      animation: cardIn 0.4s ease both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    .order-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      border-radius: 18px 0 0 18px;
+    }
+    .order-card.WAITING   { border-color: rgba(255,227,147,0.25); }
+    .order-card.WAITING::before   { background: var(--amber); }
+    .order-card.ACCEPTED  { border-color: rgba(107,184,255,0.25); }
+    .order-card.ACCEPTED::before  { background: var(--blue); }
+    .order-card.PREPARING { border-color: rgba(201,124,255,0.25); }
+    .order-card.PREPARING::before { background: var(--purple); }
+    .order-card.READY     { border-color: rgba(79,255,176,0.25); }
+    .order-card.READY::before     { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .order-card.COMPLETED { opacity: 0.45; }
+    .order-card.COMPLETED::before { background: var(--muted); }
+
+    /* Queue position badge */
+    .queue-pos {
+      width: 52px; height: 52px;
+      background: rgba(255,159,74,0.08);
+      border: 0.5px solid rgba(255,159,74,0.2);
+      border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .queue-pos-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg,#ff9f4a,#ffe393);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      line-height: 1;
+    }
+    .queue-pos-label { font-size: 8px; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* Order info */
+    .order-info {}
+    .order-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .order-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600; color: var(--muted);
+    }
+    .status-badge {
+      padding: 3px 10px; border-radius: 9999px;
+      font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .status-badge.WAITING   { background: rgba(255,227,147,0.12); color: var(--amber); border: 0.5px solid rgba(255,227,147,0.3); }
+    .status-badge.ACCEPTED  { background: rgba(107,184,255,0.12); color: var(--blue);  border: 0.5px solid rgba(107,184,255,0.3); }
+    .status-badge.PREPARING { background: rgba(201,124,255,0.12); color: var(--purple); border: 0.5px solid rgba(201,124,255,0.3); }
+    .status-badge.READY     { background: rgba(79,255,176,0.12);  color: var(--green); border: 0.5px solid rgba(79,255,176,0.3);  box-shadow: 0 0 12px rgba(79,255,176,0.2); }
+    .status-badge.COMPLETED { background: rgba(153,152,170,0.12); color: var(--muted); border: 0.5px solid rgba(153,152,170,0.3); }
+
+    .priority-score {
+      display: flex; align-items: center; gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600; color: var(--purple);
+      padding: 3px 8px;
+      background: rgba(201,124,255,0.08);
+      border-radius: 6px;
+    }
+
+    .order-items {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .item-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      background: var(--bg-high);
+      border: 0.5px solid var(--outline);
+      border-radius: 9999px;
+      font-size: 11px; font-weight: 600; color: var(--text);
+    }
+
+    .order-meta {
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 10px;
+    }
+    .meta-chip {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--muted); font-weight: 600;
+    }
+    .meta-chip span { font-size: 13px; }
+
+    /* Action buttons */
+    .order-actions { display: flex; flex-direction: column; gap: 8px; min-width: 140px; }
+
+    .action-btn {
+      padding: 10px 18px;
+      border: none; border-radius: 10px;
+      font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 800;
+      cursor: pointer; transition: all 0.25s; text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-accept   { background: linear-gradient(135deg,#ffe393,#ff9f4a); color: #1a0a00; box-shadow: 0 4px 16px rgba(255,159,74,0.3); }
+    .btn-accept:hover   { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,159,74,0.5); }
+    .btn-prepare  { background: linear-gradient(135deg,#c97cff,#6b6bff); color: #fff; box-shadow: 0 4px 16px rgba(201,124,255,0.3); }
+    .btn-prepare:hover  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,124,255,0.5); }
+    .btn-ready    { background: linear-gradient(135deg,#4fffb0,#6bb8ff); color: #001a12; box-shadow: 0 4px 16px rgba(79,255,176,0.3); }
+    .btn-ready:hover    { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,255,176,0.5); }
+    .btn-complete { background: rgba(153,152,170,0.12); color: var(--muted); border: 0.5px solid var(--outline); }
+    .btn-complete:hover { background: rgba(153,152,170,0.2); }
+    .btn-done-tag { background: rgba(79,255,176,0.08); color: var(--green); border: 0.5px solid rgba(79,255,176,0.2); font-size: 11px; padding: 6px; text-align:center; border-radius: 8px; }
+
+    /* ── Priority info panel ── */
+    .algo-panel {
+      background: var(--bg-card);
+      border: 0.5px solid rgba(201,124,255,0.2);
+      border-radius: 16px; padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    }
+    .algo-icon { font-size: 32px; }
+    .algo-text h3 { font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:800; color:var(--purple); margin-bottom:4px; }
+    .algo-text p  { font-size:12px; color:var(--muted); line-height:1.6; }
+    .algo-formula {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--amber);
+      background: rgba(255,227,147,0.07);
+      border: 0.5px solid rgba(255,227,147,0.2);
+      border-radius: 8px; padding: 8px 14px;
+      margin-left: auto; white-space: nowrap;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 80px 20px;
+      background: var(--bg-card);
+      border: 0.5px dashed var(--outline);
+      border-radius: 20px;
+    }
+    .empty-icon { font-size: 64px; margin-bottom: 16px; }
+    .empty-title { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:800; margin-bottom:8px; }
+    .empty-sub   { font-size:14px; color:var(--muted); }
+
+    /* ── Error state ── */
+    .error-state {
+      text-align: center; padding: 40px;
+      background: rgba(255,107,107,0.05);
+      border: 0.5px solid rgba(255,107,107,0.2);
+      border-radius: 16px; color: #fca5a5;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 20px;
+      background: var(--bg-card);
+      border: 0.5px solid var(--outline);
+      border-radius: 12px;
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+      z-index: 999;
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: none; opacity: 1; }
+    .toast.success { border-color: rgba(79,255,176,0.4); color: var(--green); }
+    .toast.error   { border-color: rgba(255,107,107,0.4); color: #fca5a5; }
+
+    /* ── Load skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-high) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: skeletonAnim 1.4s ease-in-out infinite;
+      border-radius: 12px; height: 100px;
+    }
+    @keyframes skeletonAnim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .filter-btn {
+      padding: 7px 16px;
+      background: var(--bg-card);
+      border: 0.5px solid var(--outline);
+      border-radius: 9999px;
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn.active { background: rgba(255,159,74,0.12); border-color: rgba(255,159,74,0.4); color: var(--primary); }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 768px) {
+      header { padding: 0 16px; }
+      .hd-canteen-name { display: none; }
+      #clock { display: none; }
+      .staff-chip .staff-name { display: none; }
+
+      main { padding: 72px 16px 32px; }
+
+      .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-num { font-size: 28px; }
+
+      .order-card { grid-template-columns: 44px 1fr; gap: 12px; padding: 16px; }
+      .order-actions { grid-column: 1 / -1; flex-direction: row; }
+      .action-btn { flex: 1; }
+
+      .algo-panel { gap: 12px; }
+      .algo-formula { margin-left: 0; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- Header -->
+<header>
+  <div class="hd-left">
+    <div class="hd-logo">🍽️</div>
+    <div>
+      <div class="hd-title"><span>B.U</span> Eats · Staff</div>
+    </div>
+    <div class="hd-canteen-name" id="canteenNameBadge">Loading…</div>
+  </div>
+  <div class="hd-right">
+    <div class="live-dot">LIVE</div>
+    <div id="clock">--:--:--</div>
+    <div class="staff-chip">
+      <div class="staff-avatar" id="staffInitial">?</div>
+      <span class="staff-name" id="staffName">Staff</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- OS Algorithm info panel -->
+  <div class="algo-panel">
+    <div class="algo-icon">⚙️</div>
+    <div class="algo-text">
+      <h3>SJF + Aging Priority Algorithm</h3>
+      <p>Orders are automatically sorted by an OS scheduling algorithm. Lower score = higher priority. Waiting orders gain priority over time (aging prevents starvation).</p>
+    </div>
+    <div class="algo-formula">
+      Priority = (prep_time × 2) + (items × 3) − (wait_secs / 10)
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card s-total">
+      <div class="stat-label">Total Today</div>
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-sub">orders received</div>
+    </div>
+    <div class="stat-card s-wait">
+      <div class="stat-label">Waiting</div>
+      <div class="stat-num" id="statWaiting">0</div>
+      <div class="stat-sub">need attention</div>
+    </div>
+    <div class="stat-card s-prep">
+      <div class="stat-label">In Progress</div>
+      <div class="stat-num" id="statInProg">0</div>
+      <div class="stat-sub">being prepared</div>
+    </div>
+    <div class="stat-card s-done">
+      <div class="stat-label">Completed</div>
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-sub">served today</div>
+    </div>
+  </div>
+
+  <!-- Filter + Refresh -->
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">📋 Order Queue</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="algo-badge">⚡ Auto-refresh 10s</div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadOrders()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('ALL',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('WAITING',this)">⏳ Waiting</button>
+    <button class="filter-btn" onclick="setFilter('ACCEPTED',this)">✅ Accepted</button>
+    <button class="filter-btn" onclick="setFilter('PREPARING',this)">👨‍🍳 Preparing</button>
+    <button class="filter-btn" onclick="setFilter('READY',this)">🔔 Ready</button>
+    <button class="filter-btn" onclick="setFilter('COMPLETED',this)">✔ Completed</button>
+  </div>
+
+  <!-- Order list -->
+  <div class="order-queue" id="orderQueue">
+    <div class="skeleton"></div>
+    <div class="skeleton" style="height:80px;opacity:0.6;"></div>
+    <div class="skeleton" style="height:80px;opacity:0.3;"></div>
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="../common/config.js"></script>
 <script src="../common/app.js"></script>
 <script>
-protectPage("canteen")
+/* ── Auth guard ── */
+const token = localStorage.getItem('token');
+const user  = JSON.parse(localStorage.getItem('user') || 'null');
+if (!token || !user || user.role !== 'canteen') {
+  window.location.href = 'login.html';
+}
+
+/* ── Populate header ── */
+const CANTEEN_NAMES = {
+  1: 'Maggi Hotspot', 2: 'Southern Stories',
+  3: 'SnapEats',      4: 'Infinity Kitchen'
+};
+document.getElementById('canteenNameBadge').textContent = CANTEEN_NAMES[user.canteen_id] || `Canteen #${user.canteen_id}`;
+document.getElementById('staffName').textContent = (user.name || 'Staff').split(' ')[0];
+document.getElementById('staffInitial').textContent = (user.name || 'S')[0].toUpperCase();
+
+/* ── Clock ── */
+function tick(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN',{hour12:false});
+}
+tick(); setInterval(tick, 1000);
+
+/* ── State ── */
+let allOrders = [];
+let currentFilter = 'ALL';
+
+/* ── Load orders ── */
+async function loadOrders(){
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+
+  try {
+    const res = await fetch(`${API}/canteen/orders`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error('Server error');
+
+    allOrders = await res.json();
+    renderOrders();
+    updateStats();
+  } catch(e) {
+    document.getElementById('orderQueue').innerHTML = `
+      <div class="error-state">
+        <div>⚠️ Could not load orders. Check your connection.</div>
+        <div style="font-size:12px;margin-top:8px;opacity:0.7;">${e.message}</div>
+      </div>`;
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+/* ── Render orders ── */
+function renderOrders(){
+  const q = document.getElementById('orderQueue');
+  const filtered = currentFilter === 'ALL' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+
+  if (!filtered.length) {
+    q.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${currentFilter === 'ALL' ? '🎉' : '📭'}</div>
+        <div class="empty-title">${currentFilter === 'ALL' ? 'No orders yet!' : 'Nothing here'}</div>
+        <div class="empty-sub">${currentFilter === 'ALL' ? 'Orders will appear here automatically.' : `No ${currentFilter.toLowerCase()} orders right now.`}</div>
+      </div>`;
+    return;
+  }
+
+  q.innerHTML = filtered.map((o, idx) => orderCard(o, idx + 1)).join('');
+}
+
+/* ── Order card HTML ── */
+function orderCard(o, qPos){
+  const items    = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
+  const waitMins = Math.floor((Date.now()/1000 - o.created_time) / 60);
+  const score    = o.priority !== undefined ? o.priority.toFixed(1) : '—';
+
+  const itemPills = items.map(i =>
+    `<div class="item-pill">${i.emoji || '🍽'} ${i.name} ×${i.qty||1}</div>`
+  ).join('');
+
+  const actionBtn = actionHTML(o);
+
+  return `
+  <div class="order-card ${o.status}" id="card-${o.order_id}">
+    <div class="queue-pos">
+      <div class="queue-pos-num">${o.queue_position || qPos}</div>
+      <div class="queue-pos-label">Queue</div>
+    </div>
+    <div class="order-info">
+      <div class="order-top">
+        <span class="order-id">#${String(o.order_id).slice(-6)}</span>
+        <span class="status-badge ${o.status}">${statusLabel(o.status)}</span>
+        <span class="priority-score">⚡ ${score}</span>
+      </div>
+      <div class="order-items">${itemPills}</div>
+      <div class="order-meta">
+        <div class="meta-chip"><span>⏱</span> ${o.expected_time} min prep</div>
+        <div class="meta-chip"><span>🛍</span> ${o.items_count} item${o.items_count>1?'s':''}</div>
+        <div class="meta-chip"><span>🕐</span> ${waitMins < 1 ? 'Just now' : waitMins + 'm ago'}</div>
+        <div class="meta-chip"><span>💰</span> ₹${(o.price||0).toFixed(0)}</div>
+      </div>
+    </div>
+    <div class="order-actions">${actionBtn}</div>
+  </div>`;
+}
+
+function statusLabel(s){
+  return {WAITING:'⏳ Waiting', ACCEPTED:'✅ Accepted', PREPARING:'👨‍🍳 Preparing', READY:'🔔 Ready!', COMPLETED:'✔ Done'}[s] || s;
+}
+
+function actionHTML(o){
+  switch(o.status){
+    case 'WAITING':
+      return `<button class="action-btn btn-accept" onclick="updateStatus(${o.order_id},'accept')">✅ Accept Order</button>`;
+    case 'ACCEPTED':
+      return `<button class="action-btn btn-prepare" onclick="updateStatus(${o.order_id},'preparing')">👨‍🍳 Start Preparing</button>`;
+    case 'PREPARING':
+      return `<button class="action-btn btn-ready" onclick="updateStatus(${o.order_id},'ready')">🔔 Mark Ready</button>`;
+    case 'READY':
+      return `<button class="action-btn btn-complete" onclick="updateStatus(${o.order_id},'complete')">✔ Completed</button>`;
+    case 'COMPLETED':
+      return `<div class="btn-done-tag">✔ Order Delivered</div>`;
+    default:
+      return '';
+  }
+}
+
+/* ── Update a single order's status ── */
+async function updateStatus(orderId, action){
+  try {
+    const res = await fetch(`${API}/order/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ order_id: orderId })
+    });
+    if (!res.ok) throw new Error('Failed');
+    showToast('✅ Status updated!', 'success');
+    await loadOrders();
+  } catch(e) {
+    showToast('❌ Update failed. Try again.', 'error');
+  }
+}
+
+/* ── Stats ── */
+function updateStats(){
+  document.getElementById('statTotal').textContent   = allOrders.length;
+  document.getElementById('statWaiting').textContent = allOrders.filter(o => o.status === 'WAITING').length;
+  document.getElementById('statInProg').textContent  = allOrders.filter(o => ['ACCEPTED','PREPARING'].includes(o.status)).length;
+  document.getElementById('statDone').textContent    = allOrders.filter(o => o.status === 'COMPLETED').length;
+}
+
+/* ── Filters ── */
+function setFilter(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOrders();
+}
+
+/* ── Toast ── */
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(()=>{t.classList.remove('show')}, 3000);
+}
+
+/* ── Logout ── */
+function logout(){
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = 'login.html';
+}
+
+/* ── Auto-refresh every 10s ── */
+loadOrders();
+setInterval(loadOrders, 10000);
 </script>
-
-</head>
-
-<body onload="loadOrders()">
-
-<div class="navbar">Canteen Dashboard</div>
-
-<div class="container">
-<div id="orders"></div>
-</div>
-
 </body>
 </html>

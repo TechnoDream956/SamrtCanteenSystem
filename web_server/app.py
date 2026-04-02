@@ -173,11 +173,11 @@ def register():
     d     = request.json
     email = (d.get("email") or "").strip().lower()
 
-    if not email.endswith(ALLOWED_DOMAIN):
-        return jsonify({"error": f"Only {ALLOWED_DOMAIN} emails are allowed."}), 400
-
     role       = d.get("role", "student")
     canteen_id = d.get("canteen_id", None)
+
+    if role == "student" and not email.endswith(ALLOWED_DOMAIN):
+        return jsonify({"error": f"Only {ALLOWED_DOMAIN} emails are allowed for students."}), 400
     now        = time.time()
     hashed     = generate_password_hash(d["password"])
 
