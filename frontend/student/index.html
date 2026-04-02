@@ -598,6 +598,125 @@
     }
     .footer-text { font-size: 12px; color: var(--muted); }
     .footer-love { color: var(--primary); }
+
+    /* ═══════════════════════════════════════════════════════════
+       MOBILE RESPONSIVE — all breakpoints
+    ═══════════════════════════════════════════════════════════ */
+
+    /* Hamburger button */
+    .hamburger {
+      display: none;
+      flex-direction: column; justify-content: center; align-items: center;
+      gap: 5px; width: 40px; height: 40px;
+      background: rgba(255,159,74,0.08);
+      border: 0.5px solid rgba(255,159,74,0.25);
+      border-radius: 10px; cursor: pointer; z-index: 200;
+    }
+    .hamburger span {
+      width: 20px; height: 2px;
+      background: var(--primary); border-radius: 2px;
+      transition: all 0.3s ease;
+      display: block;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Mobile drawer */
+    .mobile-menu {
+      display: none;
+      position: fixed; top: 72px; left: 0; right: 0; bottom: 0;
+      background: rgba(13,13,22,0.97);
+      backdrop-filter: blur(24px);
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 32px; z-index: 99;
+      animation: menuSlide 0.3s ease;
+    }
+    @keyframes menuSlide {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px; font-weight: 800;
+      color: var(--on-surface); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .mobile-menu a:hover { color: var(--primary); }
+    .mobile-menu-btns { display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 16px; }
+
+    @media (max-width: 768px) {
+      /* Hide desktop cursor on touch devices */
+      #cursor-dot, #cursor-ring { display: none; }
+      body { cursor: auto; }
+      a, button { cursor: pointer; }
+
+      /* Navbar */
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .nav-btns  { display: none; }
+      .hamburger { display: flex; }
+
+      /* Hero */
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 90px 20px 50px;
+        min-height: auto;
+        gap: 32px;
+        text-align: center;
+      }
+      .hero-visual { display: none !important; }
+      .hero-content { display: flex; flex-direction: column; align-items: center; }
+      .hero-eyebrow { margin-bottom: 20px; }
+      .hero h1 {
+        font-size: clamp(36px, 9vw, 52px);
+        letter-spacing: -1.5px;
+      }
+      .hero-sub { font-size: 15px; text-align: center; max-width: 100%; }
+      .hero-cta { justify-content: center; }
+      .btn-hero { padding: 14px 28px; font-size: 14px; }
+      .btn-outline-hero { padding: 13px 24px; font-size: 14px; }
+      .hero-stats {
+        margin-top: 36px; padding-top: 28px;
+        justify-content: center; gap: 24px;
+      }
+      .stat-num { font-size: 28px; }
+
+      /* Section */
+      section { padding: 60px 20px; }
+      .section-sub { margin-bottom: 36px; }
+
+      /* Canteen grid — 2 columns on mobile */
+      .canteen-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .canteen-card { padding: 20px 16px; }
+      .canteen-icon { font-size: 38px; margin-bottom: 12px; }
+      .canteen-name { font-size: 16px; }
+      .canteen-desc { font-size: 12px; margin-bottom: 12px; display: none; }
+      .canteen-chips { display: none; }
+      .canteen-foot { margin-bottom: 12px; }
+      .btn-canteen { padding: 11px; font-size: 11px; }
+
+      /* Features strip — 2x2 */
+      .features-strip { grid-template-columns: 1fr 1fr; }
+      .feature-cell { padding: 24px 16px; border-bottom: 0.5px solid rgba(72,71,81,0.3); }
+      .feature-emoji { font-size: 28px; }
+      .feature-title { font-size: 13px; }
+      .feature-desc  { font-size: 11px; }
+
+      /* Footer */
+      footer { padding: 32px 20px; flex-direction: column; text-align: center; gap: 12px; }
+    }
+
+    @media (max-width: 400px) {
+      .canteen-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 32px; }
+      .hero-cta { flex-direction: column; width: 100%; }
+      .btn-hero, .btn-outline-hero { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
 <body>
@@ -629,7 +748,20 @@
   <div class="nav-btns" id="navBtns">
     <!-- Populated by JS based on login state -->
   </div>
+  <!-- Hamburger (mobile only) -->
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile slide-down menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#canteens" onclick="toggleMenu()">Canteens</a>
+  <a href="#features" onclick="toggleMenu()">Features</a>
+  <div class="mobile-menu-btns" id="mobileNavBtns">
+    <!-- filled by JS -->
+  </div>
+</div>
 
 <!-- Hero -->
 <div class="hero">
@@ -995,6 +1127,34 @@ document.head.appendChild(ks);
 
 // Force all reveal elements visible after a delay (fallback)
 setTimeout(()=>document.querySelectorAll('.reveal').forEach(e=>e.classList.add('visible')),200);
+
+/* ── Hamburger menu ── */
+function toggleMenu(){
+  const hb = document.getElementById('hamburger');
+  const mm = document.getElementById('mobileMenu');
+  hb.classList.toggle('open');
+  mm.classList.toggle('open');
+  // Populate mobile nav buttons same as desktop
+  const token = localStorage.getItem('token');
+  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  const mBtns = document.getElementById('mobileNavBtns');
+  if(token && user && user.name){
+    const firstName = user.name.split(' ')[0];
+    mBtns.innerHTML = `
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:#ff9f4a;">👋 ${firstName}</div>
+      <button onclick="logout()" style="margin-top:8px;padding:12px 32px;background:rgba(239,68,68,0.15);border:0.5px solid rgba(239,68,68,0.4);color:#fca5a5;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;border-radius:9999px;cursor:pointer;">Sign Out</button>`;
+  } else {
+    mBtns.innerHTML = `
+      <a href="login.html" style="font-size:22px!important;">Login</a>
+      <a href="register.html" style="color:#ff9f4a!important;font-size:22px!important;">Register →</a>`;
+  }
+}
+// Close menu on scroll
+window.addEventListener('scroll',()=>{
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+},{ passive: true });
+
 </script>
 </body>
 </html>
