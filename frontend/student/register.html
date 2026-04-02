@@ -244,17 +244,28 @@
 
     .strength-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
+    /* Input field wrapper — makes icon position relative to INPUT only */
+    .field-inner {
+      position: relative;
+      display: block;
+    }
+    .field-inner input {
+      padding-right: 48px !important;
+    }
+
     .pass-toggle {
       position: absolute;
       right: 14px;
-      bottom: 14px;
+      top: 50%;
+      transform: translateY(-50%);
       cursor: pointer;
       font-size: 17px;
-      opacity: 0.4;
+      opacity: 0.5;
       transition: opacity 0.2s;
       user-select: none;
+      line-height: 1;
     }
-    .pass-toggle:hover { opacity: 0.8; }
+    .pass-toggle:hover { opacity: 0.9; }
 
     .input-group::after {
       content: '';
@@ -354,22 +365,25 @@
       <div class="input-group">
         <label>Student Email</label>
         <input id="email" type="email" placeholder="you@bennett.edu.in" autocomplete="email" />
-        <span class="input-icon">✉️</span>
-        <div style="font-size:11px;color:#acaab5;margin-top:4px;">🔒 Only @bennett.edu.in emails are accepted</div>
+        <div style="font-size:11px;color:#acaab5;margin-top:6px;">🔒 Only @bennett.edu.in emails are accepted</div>
       </div>
 
       <div class="input-group">
         <label>Password</label>
-        <input id="password" type="password" placeholder="Create a strong password" oninput="checkStrength(this.value)" autocomplete="new-password" />
-        <span class="pass-toggle" onclick="togglePass('password','tog1')" id="tog1">👁️</span>
+        <div class="field-inner">
+          <input id="password" type="password" placeholder="Create a strong password" oninput="checkStrength(this.value)" autocomplete="new-password" />
+          <span class="pass-toggle" onclick="togglePass('password','tog1')" id="tog1">👁</span>
+        </div>
         <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
         <div class="strength-label" id="strengthLabel">Enter a password</div>
       </div>
 
       <div class="input-group">
         <label>Confirm Password</label>
-        <input id="confirmPass" type="password" placeholder="Repeat your password" autocomplete="new-password" />
-        <span class="pass-toggle" onclick="togglePass('confirmPass','tog2')" id="tog2">👁️</span>
+        <div class="field-inner">
+          <input id="confirmPass" type="password" placeholder="Repeat your password" autocomplete="new-password" />
+          <span class="pass-toggle" onclick="togglePass('confirmPass','tog2')" id="tog2">👁</span>
+        </div>
       </div>
 
       <button class="btn-register-primary" onclick="register()" id="regBtn">
