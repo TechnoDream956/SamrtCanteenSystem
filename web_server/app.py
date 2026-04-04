@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
-import time, json, os
+import time, json, os, subprocess
 
 app = Flask(__name__)
 
@@ -31,7 +31,6 @@ def db_conn():
     """Return a connection + placeholder character for the active DB."""
     if USE_POSTGRES:
         import psycopg2
-        import psycopg2.extras
         conn = psycopg2.connect(DATABASE_URL)
         conn.autocommit = False
         return conn, "%s"
@@ -144,7 +143,7 @@ def seed():
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM canteens")
     row = cur.fetchone()
-    count = row[0] if USE_POSTGRES else row[0]
+    count = row[0]
     if count == 0:
         for name in ["Maggi Hotspot", "Southern Stories", "SnapEats", "Infinity Kitchen"]:
             cur.execute(f"INSERT INTO canteens(name) VALUES ({ph})", (name,))
@@ -154,7 +153,7 @@ def seed():
 seed()
 
 # ── In-memory OTP store {email: {otp, expires, verified}} ───────────────────
-import random, smtplib
+import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 otp_store = {}
@@ -188,14 +187,18 @@ def send_email(to_addr, otp):
         s.login(SMTP_EMAIL, SMTP_PASSWORD)
         s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
 
-# ── SEND OTP (email-based) ──────────────────────────────────────────────────────
 @app.route("/send-otp", methods=["POST"])
 def send_otp():
     email = (request.json.get("email") or "").strip().lower()
     if not email.endswith("@bennett.edu.in"):
         return jsonify({"error": "Only @bennett.edu.in emails are accepted."}), 400
 
-    otp = str(random.randint(100000, 999999))
+    # --- CALL C++ FOR OTP GENERATION ---
+    res = call_canteen_tool(["--generate-otp"])
+    if not res or res.returncode != 0:
+        return jsonify({"error": "Failed to generate OTP in C++."}), 500
+    
+    otp = res.stdout.strip()
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
     dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
@@ -208,7 +211,7 @@ def send_otp():
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
 
     # Dev mode — no SMTP configured, return OTP in response
-    return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
+    return jsonify({"msg": "DEV MODE: OTP generated via C++ (no SMTP configured)",
                     "dev_mode": True, "otp": otp})
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
@@ -229,9 +232,123 @@ def verify_otp():
     otp_store[email]["verified"] = True
     return jsonify({"msg": "Email verified!"})
 
-# ── Priority algorithm ────────────────────────────────────────────────────────
+# ── AUTHENTICATION BRIDGE (C++) ──────────────────────────────────────────────
+# We use the C++ 'auth_tool' for core logic to satisfy performance and logic requirements.
+
+def call_canteen_tool(args):
+    """Helper to call our C++ canteen utility."""
+    try:
+        # Path to the compiled C++ binary
+        binary = os.path.join(os.path.dirname(__file__), "..", "backend", "bin", "canteen_tool")
+        result = subprocess.run([binary] + args, capture_output=True, text=True)
+        return result
+    except Exception as e:
+        print(f"C++ Canteen Tool Error: {e}")
+        return None
+
+@app.route("/password-reset/request", methods=["POST"])
+def password_reset_request():
+    """Step 1: Request reset - Logic powered by C++ generateOTP."""
+    email = (request.json.get("email") or "").strip().lower()
+    
+    conn, ph = db_conn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM users WHERE email = {ph}", (email,))
+    user = cur.fetchone()
+    conn.close()
+
+    if not user:
+        return jsonify({"error": "No account found with this email."}), 404
+
+    # --- CALL C++ FOR OTP GENERATION ---
+    res = call_canteen_tool(["--generate-otp"])
+    if not res or res.returncode != 0:
+        return jsonify({"error": "Failed to generate recovery code in C++."}), 500
+    
+    otp = res.stdout.strip()
+    otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
+
+    dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
+
+    if not dev_mode:
+        try:
+            msg            = MIMEMultipart("alternative")
+            msg["Subject"] = f"🔐 B.U Eats — Password Reset Code: {otp}"
+            msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
+            msg["To"]      = email
+            
+            html = f"""
+            <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
+              <div style="text-align:center;margin-bottom:24px;">
+                <div style="font-size:48px;">&#x1F512;</div>
+                <h2 style="color:#ff9f4a;margin:8px 0;font-size:22px;">Password Reset</h2>
+                <p style="color:#9998aa;font-size:13px;">Use the code below to reset your password</p>
+              </div>
+              <div style="background:#1e1d2e;border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
+                <div style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ffe393;font-family:monospace;">{otp}</div>
+                <p style="color:#9998aa;font-size:12px;margin-top:8px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>.</p>
+              </div>
+            </div>"""
+            msg.attach(MIMEText(html, "html"))
+            
+            with smtplib.SMTP("smtp.gmail.com", 587) as s:
+                s.starttls()
+                s.login(SMTP_EMAIL, SMTP_PASSWORD)
+                s.sendmail(SMTP_EMAIL, email, msg.as_string())
+        except Exception as e:
+            return jsonify({"error": f"Email send failed: {str(e)}"}), 500
+        return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
+
+    return jsonify({"msg": "DEV MODE: Reset OTP generated via C++", "dev_mode": True, "otp": otp})
+
+@app.route("/password-reset/confirm", methods=["POST"])
+def password_reset_confirm():
+    """Step 2: Confirm reset - Logic powered by C++ validatePassword."""
+    email = (request.json.get("email") or "").strip().lower()
+    otp   = (request.json.get("otp")   or "").strip()
+    new_password = (request.json.get("password") or "").strip()
+
+    # --- CALL C++ FOR PASSWORD VALIDATION ---
+    res = call_canteen_tool(["--validate-password", new_password])
+    if not res or res.returncode != 0:
+        return jsonify({"error": "Password does not meet C++ security requirements (must be >= 6 chars and contain a digit)."}), 400
+
+    record = otp_store.get(email)
+    if not record:
+        return jsonify({"error": "No OTP found. Request a new one."}), 400
+    if time.time() > record["expires"]:
+        otp_store.pop(email, None)
+        return jsonify({"error": "OTP expired. Request a new one."}), 400
+    
+    # --- CALL C++ FOR OTP VERIFICATION ---
+    res = call_canteen_tool(["--verify-otp", otp, record["otp"]])
+    if not res or res.returncode != 0:
+        return jsonify({"error": "Wrong OTP. Identity verification failed in C++."}), 400
+
+    # Verification successful, update hashed password in database
+    hashed = generate_password_hash(new_password)
+    conn, ph = db_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"UPDATE users SET password = {ph} WHERE email = {ph}", (hashed, email))
+        conn.commit()
+        otp_store.pop(email, None)
+        return jsonify({"msg": "Password reset successfully!"})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    finally:
+        conn.close()
+
+# ── Priority algorithm (C++ Powered) ──────────────────────────────────────────
 def calc_priority(o):
+    """Calls C++ to determine order priority based on wait time and load."""
     waiting = time.time() - o["created_time"]
+    res = call_canteen_tool(["--calc-priority", str(waiting), str(o["expected_time"]), str(o["items_count"])])
+    if res and res.returncode == 0:
+        try: return float(res.stdout.strip())
+        except: pass
+    # Fallback to local python (should not happen if C++ is built)
     return (o["expected_time"] * 2) + (o["items_count"] * 3) - (waiting / 10)
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -363,8 +480,14 @@ def create_order():
     cur.execute(f"SELECT COUNT(*) FROM orders WHERE canteen_id = {ph} AND status IN ('WAITING', 'ACCEPTED', 'PREPARING')", (d["canteen_id"],))
     count_row = cur.fetchone()
     active_orders = count_row[0] if count_row else 0
-    # Dynamic ETA: Add 2 minutes per existing active order in queue
-    expected_time  = total_time + (active_orders * 2)
+    
+    # --- CALL C++ FOR DYNAMIC ETA ---
+    res = call_canteen_tool(["--calc-eta", str(total_time), str(active_orders)])
+    if res and res.returncode == 0:
+        expected_time = int(res.stdout.strip())
+    else:
+        # Fallback
+        expected_time = total_time + (active_orders * 2)
 
     cur.execute(
         f"INSERT INTO orders VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph})",
@@ -501,15 +624,7 @@ def student_history():
 
     return jsonify(result)
 
-# ── STATE MACHINE ─────────────────────────────────────────────────────────────
-FLOW = {
-    "WAITING":   ["ACCEPTED"],
-    "ACCEPTED":  ["PREPARING"],
-    "PREPARING": ["READY"],
-    "READY":     ["COMPLETED"],
-    "COMPLETED": []
-}
-
+# ── STATE MACHINE (C++ Powered) ───────────────────────────────────────────────
 def set_status(oid, next_status):
     conn, ph = db_conn()
     cur  = conn.cursor()
@@ -517,7 +632,10 @@ def set_status(oid, next_status):
     row = cur.fetchone()
     if row:
         current = row[0] if USE_POSTGRES else row["status"]
-        if next_status in FLOW.get(current, []):
+        
+        # --- CALL C++ FOR FLOW VALIDATION ---
+        res = call_canteen_tool(["--validate-flow", current, next_status])
+        if res and res.returncode == 0:
             cur.execute(f"UPDATE orders SET status = {ph} WHERE order_id = {ph}", (next_status, oid))
             conn.commit()
     conn.close()

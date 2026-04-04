@@ -259,6 +259,13 @@
     .form-footer { text-align:center; font-size:13px; color:var(--muted); margin-top:24px; }
     .form-footer a { color:var(--primary); text-decoration:none; font-weight:700; transition:opacity .2s; }
     .form-footer a:hover { opacity:0.8; text-decoration:underline; }
+    
+    .forgot-pass-link {
+        font-size: 13px; color: var(--primary); text-decoration: none;
+        font-weight: 700; transition: all 0.3s ease;
+        opacity: 0.8;
+    }
+    .forgot-pass-link:hover { opacity: 1; text-decoration: underline; text-shadow: 0 0 10px rgba(255,159,74,0.5); }
 
     .secure-note {
       display:flex; align-items:center; justify-content:center; gap:6px;
@@ -349,6 +356,10 @@
           <button type="button" class="eye-btn" onclick="togglePass()" id="eyeBtn">👁</button>
         </div>
 
+        <div style="text-align:right; margin-bottom:28px;">
+          <a href="javascript:void(0)" onclick="openResetModal()" class="forgot-pass-link">Forgot Password?</a>
+        </div>
+
         <div class="err-msg" id="errMsg"></div>
 
         <button type="submit" class="btn-login" id="loginBtn">
@@ -374,16 +385,67 @@
 
 </div>
 
+<!-- Reset Password Modal -->
+<div id="resetModal" style="display:none; position:fixed; inset:0; background:rgba(13,13,22,0.85); backdrop-filter:blur(12px); z-index:10000; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--bg-card); width:100%; max-width:400px; border-radius:24px; border:1px solid var(--outline); padding:40px; position:relative; box-shadow:0 30px 100px rgba(0,0,0,0.6);">
+    <button onclick="closeResetModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:var(--muted); font-size:24px; cursor:none;">×</button>
+    
+    <div id="resetStep1">
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:24px; margin-bottom:8px;">Reset <span class="grad">Password</span></h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:24px;">Enter your email to receive a recovery code.</p>
+      
+      <div class="field">
+        <input type="email" id="resetEmail" placeholder=" " required />
+        <label class="field-label">Email Address</label>
+        <div class="field-glow"></div>
+      </div>
+      
+      <div id="resetErr1" style="font-size:12px; color:#ff7351; margin-bottom:16px;"></div>
+      
+      <button onclick="requestResetOTP()" class="btn-login" id="sendOtpBtn">
+        <span id="sendOtpBtnText">Send Reset Code →</span>
+      </button>
+    </div>
+
+    <div id="resetStep2" style="display:none;">
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:24px; margin-bottom:8px;">Verify <span class="grad">Identity</span></h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:24px;">Enter the 6-digit code and your new password.</p>
+      
+      <div class="field">
+        <input type="text" id="resetOtp" maxlength="6" placeholder=" " required />
+        <label class="field-label">6-Digit Code</label>
+        <div class="field-glow"></div>
+      </div>
+
+      <div class="field">
+        <input type="password" id="resetNewPass" placeholder=" " required />
+        <label class="field-label">New Password</label>
+        <div class="field-glow"></div>
+      </div>
+      
+      <div id="resetErr2" style="font-size:12px; color:#ff7351; margin-bottom:16px;"></div>
+      
+      <button onclick="confirmReset()" class="btn-login" id="confirmResetBtn">
+        <span id="confirmResetBtnText">Reset Password →</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* cursor */
 const dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
 let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=(mx-4)+'px';dot.style.top=(my-4)+'px';});
 (function animRing(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;ring.style.left=(rx-18)+'px';ring.style.top=(ry-18)+'px';requestAnimationFrame(animRing)})();
-document.querySelectorAll('a,button,input').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{ring.style.width='50px';ring.style.height='50px';ring.style.borderColor='rgba(255,159,74,0.7)';dot.style.transform='scale(2)';});
-  el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';ring.style.borderColor='rgba(255,159,74,0.5)';dot.style.transform='scale(1)';});
-});
+
+function refreshCursorTriggers() {
+  document.querySelectorAll('a,button,input').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ring.style.width='50px';ring.style.height='50px';ring.style.borderColor='rgba(255,159,74,0.7)';dot.style.transform='scale(2)';});
+    el.addEventListener('mouseleave',()=>{ring.style.width='36px';ring.style.height='36px';ring.style.borderColor='rgba(255,159,74,0.5)';dot.style.transform='scale(1)';});
+  });
+}
+refreshCursorTriggers();
 
 /* particles */
 const canvas=document.getElementById('particle-canvas'),ctx=canvas.getContext('2d');
@@ -437,6 +499,82 @@ async function doLogin(e){
     txtEl.textContent='Login →';
     btn.style.animation='shake .4s ease';
     setTimeout(()=>btn.style.animation='',400);
+  }
+}
+
+/* Forgot Password Modals */
+function openResetModal(){
+  document.getElementById('resetModal').style.display='flex';
+  document.getElementById('resetStep1').style.display='block';
+  document.getElementById('resetStep2').style.display='none';
+  refreshCursorTriggers();
+}
+function closeResetModal(){
+  document.getElementById('resetModal').style.display='none';
+}
+
+async function requestResetOTP(){
+  const email = document.getElementById('resetEmail').value.trim();
+  const errEl = document.getElementById('resetErr1');
+  const btn   = document.getElementById('sendOtpBtn');
+  const txt   = document.getElementById('sendOtpBtnText');
+
+  if(!email) return errEl.textContent = "Please enter your email.";
+  
+  btn.disabled = true; txt.textContent = "Sending..."; errEl.textContent = "";
+
+  try {
+    const res = await fetch(API + '/password-reset/request', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "Failed to send OTP.");
+
+    if(data.dev_mode) {
+      alert("DEV MODE: Reset OTP is " + data.otp);
+    }
+    
+    document.getElementById('resetStep1').style.display = 'none';
+    document.getElementById('resetStep2').style.display = 'block';
+    refreshCursorTriggers();
+
+  } catch(e) {
+    errEl.textContent = "⚠ " + e.message;
+  } finally {
+    btn.disabled = false; txt.textContent = "Send Reset Code →";
+  }
+}
+
+async function confirmReset(){
+  const email = document.getElementById('resetEmail').value.trim();
+  const otp   = document.getElementById('resetOtp').value.trim();
+  const pass  = document.getElementById('resetNewPass').value.trim();
+  const errEl = document.getElementById('resetErr2');
+  const btn   = document.getElementById('confirmResetBtn');
+  const txt   = document.getElementById('confirmResetBtnText');
+
+  if(!otp || !pass) return errEl.textContent = "All fields are required.";
+  if(pass.length < 6) return errEl.textContent = "Password must be >= 6 chars.";
+
+  btn.disabled = true; txt.textContent = "Resetting..."; errEl.textContent = "";
+
+  try {
+    const res = await fetch(API + '/password-reset/confirm', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, otp, password: pass })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "Reset failed.");
+
+    alert("Success! Password updated. You can now login.");
+    closeResetModal();
+  } catch(e) {
+    errEl.textContent = "⚠ " + e.message;
+  } finally {
+    btn.disabled = false; txt.textContent = "Reset Password →";
   }
 }
 

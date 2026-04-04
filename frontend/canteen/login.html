@@ -129,6 +129,13 @@
     .card-footer a { color:var(--primary); text-decoration:none; font-weight:700; }
     .card-footer a:hover { text-decoration:underline; }
 
+    .forgot-pass-link {
+        font-size: 12px; color: var(--primary); text-decoration: none;
+        font-weight: 700; transition: all 0.3s ease;
+        opacity: 0.8;
+    }
+    .forgot-pass-link:hover { opacity: 1; text-decoration: underline; text-shadow: 0 0 10px rgba(255,159,74,0.5); }
+
     .divider { height:0.5px; background:var(--outline); margin: 20px 0; }
   </style>
 </head>
@@ -166,6 +173,9 @@
       <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password"/>
       <button class="eye-btn" id="eyeBtn" onclick="togglePass()" type="button">👁</button>
     </div>
+    <div style="text-align:right; margin-bottom:16px;">
+      <a href="javascript:void(0)" onclick="openResetModal()" class="forgot-pass-link">Forgot Password?</a>
+    </div>
   </div>
 
   <button class="btn-submit" id="loginBtn" onclick="doLogin()">
@@ -181,6 +191,50 @@
   </div>
   <div class="card-footer" style="margin-top:8px;">
     <a href="../student/index.html">← Back to Student Site</a>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetModal" style="display:none; position:fixed; inset:0; background:rgba(10,10,20,0.9); backdrop-filter:blur(10px); z-index:10000; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--card); width:100%; max-width:400px; border-radius:24px; border:1px solid var(--outline); padding:40px; position:relative; box-shadow:0 30px 100px rgba(0,0,0,0.6);">
+    <button onclick="closeResetModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">×</button>
+    
+    <div id="resetStep1">
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:24px; margin-bottom:8px;">Reset <span style="background:linear-gradient(90deg,#ff9f4a,#ffe393); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Password</span></h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:24px;">Enter your staff email to receive a recovery code.</p>
+      
+      <div class="form-group">
+        <label>Staff Email</label>
+        <input type="email" id="resetEmail" placeholder="staff@bennett.edu.in" required />
+      </div>
+      
+      <div id="resetErr1" style="font-size:12px; color:#fca5a5; margin-bottom:16px;"></div>
+      
+      <button onclick="requestResetOTP()" class="btn-submit" id="sendOtpBtn">
+        <span id="sendOtpBtnText">Send Reset Code →</span>
+      </button>
+    </div>
+
+    <div id="resetStep2" style="display:none;">
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:24px; margin-bottom:8px;">Verify <span style="background:linear-gradient(90deg,#ff9f4a,#ffe393); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Identity</span></h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:24px;">Enter the 6-digit code and your new password.</p>
+      
+      <div class="form-group">
+        <label>6-Digit Code</label>
+        <input type="text" id="resetOtp" maxlength="6" placeholder="000000" required />
+      </div>
+
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="resetNewPass" placeholder="••••••••" required />
+      </div>
+      
+      <div id="resetErr2" style="font-size:12px; color:#fca5a5; margin-bottom:16px;"></div>
+      
+      <button onclick="confirmReset()" class="btn-submit" id="confirmResetBtn">
+        <span id="confirmResetBtnText">Reset Password →</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -260,6 +314,80 @@ function showMsg(text, type){
   m.textContent = text;
   m.className = `msg ${type}`;
   m.style.display = 'block';
+}
+
+/* Forgot Password Logic */
+function openResetModal(){
+  document.getElementById('resetModal').style.display='flex';
+  document.getElementById('resetStep1').style.display='block';
+  document.getElementById('resetStep2').style.display='none';
+}
+function closeResetModal(){
+  document.getElementById('resetModal').style.display='none';
+}
+
+async function requestResetOTP(){
+  const email = document.getElementById('resetEmail').value.trim();
+  const errEl = document.getElementById('resetErr1');
+  const btn   = document.getElementById('sendOtpBtn');
+  const txt   = document.getElementById('sendOtpBtnText');
+
+  if(!email) return errEl.textContent = "Please enter your email.";
+  
+  btn.disabled = true; txt.textContent = "Sending..."; errEl.textContent = "";
+
+  try {
+    const res = await fetch(API + '/password-reset/request', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "Failed to send OTP.");
+
+    if(data.dev_mode) {
+      alert("DEV MODE: Reset OTP is " + data.otp);
+    }
+    
+    document.getElementById('resetStep1').style.display = 'none';
+    document.getElementById('resetStep2').style.display = 'block';
+
+  } catch(e) {
+    errEl.textContent = "⚠ " + e.message;
+  } finally {
+    btn.disabled = false; txt.textContent = "Send Reset Code →";
+  }
+}
+
+async function confirmReset(){
+  const email = document.getElementById('resetEmail').value.trim();
+  const otp   = document.getElementById('resetOtp').value.trim();
+  const pass  = document.getElementById('resetNewPass').value.trim();
+  const errEl = document.getElementById('resetErr2');
+  const btn   = document.getElementById('confirmResetBtn');
+  const txt   = document.getElementById('confirmResetBtnText');
+
+  if(!otp || !pass) return errEl.textContent = "All fields are required.";
+  if(pass.length < 6) return errEl.textContent = "Password must be >= 6 chars.";
+
+  btn.disabled = true; txt.textContent = "Resetting..."; errEl.textContent = "";
+
+  try {
+    const res = await fetch(API + '/password-reset/confirm', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, otp, password: pass })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "Reset failed.");
+
+    alert("Success! Password updated. You can now login.");
+    closeResetModal();
+  } catch(e) {
+    errEl.textContent = "⚠ " + e.message;
+  } finally {
+    btn.disabled = false; txt.textContent = "Reset Password →";
+  }
 }
 
 document.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
