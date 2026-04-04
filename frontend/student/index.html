@@ -1057,39 +1057,48 @@ document.querySelectorAll('.canteen-card').forEach(card=>{
   if(token && user && user.name){
     const firstName = user.name.split(' ')[0];
     btns.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="
-          display:flex;align-items:center;gap:8px;
-          padding:8px 16px;
-          background:rgba(255,159,74,0.1);
-          border:0.5px solid rgba(255,159,74,0.3);
-          border-radius:9999px;
-          font-family:'Space Grotesk',sans-serif;
-          font-size:13px;font-weight:700;
-        ">
-          <span style="font-size:16px;">👋</span>
-          <span style="background:linear-gradient(90deg,#ff9f4a,#ffe393);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-            ${firstName}
-          </span>
+      <div style="display:flex;align-items:center;gap:12px;position:relative;">
+        <div class="user-dropdown" style="position:relative;">
+          <div onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" style="
+            display:flex;align-items:center;gap:8px;
+            padding:8px 16px;
+            background:rgba(255,159,74,0.1);
+            border:0.5px solid rgba(255,159,74,0.3);
+            border-radius:9999px;
+            font-family:'Space Grotesk',sans-serif;
+            font-size:13px;font-weight:700;
+            cursor:pointer;
+          ">
+            <span style="font-size:16px;">👋</span>
+            <span style="background:linear-gradient(90deg,#ff9f4a,#ffe393);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+              ${firstName} ▾
+            </span>
+          </div>
+          <div class="dropdown-content" style="
+            display:none; position:absolute; right:0; top:calc(100% + 8px); width:160px;
+            background:rgba(31,30,43,0.95); border:0.5px solid rgba(72,71,81,0.5);
+            border-radius:12px; backdrop-filter:blur(16px);
+            box-shadow:0 8px 32px rgba(0,0,0,0.5); overflow:hidden; z-index:999;
+          ">
+            <a href="order_status.html" style="display:block;padding:12px 16px;color:#e7e4f0;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border-bottom:0.5px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,159,74,0.1)'" onmouseout="this.style.background='transparent'">✅ Active Order</a>
+            <a href="history.html" style="display:block;padding:12px 16px;color:#e7e4f0;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border-bottom:0.5px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,159,74,0.1)'" onmouseout="this.style.background='transparent'">📜 Order History</a>
+            <a href="#" onclick="logout()" style="display:block;padding:12px 16px;color:#fca5a5;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">🚪 Sign Out</a>
+          </div>
         </div>
-        <button onclick="logout()" style="
-          padding:8px 18px;
-          background:rgba(239,68,68,0.1);
-          border:0.5px solid rgba(239,68,68,0.3);
-          color:#fca5a5;
-          font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;
-          border-radius:9999px;cursor:pointer;
-          transition:all 0.25s;
-        " onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">
-          Sign Out
-        </button>
-      </div>`;
+      </div>
+    `;
   } else {
     btns.innerHTML = `
       <a href="login.html"><button class="btn-ghost" style="cursor:pointer">Login</button></a>
       <a href="register.html"><button class="btn-solid" style="cursor:pointer"><span>Register →</span></button></a>`;
   }
 })();
+
+// Close dropdown on outside click
+document.addEventListener('click', () => {
+  const dropdowns = document.querySelectorAll('.dropdown-content');
+  dropdowns.forEach(dd => dd.style.display = 'none');
+});
 
 function logout(){
   localStorage.removeItem('token');

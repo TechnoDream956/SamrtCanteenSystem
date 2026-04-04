@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order History — B.U Eats</title>
+  <link rel="stylesheet" href="../common/style.css" />
+  <script src="../common/config.js"></script>
+  <script src="../common/app.js"></script>
+  <script>protectPage("student");</script>
+  <style>
+    .history-page {
+      min-height: 100vh;
+      padding-top: 100px;
+      padding-bottom: 60px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .history-wrap { width: 100%; max-width: 600px; }
+    .page-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 38px; font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+    }
+    .page-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; }
+
+    .history-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: transform 0.2s;
+    }
+    .history-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.1); }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-weight: 700; font-size: 16px; color: var(--on-surface); }
+    .card-date { font-size: 12px; color: var(--text-muted); }
+    
+    .status-badge {
+      padding: 4px 10px; border-radius: 50px; font-size: 11px; font-weight: 700;
+    }
+    .status-badge.completed { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .status-badge.active { background: rgba(255,159,74,0.15); color: #ff9f4a; border: 1px solid rgba(255,159,74,0.3); }
+
+    .items-list { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+    
+    .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: 16px; }
+    .total-price { font-size: 18px; font-weight: 800; color: var(--amber); }
+
+    .btn-back {
+      width: 100%; padding: 14px; background: var(--glass-bg); border: 1px solid var(--glass-border);
+      color: var(--text-primary); font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+      border-radius: 14px; cursor: pointer; text-decoration: none; display: block; text-align: center;
+      margin-top: 24px; transition: all 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.08); }
+  </style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">
+    <div class="logo-icon">🍽️</div>
+    <div>
+      <div class="logo-text">B.U Eats</div>
+      <div class="logo-subtitle">Campus Food</div>
+    </div>
+  </a>
+  <div class="navbar-right" id="navBtns">
+    <div style="display:flex;align-items:center;gap:12px;position:relative;">
+      <div class="user-dropdown" style="position:relative;">
+        <div onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" style="
+          display:flex;align-items:center;gap:8px; padding:8px 16px; background:rgba(255,159,74,0.1); border:0.5px solid rgba(255,159,74,0.3);
+          border-radius:9999px; font-family:'Space Grotesk',sans-serif; font-size:13px;font-weight:700; cursor:pointer;
+        ">
+          <span style="font-size:16px;">👋</span>
+          <span id="nav-username" style="background:linear-gradient(90deg,#ff9f4a,#ffe393);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+            Student ▾
+          </span>
+        </div>
+        <div class="dropdown-content" style="
+          display:none; position:absolute; right:0; top:calc(100% + 8px); width:160px;
+          background:rgba(31,30,43,0.95); border:0.5px solid rgba(72,71,81,0.5);
+          border-radius:12px; backdrop-filter:blur(16px); box-shadow:0 8px 32px rgba(0,0,0,0.5); overflow:hidden; z-index:999;
+        ">
+          <a href="order_status.html" style="display:block;padding:12px 16px;color:#e7e4f0;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border-bottom:0.5px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,159,74,0.1)'" onmouseout="this.style.background='transparent'">✅ Active Order</a>
+          <a href="history.html" style="display:block;padding:12px 16px;color:#e7e4f0;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border-bottom:0.5px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,159,74,0.1)'" onmouseout="this.style.background='transparent'">📜 Order History</a>
+          <a href="#" onclick="logout()" style="display:block;padding:12px 16px;color:#fca5a5;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">🚪 Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="history-page">
+  <div class="history-wrap container">
+    <div class="page-title">Order History</div>
+    <div class="page-sub">View your past and current active orders here.</div>
+
+    <div id="historyList">
+      <div style="text-align:center;color:var(--text-muted);padding:40px;">Loading history...</div>
+    </div>
+
+    <a href="index.html" class="btn-back">← Back to Canteens</a>
+  </div>
+</div>
+
+<script>
+// User greeting injection
+const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+const navUserExt = document.getElementById("nav-username");
+if (navUserExt && userObj.name) navUserExt.textContent = userObj.name.split(' ')[0] + " ▾";
+
+// Close dropdown on outside click
+document.addEventListener('click', () => {
+  const dropdowns = document.querySelectorAll('.dropdown-content');
+  dropdowns.forEach(dd => dd.style.display = 'none');
+});
+
+// Fetch History
+fetch(API + "/student/history", { headers: authHeaders() })
+  .then(res => res.json())
+  .then(data => {
+    const list = document.getElementById("historyList");
+    if (!data || data.length === 0) {
+      list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:40px;">No orders found. Use B.U Eats to order today!</div>`;
+      return;
+    }
+    
+    list.innerHTML = data.map(o => {
+      const date = new Date(o.created_time * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+      const completed = o.status === "COMPLETED";
+      const statusClass = completed ? "completed" : "active";
+      const statusText = completed ? "Completed" : o.status;
+      
+      const itemsList = o.items.map(i => `• ${i.name} `).join('<br/>');
+      
+      return `
+        <div class="history-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Order #${o.order_id.toString().slice(-6)}</div>
+              <div class="card-date">${date}</div>
+            </div>
+            <div class="status-badge ${statusClass}">${statusText}</div>
+          </div>
+          <div class="items-list">
+            ${itemsList}
+          </div>
+          <div class="card-footer">
+            <span style="font-size:12px;color:rgba(255,255,255,0.4)">Items: ${o.items_count}</span>
+            <span class="total-price">₹${o.price}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+  })
+  .catch(err => {
+    document.getElementById("historyList").innerHTML = `<div style="text-align:center;color:#ef4444;padding:40px;">Failed to load history.</div>`;
+  });
+</script>
+</body>
+</html>
