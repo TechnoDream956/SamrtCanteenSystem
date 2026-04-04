@@ -1,109 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Register your canteen on Smart Canteen System.">
-  <title>Canteen Register — Smart Canteen</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../common/style.css">
-  <script src="../common/app.js"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B.U Eats | Canteen Staff Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a14; --card: #13121e;
+      --primary: #ff9f4a; --amber: #ffe393; --purple: #c97cff;
+      --muted: #9998aa; --text: #e7e4f0; --outline: rgba(72,71,81,0.4);
+    }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,159,74,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,159,74,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .orb-1 { width: 500px; height: 500px; background: rgba(255,140,0,0.07); top:-200px; left:-150px; animation: oF 12s ease-in-out infinite; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(201,124,255,0.06); bottom:-150px; right:-100px; animation: oF 15s ease-in-out infinite reverse; }
+    @keyframes oF { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 440px;
+      background: var(--card);
+      border: 0.5px solid var(--outline);
+      border-radius: 24px; padding: 36px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      animation: slideIn 0.5s ease both;
+    }
+    @keyframes slideIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
+
+    .card-header { text-align: center; margin-bottom: 28px; }
+    .logo-wrap {
+      width: 56px; height: 56px; margin: 0 auto 14px;
+      background: linear-gradient(135deg,#c97cff,#6b6bff);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 28px rgba(201,124,255,0.4);
+    }
+    h1 { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:800; margin-bottom:6px; }
+    h1 span { background:linear-gradient(90deg,#c97cff,#ff9f4a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .subtitle { font-size:12px; color:var(--muted); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-bottom: 16px; }
+    label { display:block; font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:7px; }
+
+    input, select {
+      width:100%; padding:12px 15px;
+      background:rgba(255,255,255,0.05);
+      border:0.5px solid var(--outline);
+      border-radius:11px;
+      color:var(--text); font-family:'Manrope',sans-serif; font-size:14px;
+      outline:none; transition:all 0.25s;
+      appearance:none; -webkit-appearance:none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239998aa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center; padding-right:40px;
+    }
+    select option { background:var(--card); }
+    input::placeholder { color:rgba(255,255,255,0.2); }
+    input:focus, select:focus { border-color:var(--purple); background:rgba(201,124,255,0.06); box-shadow:0 0 0 3px rgba(201,124,255,0.1); }
+
+    .pass-wrap { position:relative; }
+    .pass-wrap input { padding-right:44px; }
+    .eye-btn { position:absolute; right:13px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px; }
+    .eye-btn:hover { color:var(--primary); }
+
+    .btn-submit {
+      width:100%; padding:13px;
+      background:linear-gradient(135deg,#c97cff,#6b6bff);
+      border:none; border-radius:11px;
+      color:#fff; font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:800;
+      cursor:pointer; transition:all 0.3s;
+      position:relative; overflow:hidden;
+      box-shadow:0 6px 24px rgba(201,124,255,0.35);
+      margin-top:6px;
+    }
+    .btn-submit::before { content:''; position:absolute; top:0; left:-100%; width:200%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); animation:shimmer 2.5s infinite; }
+    @keyframes shimmer { 0%{left:-100%} 100%{left:100%} }
+    .btn-submit:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(201,124,255,0.5); }
+    .btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+    .btn-submit span { position:relative; z-index:1; }
+
+    .msg { padding:11px 16px; border-radius:10px; font-size:13px; font-weight:600; margin-top:12px; text-align:center; display:none; }
+    .msg.error   { background:rgba(239,68,68,0.12); color:#fca5a5; border:0.5px solid rgba(239,68,68,0.3); }
+    .msg.success { background:rgba(79,255,176,0.12); color:#4fffb0; border:0.5px solid rgba(79,255,176,0.3); }
+
+    .card-footer { text-align:center; margin-top:18px; font-size:12px; color:var(--muted); }
+    .card-footer a { color:var(--primary); text-decoration:none; font-weight:700; }
+    .divider { height:0.5px; background:var(--outline); margin:18px 0; }
+
+    .notice {
+      padding:10px 14px; border-radius:10px; font-size:11px;
+      background:rgba(255,159,74,0.07); border:0.5px solid rgba(255,159,74,0.2);
+      color:var(--amber); margin-bottom:18px; line-height:1.5;
+    }
+  </style>
 </head>
 <body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
 
-<nav class="navbar">
-  <a class="navbar-brand" href="../student/index.html">
-    <div class="logo-icon">🍽️</div>
-    SmartCanteen
-  </a>
-</nav>
-
-<div class="auth-container">
-  <div class="auth-card">
-    <div style="font-size:44px;margin-bottom:18px;">🏪</div>
-    <h2>Register Your Canteen</h2>
-    <p class="subtitle">Set up your canteen staff account to manage orders</p>
-
-    <div class="form-group">
-      <label for="name">Owner / Staff Name</label>
-      <input id="name" type="text" placeholder="Your name" autocomplete="name">
-    </div>
-    <div class="form-group">
-      <label for="email">Email Address</label>
-      <input id="email" type="email" placeholder="staff@bennett.edu.in" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Create a password" autocomplete="new-password">
-    </div>
-    <div class="form-group">
-      <label for="canteen">Select Your Canteen</label>
-      <select id="canteen">
-        <option value="1">🍜 Maggi Hotspot</option>
-        <option value="2">🥗 Southern Stories</option>
-        <option value="3">⚡ SnapEats</option>
-        <option value="4">🌟 Infinity Kitchen</option>
-      </select>
-    </div>
-
-    <button class="btn-full" onclick="doRegister()" id="regBtn">Register Canteen →</button>
-    <div id="msg" class="msg msg-error"></div>
-
-    <p class="switch-link">Already registered? <a href="login.html">Login to dashboard</a></p>
+<div class="card">
+  <div class="card-header">
+    <div class="logo-wrap">👨‍🍳</div>
+    <h1>Create <span>Staff</span> Account</h1>
+    <div class="subtitle">Register as canteen staff to manage orders</div>
   </div>
+
+  <div class="notice">
+    ⚠️ Staff accounts require a canteen selection. Your account will be linked to that canteen permanently.
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" id="fname" placeholder="Ravi" autocomplete="given-name"/>
+    </div>
+    <div class="form-group">
+      <label>Last Name</label>
+      <input type="text" id="lname" placeholder="Kumar" autocomplete="family-name"/>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Your Canteen</label>
+    <select id="canteenId">
+      <option value="">— Select your canteen —</option>
+      <option value="1">🍜 Maggi Hotspot (Canteen 1)</option>
+      <option value="2">🍛 Southern Stories (Canteen 2)</option>
+      <option value="3">⚡ SnapEats (Canteen 3)</option>
+      <option value="4">🌌 Infinity Kitchen (Canteen 4)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Staff Email</label>
+    <input type="email" id="email" placeholder="staff@example.com" autocomplete="email"/>
+  </div>
+
+  <div class="form-group">
+    <label>Password</label>
+    <div class="pass-wrap">
+      <input type="password" id="password" placeholder="Create password"/>
+      <button class="eye-btn" onclick="togglePass('password','e1')" id="e1" type="button">👁</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Confirm Password</label>
+    <div class="pass-wrap">
+      <input type="password" id="confirmPass" placeholder="Repeat password"/>
+      <button class="eye-btn" onclick="togglePass('confirmPass','e2')" id="e2" type="button">👁</button>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="regBtn" onclick="doRegister()">
+    <span id="btnText">👨‍🍳 Create Staff Account</span>
+  </button>
+
+  <div class="msg" id="msgEl"></div>
+
+  <div class="divider"></div>
+  <div class="card-footer">Already have an account? <a href="login.html">Sign in →</a></div>
 </div>
 
+<script src="../common/config.js"></script>
+<script src="../common/app.js"></script>
 <script>
-function doRegister(){
-  const name      = document.getElementById("name").value.trim()
-  const email     = document.getElementById("email").value.trim()
-  const password  = document.getElementById("password").value
-  const canteen   = document.getElementById("canteen").value
-  const btn       = document.getElementById("regBtn")
-  const msg       = document.getElementById("msg")
-
-  msg.className = "msg msg-error"; msg.innerText = ""
-
-  if(!name || !email || !password){
-    msg.innerText = "Please fill in all fields."
-    msg.className = "msg msg-error show"; return
-  }
-
-  if (!email.toLowerCase().endsWith("@bennett.edu.in")) {
-    msg.innerText = "⚠️ Only @bennett.edu.in emails are allowed."
-    msg.className = "msg msg-error show"; return
-  }
-
-  btn.disabled = true
-  btn.innerHTML = '<span class="spinner"></span>&nbsp;Registering...'
-
-  fetch(API + "/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password, role: "canteen", canteen_id: canteen })
-  })
-  .then(r => r.json())
-  .then(d => {
-    if(d.error){
-      msg.innerText = d.error
-      msg.className = "msg msg-error show"
-      btn.disabled = false; btn.innerHTML = "Register Canteen →"; return
-    }
-    msg.innerText = "✅ Registered! Redirecting to login..."
-    msg.className = "msg msg-success show"
-    setTimeout(() => window.location = "login.html", 1500)
-  })
-  .catch(() => {
-    msg.innerText = "Could not connect to server."
-    msg.className = "msg msg-error show"
-    btn.disabled = false; btn.innerHTML = "Register Canteen →"
-  })
+function togglePass(id, btnId){
+  const inp = document.getElementById(id);
+  const btn = document.getElementById(btnId);
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
 }
 
-document.addEventListener("keydown", e => { if(e.key === "Enter") doRegister() })
-</script>
+async function doRegister(){
+  const fname     = document.getElementById('fname').value.trim();
+  const lname     = document.getElementById('lname').value.trim();
+  const canteenId = document.getElementById('canteenId').value;
+  const email     = document.getElementById('email').value.trim().toLowerCase();
+  const pass      = document.getElementById('password').value;
+  const conf      = document.getElementById('confirmPass').value;
+  const btn       = document.getElementById('regBtn');
 
+  if (!fname || !lname || !canteenId || !email || !pass) return showMsg('⚠️ Please fill all fields.','error');
+  if (pass !== conf) return showMsg('❌ Passwords do not match.','error');
+  if (pass.length < 6) return showMsg('❌ Password must be at least 6 characters.','error');
+
+  btn.disabled = true;
+  document.getElementById('btnText').textContent = '⏳ Creating account…';
+
+  try {
+    const res  = await fetch(`${API}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `${fname} ${lname}`,
+        email, password: pass,
+        role: 'canteen',
+        canteen_id: parseInt(canteenId)
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg(`❌ ${data.error || 'Registration failed'}`, 'error'); return; }
+    showMsg('✅ Account created! Redirecting to login…', 'success');
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+  } catch(e) {
+    showMsg('❌ Server unreachable. Is the backend running?', 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnText').textContent = '👨‍🍳 Create Staff Account';
+  }
+}
+
+function showMsg(text, type){
+  const m = document.getElementById('msgEl');
+  m.textContent = text;
+  m.className = `msg ${type}`;
+  m.style.display = 'block';
+}
+</script>
 </body>
 </html>

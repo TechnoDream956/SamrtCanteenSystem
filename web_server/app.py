@@ -2,296 +2,502 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3, time, json, os
+import time, json, os
 
 app = Flask(__name__)
-CORS(app)
 
-# ---------------- SECURITY ----------------
-app.config["JWT_SECRET_KEY"] = "CHANGE_THIS_SECRET_IN_PROD"
+# ── CORS ──────────────────────────────────────────────────────────────────────
+ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*")
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
+
+# ── JWT: reads JWT_SECRET_KEY or API_SECRET (Railway sets API_SECRET) ─────────
+app.config["JWT_SECRET_KEY"] = (
+    os.environ.get("JWT_SECRET_KEY") or
+    os.environ.get("API_SECRET") or
+    "local-dev-secret-change-in-prod"
+)
 jwt = JWTManager(app)
 
-# ---------------- DB PATH ----------------
-DB_PATH = os.path.join(os.path.dirname(__file__), "canteen.db")
-print("DB PATH:", DB_PATH)
+# ── Database: PostgreSQL on Railway, SQLite locally ───────────────────────────
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
-# ---------------- DB CONNECT ----------------
+# Railway sometimes gives postgres:// — psycopg2 needs postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+USE_POSTGRES = bool(DATABASE_URL)
+
 def db_conn():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    """Return a connection + placeholder character for the active DB."""
+    if USE_POSTGRES:
+        import psycopg2
+        import psycopg2.extras
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = False
+        return conn, "%s"
+    else:
+        import sqlite3
+        db_path = os.path.join(os.path.dirname(__file__), "canteen.db")
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn, "?"
 
-# ---------------- INIT DB (FIXED) ----------------
+def row_to_dict(row, cursor=None):
+    """Convert a DB row to a plain dict regardless of DB engine."""
+    if USE_POSTGRES:
+        cols = [desc[0] for desc in cursor.description]
+        return dict(zip(cols, row))
+    else:
+        return dict(row)
+
+# ── Init DB ───────────────────────────────────────────────────────────────────
 def init_db():
-    conn = db_conn()
+    conn, ph = db_conn()
     cur = conn.cursor()
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT UNIQUE,
-        password TEXT,
-        role TEXT,
-        canteen_id INTEGER
-    )
-    """)
+    if USE_POSTGRES:
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS users(
+            id             SERIAL PRIMARY KEY,
+            name           TEXT,
+            email          TEXT UNIQUE,
+            password       TEXT,
+            role           TEXT DEFAULT 'student',
+            canteen_id     INTEGER,
+            phone          TEXT,
+            enrollment_no  TEXT,
+            phone_verified INTEGER DEFAULT 0,
+            registered_at  DOUBLE PRECISION DEFAULT 0,
+            last_login     DOUBLE PRECISION DEFAULT 0
+        )""")
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS canteens(
+            id   SERIAL PRIMARY KEY,
+            name TEXT
+        )""")
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS orders(
+            order_id      BIGINT PRIMARY KEY,
+            canteen_id    INTEGER,
+            student_id    INTEGER,
+            items         TEXT,
+            items_count   INTEGER,
+            price         DOUBLE PRECISION,
+            expected_time INTEGER,
+            status        TEXT,
+            created_time  DOUBLE PRECISION,
+            accepted_time DOUBLE PRECISION,
+            ready_time    DOUBLE PRECISION
+        )""")
+    else:
+        import sqlite3
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS users(
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            name           TEXT,
+            email          TEXT UNIQUE,
+            password       TEXT,
+            role           TEXT DEFAULT 'student',
+            canteen_id     INTEGER,
+            phone          TEXT,
+            enrollment_no  TEXT,
+            phone_verified INTEGER DEFAULT 0,
+            registered_at  REAL DEFAULT 0,
+            last_login     REAL DEFAULT 0
+        )""")
+        # Migrate existing tables safely
+        for col, typ in [("registered_at","REAL DEFAULT 0"),("last_login","REAL DEFAULT 0"),
+                         ("phone","TEXT"),("enrollment_no","TEXT"),("phone_verified","INTEGER DEFAULT 0")]:
+            try:
+                cur.execute(f"ALTER TABLE users ADD COLUMN {col} {typ}")
+            except Exception:
+                pass
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS canteens(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT
-    )
-    """)
-
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS orders(
-        order_id INTEGER PRIMARY KEY,
-        canteen_id INTEGER,
-        student_id INTEGER,
-        items TEXT,
-        items_count INTEGER,
-        price REAL,
-        expected_time INTEGER,
-        status TEXT,
-        created_time REAL,
-        accepted_time REAL,
-        ready_time REAL
-    )
-    """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS canteens(
+            id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT
+        )""")
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS orders(
+            order_id      INTEGER PRIMARY KEY,
+            canteen_id    INTEGER,
+            student_id    INTEGER,
+            items         TEXT,
+            items_count   INTEGER,
+            price         REAL,
+            expected_time INTEGER,
+            status        TEXT,
+            created_time  REAL,
+            accepted_time REAL,
+            ready_time    REAL
+        )""")
 
     conn.commit()
     conn.close()
 
-# ---------------- CALL INIT ----------------
 init_db()
 
-# ---------------- SEED ----------------
+# ── Seed canteens ─────────────────────────────────────────────────────────────
 def seed():
-    conn = db_conn()
+    conn, ph = db_conn()
     cur = conn.cursor()
-
     cur.execute("SELECT COUNT(*) FROM canteens")
-    if cur.fetchone()[0] == 0:
-        cur.executemany("INSERT INTO canteens(name) VALUES(?)", [
-            ("Maggi Hotspot",),
-            ("Southern Stories",),
-            ("SnapEats",),
-            ("Infinity Kitchen",)
-        ])
+    row = cur.fetchone()
+    count = row[0] if USE_POSTGRES else row[0]
+    if count == 0:
+        for name in ["Maggi Hotspot", "Southern Stories", "SnapEats", "Infinity Kitchen"]:
+            cur.execute(f"INSERT INTO canteens(name) VALUES ({ph})", (name,))
         conn.commit()
-
     conn.close()
 
 seed()
 
-# ---------------- PRIORITY ----------------
+# ── In-memory OTP store {email: {otp, expires, verified}} ───────────────────
+import random, smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+otp_store = {}
+
+SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+
+def send_email(to_addr, otp):
+    msg            = MIMEMultipart("alternative")
+    msg["Subject"] = f"🍽️ B.U Eats — Your Verification Code: {otp}"
+    msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
+    msg["To"]      = to_addr
+
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;">&#x1F37D;&#xFE0F;</div>
+        <h2 style="color:#ff9f4a;margin:8px 0;font-size:22px;">B.U Eats Verification</h2>
+        <p style="color:#9998aa;font-size:13px;">Use the code below to verify your email</p>
+      </div>
+      <div style="background:#1e1d2e;border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
+        <div style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ffe393;font-family:monospace;">{otp}</div>
+        <p style="color:#9998aa;font-size:12px;margin-top:8px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>. Do not share with anyone.</p>
+      </div>
+      <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
+    </div>"""
+
+    msg.attach(MIMEText(html, "html"))
+    with smtplib.SMTP("smtp.gmail.com", 587) as s:
+        s.starttls()
+        s.login(SMTP_EMAIL, SMTP_PASSWORD)
+        s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+
+# ── SEND OTP (email-based) ──────────────────────────────────────────────────────
+@app.route("/send-otp", methods=["POST"])
+def send_otp():
+    email = (request.json.get("email") or "").strip().lower()
+    if not email.endswith("@bennett.edu.in"):
+        return jsonify({"error": "Only @bennett.edu.in emails are accepted."}), 400
+
+    otp = str(random.randint(100000, 999999))
+    otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
+
+    dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
+
+    if not dev_mode:
+        try:
+            send_email(email, otp)
+        except Exception as e:
+            return jsonify({"error": f"Email send failed: {str(e)}"}), 500
+        return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
+
+    # Dev mode — no SMTP configured, return OTP in response
+    return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
+                    "dev_mode": True, "otp": otp})
+
+# ── VERIFY OTP ────────────────────────────────────────────────────────────────
+@app.route("/verify-otp", methods=["POST"])
+def verify_otp():
+    email = (request.json.get("email") or "").strip().lower()
+    otp   = (request.json.get("otp")   or "").strip()
+
+    record = otp_store.get(email)
+    if not record:
+        return jsonify({"error": "No OTP found for this email. Request a new one."}), 400
+    if time.time() > record["expires"]:
+        otp_store.pop(email, None)
+        return jsonify({"error": "OTP expired. Request a new one."}), 400
+    if record["otp"] != otp:
+        return jsonify({"error": "Wrong OTP. Try again."}), 400
+
+    otp_store[email]["verified"] = True
+    return jsonify({"msg": "Email verified!"})
+
+# ── Priority algorithm ────────────────────────────────────────────────────────
 def calc_priority(o):
     waiting = time.time() - o["created_time"]
-    return (o["expected_time"]*2) + (o["items_count"]*3) - (waiting/10)
+    return (o["expected_time"] * 2) + (o["items_count"] * 3) - (waiting / 10)
 
-# ---------------- REGISTER ----------------
-import sqlite3
+# ── Health check ──────────────────────────────────────────────────────────────
+@app.route("/", methods=["GET"])
+def health():
+    return jsonify({
+        "status":   "ok",
+        "service":  "B.U Eats API",
+        "db":       "postgres" if USE_POSTGRES else "sqlite",
+        "version":  "2.0"
+    })
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok"})
+
+# ── Domain restriction ────────────────────────────────────────────────────────
+ALLOWED_DOMAIN = "@bennett.edu.in"
+
+# ── REGISTER ──────────────────────────────────────────────────────────────────
 @app.route("/register", methods=["POST"])
 def register():
-    d = request.json
-    conn = db_conn()
+    d     = request.json
+    email = (d.get("email") or "").strip().lower()
+
+    role       = d.get("role", "student")
+    canteen_id = d.get("canteen_id", None)
+    phone      = (d.get("phone") or "").strip()
+
+    if role == "student" and not email.endswith(ALLOWED_DOMAIN):
+        return jsonify({"error": f"Only {ALLOWED_DOMAIN} emails are allowed for students."}), 400
+
+    # Validate email OTP for students
+    if role == "student":
+        otp_record = otp_store.get(email)
+        if not otp_record or not otp_record.get("verified"):
+            return jsonify({"error": "Email not verified. Please verify your @bennett.edu.in email first."}), 400
+
+    # Extract enrollment number from email prefix
+    enrollment_no = email.split("@")[0].upper() if role == "student" else None
+
+    now    = time.time()
+    hashed = generate_password_hash(d["password"])
+
+    conn, ph = db_conn()
     cur = conn.cursor()
-
     try:
-        hashed = generate_password_hash(d["password"])
-
-        cur.execute("""
-        INSERT INTO users(name,email,password,role,canteen_id)
-        VALUES(?,?,?,?,?)
-        """,(d["name"], d["email"], hashed, d["role"], d.get("canteen_id")))
-
+        cur.execute(
+            f"INSERT INTO users(name, email, password, role, canteen_id, phone, enrollment_no, phone_verified, registered_at) "
+            f"VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph})",
+            (d["name"], email, hashed, role, canteen_id, phone if role=="student" else None,
+             enrollment_no, 1 if role=="student" else 0, now)
+        )
         conn.commit()
         conn.close()
-
-        return jsonify({"msg":"registered"})
-
-    except sqlite3.IntegrityError:
-        conn.close()
-        return jsonify({"error":"user already exists"}), 400
+        # Clear OTP after successful registration
+        if role == "student":
+            otp_store.pop(email, None)
+        return jsonify({"msg": "registered"})
 
     except Exception as e:
+        conn.rollback()
         conn.close()
-        print("REGISTER ERROR:", e)   # 👈 IMPORTANT DEBUG
-        return jsonify({"error": str(e)}), 500
+        err = str(e)
+        if "unique" in err.lower() or "duplicate" in err.lower():
+            return jsonify({"error": "Email already registered"}), 400
+        return jsonify({"error": err}), 500
 
-# ---------------- LOGIN ----------------
+# ── LOGIN ─────────────────────────────────────────────────────────────────────
 @app.route("/login", methods=["POST"])
 def login():
-    d = request.json
-    conn = db_conn()
+    d     = request.json
+    email = (d.get("email") or "").strip().lower()
+
+    conn, ph = db_conn()
     cur = conn.cursor()
+    cur.execute(f"SELECT * FROM users WHERE email = {ph}", (email,))
+    row = cur.fetchone()
 
-    cur.execute("SELECT * FROM users WHERE email=?", (d["email"],))
-    u = cur.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"msg": "Invalid email or password"}), 401
 
+    u = row_to_dict(row, cur)
+
+    if not check_password_hash(u["password"], d["password"]):
+        conn.close()
+        return jsonify({"msg": "Invalid email or password"}), 401
+
+    # Record last login
+    cur.execute(f"UPDATE users SET last_login = {ph} WHERE id = {ph}", (time.time(), u["id"]))
+    conn.commit()
     conn.close()
 
-    if not u or not check_password_hash(u[3], d["password"]):
-        return jsonify({"error":"invalid credentials"}), 401
-
     token = create_access_token(identity={
-        "id": u[0],
-        "role": u[4],
-        "canteen_id": u[5]
+        "id":         u["id"],
+        "role":       u["role"],
+        "canteen_id": u["canteen_id"]
     })
 
     return jsonify({
-        "token": token,
-        "id": u[0],
-        "name": u[1],
-        "role": u[4],
-        "canteen_id": u[5]
+        "access_token": token,
+        "user": {
+            "id":         u["id"],
+            "name":       u["name"],
+            "email":      email,
+            "role":       u["role"],
+            "canteen_id": u["canteen_id"]
+        }
     })
 
-# ---------------- CREATE ORDER ----------------
+# ── CREATE ORDER ──────────────────────────────────────────────────────────────
 @app.route("/order/create", methods=["POST"])
 @jwt_required()
 def create_order():
     user = get_jwt_identity()
     if user["role"] != "student":
-        return jsonify({"error":"only students"}), 403
+        return jsonify({"error": "Only students can place orders"}), 403
 
-    d = request.json
-    conn = db_conn()
-    cur = conn.cursor()
+    d    = request.json
+    conn, ph = db_conn()
+    cur  = conn.cursor()
 
-    oid = int(time.time()*1000)
-    items = d["items"]
-
+    oid         = int(time.time() * 1000)
+    items       = d["items"]
     total_price = sum(i["price"] for i in items)
-    total_time  = sum(i["time"] for i in items)
+    total_time  = sum(i["time"]  for i in items)
 
-    cur.execute("""
-    INSERT INTO orders VALUES(?,?,?,?,?,?,?,?,?,?,?)
-    """,(oid, d["canteen_id"], user["id"],
+    cur.execute(f"SELECT COUNT(*) FROM orders WHERE canteen_id = {ph} AND status IN ('WAITING', 'ACCEPTED', 'PREPARING')", (d["canteen_id"],))
+    count_row = cur.fetchone()
+    active_orders = count_row[0] if count_row else 0
+    # Dynamic ETA: Add 2 minutes per existing active order in queue
+    expected_time  = total_time + (active_orders * 2)
+
+    cur.execute(
+        f"INSERT INTO orders VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph})",
+        (oid, d["canteen_id"], user["id"],
          json.dumps(items), len(items),
-         total_price, total_time,
-         "WAITING", time.time(), None, None))
-
+         total_price, expected_time,
+         "WAITING", time.time(), None, None)
+    )
     conn.commit()
     conn.close()
-
     return jsonify({"order_id": oid})
 
-# ---------------- CANTEEN ORDERS ----------------
+# ── CANTEEN ORDERS ────────────────────────────────────────────────────────────
 @app.route("/canteen/orders", methods=["GET"])
 @jwt_required()
 def canteen_orders():
     user = get_jwt_identity()
     if user["role"] != "canteen":
-        return jsonify({"error":"only canteen"}), 403
+        return jsonify({"error": "Only canteen staff can view this"}), 403
 
-    conn = db_conn()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM orders WHERE canteen_id=?", (user["canteen_id"],))
+    conn, ph = db_conn()
+    cur  = conn.cursor()
+    query = f"""
+        SELECT o.*,
+               u.name          AS student_name,
+               u.enrollment_no AS enrollment_no,
+               u.phone         AS student_phone
+        FROM orders o
+        LEFT JOIN users u ON o.student_id = u.id
+        WHERE o.canteen_id = {ph}
+    """
+    cur.execute(query, (user["canteen_id"],))
     rows = cur.fetchall()
     conn.close()
 
     result = []
-
     for r in rows:
-        o = {
-            "order_id": r[0],
-            "canteen_id": r[1],
-            "student_id": r[2],
-            "items": json.loads(r[3]),
-            "items_count": r[4],
-            "price": r[5],
-            "expected_time": r[6],
-            "status": r[7],
-            "created_time": r[8]
-        }
+        o = dict(zip([d[0] for d in cur.description], r))
+        o["items"]    = json.loads(o["items"])
         o["priority"] = round(calc_priority(o), 2)
         result.append(o)
 
     result.sort(key=lambda x: x["priority"])
-
-    for i,o in enumerate(result):
-        o["queue_position"] = i+1
+    for i, o in enumerate(result):
+        o["queue_position"] = i + 1
 
     return jsonify(result)
 
-# ---------------- STATUS ----------------
-@app.route("/order/status/<int:oid>")
+# ── ORDER STATUS ──────────────────────────────────────────────────────────────
+@app.route("/order/status/<int:oid>", methods=["GET"])
 @jwt_required()
 def order_status(oid):
-    conn = db_conn()
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM orders WHERE order_id=?", (oid,))
-    r = cur.fetchone()
-
+    conn, ph = db_conn()
+    cur  = conn.cursor()
+    cur.execute(f"SELECT * FROM orders WHERE order_id = {ph}", (oid,))
+    row = cur.fetchone()
     conn.close()
 
-    if not r:
-        return jsonify({})
+    if not row:
+        return jsonify({"error": "Order not found"}), 404
 
+    r = row_to_dict(row, cur)
     return jsonify({
-        "status": r[7],
-        "items": json.loads(r[3]),
-        "price": r[5],
-        "expected_time": r[6]
+        "status":        r["status"],
+        "items":         json.loads(r["items"]),
+        "price":         r["price"],
+        "expected_time": r["expected_time"]
     })
 
-# ---------------- STATE MACHINE ----------------
-def allowed(cur, nxt):
-    flow = {
-        "WAITING":["ACCEPTED"],
-        "ACCEPTED":["PREPARING"],
-        "PREPARING":["READY"],
-        "READY":["COMPLETED"],
-        "COMPLETED":[]
-    }
-    return nxt in flow.get(cur,[])
+# ── STUDENT HISTORY ───────────────────────────────────────────────────────────
+@app.route("/student/history", methods=["GET"])
+@jwt_required()
+def student_history():
+    user = get_jwt_identity()
+    if user["role"] != "student":
+        return jsonify({"error": "Only students can view their history"}), 403
 
-def set_status(oid, nxt):
-    conn = db_conn()
-    cur = conn.cursor()
-
-    cur.execute("SELECT status FROM orders WHERE order_id=?", (oid,))
-    r = cur.fetchone()
-
-    if not r:
-        conn.close()
-        return False
-
-    if allowed(r[0], nxt):
-        cur.execute("UPDATE orders SET status=? WHERE order_id=?", (nxt, oid))
-        conn.commit()
-
+    conn, ph = db_conn()
+    cur  = conn.cursor()
+    cur.execute(f"SELECT * FROM orders WHERE student_id = {ph} ORDER BY created_time DESC", (user["id"],))
+    rows = cur.fetchall()
     conn.close()
-    return True
 
-@app.route("/order/accept", methods=["POST"])
+    result = []
+    for r in rows:
+        o = row_to_dict(r, cur)
+        o["items"] = json.loads(o["items"])
+        result.append(o)
+
+    return jsonify(result)
+
+# ── STATE MACHINE ─────────────────────────────────────────────────────────────
+FLOW = {
+    "WAITING":   ["ACCEPTED"],
+    "ACCEPTED":  ["PREPARING"],
+    "PREPARING": ["READY"],
+    "READY":     ["COMPLETED"],
+    "COMPLETED": []
+}
+
+def set_status(oid, next_status):
+    conn, ph = db_conn()
+    cur  = conn.cursor()
+    cur.execute(f"SELECT status FROM orders WHERE order_id = {ph}", (oid,))
+    row = cur.fetchone()
+    if row:
+        current = row[0] if USE_POSTGRES else row["status"]
+        if next_status in FLOW.get(current, []):
+            cur.execute(f"UPDATE orders SET status = {ph} WHERE order_id = {ph}", (next_status, oid))
+            conn.commit()
+    conn.close()
+
+@app.route("/order/accept",    methods=["POST"])
 @jwt_required()
 def accept():
-    set_status(request.json["order_id"], "ACCEPTED")
-    return jsonify({"ok":1})
+    set_status(request.json["order_id"], "ACCEPTED");   return jsonify({"ok": 1})
 
 @app.route("/order/preparing", methods=["POST"])
 @jwt_required()
 def preparing():
-    set_status(request.json["order_id"], "PREPARING")
-    return jsonify({"ok":1})
+    set_status(request.json["order_id"], "PREPARING");  return jsonify({"ok": 1})
 
-@app.route("/order/ready", methods=["POST"])
+@app.route("/order/ready",     methods=["POST"])
 @jwt_required()
 def ready():
-    set_status(request.json["order_id"], "READY")
-    return jsonify({"ok":1})
+    set_status(request.json["order_id"], "READY");      return jsonify({"ok": 1})
 
-@app.route("/order/complete", methods=["POST"])
+@app.route("/order/complete",  methods=["POST"])
 @jwt_required()
 def complete():
-    set_status(request.json["order_id"], "COMPLETED")
-    return jsonify({"ok":1})
+    set_status(request.json["order_id"], "COMPLETED");  return jsonify({"ok": 1})
 
+# ── Run locally ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False)

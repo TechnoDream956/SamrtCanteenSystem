@@ -1,227 +1,261 @@
-// ══════════════════════════════════════════════════
-// API URL — Render backend (live)
-// Local:   http://127.0.0.1:5001
-// Render:  https://samrtcanteensystem.onrender.com
-// ══════════════════════════════════════════════════
-const API = "https://samrtcanteensystem.onrender.com"
+// NOTE: This file expects config.js to be loaded first.
+// All pages that use app.js MUST include:
+//   <script src="../common/config.js"></script>
+//   <script src="../common/app.js"></script>
 
-// ─── HELPERS ───
-function authHeaders(){
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+function authHeaders() {
     return {
-        "Content-Type": "application/json",
+        "Content-Type":  "application/json",
         "Authorization": "Bearer " + localStorage.getItem("token")
+    };
+}
+
+function protectPage(requiredRole) {
+    const token = localStorage.getItem("token");
+    const user  = JSON.parse(localStorage.getItem("user") || "null");
+
+    if (!token || token === "undefined") {
+        window.location.href = "../student/login.html";
+        return;
+    }
+    if (!user || !user.role) {
+        localStorage.clear();
+        window.location.href = "../student/login.html";
+        return;
+    }
+    if (requiredRole && user.role !== requiredRole) {
+        alert("Unauthorized access");
+        localStorage.clear();
+        window.location.href = "../student/login.html";
+        return;
     }
 }
 
-// ─── CART ───
-let cart = []
-
-function addToCart(name, price, time){
-    cart.push({ name, price, time })
-    renderCart()
-    // Flash the cart panel
-    const panel = document.querySelector(".cart-panel")
-    if(panel){ panel.style.borderColor = "var(--accent)"; setTimeout(()=>panel.style.borderColor="",600) }
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("order");
+    window.location = "../student/login.html";
 }
 
-function removeItem(i){
-    cart.splice(i, 1)
-    renderCart()
+// ── Cart ──────────────────────────────────────────────────────────────────────
+let cart = [];
+
+function addToCart(name, price, time) {
+    cart.push({ name, price, time });
+    renderCart();
+    showToast(`✅ ${name} added to cart!`);
 }
 
-function renderCart(){
-    const el = document.getElementById("cart")
-    if(!el) return
+function removeItem(i) {
+    const removed = cart.splice(i, 1)[0];
+    renderCart();
+    showToast(`🗑️ ${removed.name} removed`);
+}
 
-    const countEl = document.querySelector(".cart-count")
-
-    if(cart.length === 0){
-        el.innerHTML = `<div class="cart-empty">🛒<br>Your cart is empty<br><span style="font-size:12px">Add items from the menu</span></div>`
-        if(countEl) countEl.textContent = "0"
-        return
-    }
-
-    let total = 0
-    let html = ""
+function renderCart() {
+    let total = 0;
+    let html  = "";
 
     cart.forEach((item, idx) => {
-        total += item.price
-        html += `
-        <div class="cart-item">
-            <span class="cart-item-name">${item.name}</span>
-            <span class="cart-item-price">₹${item.price}</span>
-            <button class="btn-xs btn-danger" onclick="removeItem(${idx})" title="Remove">✕</button>
-        </div>`
-    })
+        total += item.price;
+        html  += `
+        <div class="cart-item" style="display:flex;align-items:center;justify-content:space-between;
+             padding:12px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+             border-radius:12px;margin-bottom:10px;">
+          <div>
+            <span style="font-weight:600;">${item.name}</span>
+            <span style="color:rgba(240,240,255,0.5);font-size:12px;margin-left:8px;">⏱ ${item.time} min</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-weight:700;color:#ffd60a;">₹${item.price}</span>
+            <button onclick="removeItem(${idx})" style="
+              background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);
+              color:#fca5a5;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px;
+              transition:all 0.2s;">✕</button>
+          </div>
+        </div>`;
+    });
 
-    el.innerHTML = html
-    if(countEl) countEl.textContent = cart.length
+    const cartEl = document.getElementById("cart");
+    const totalEl = document.getElementById("cart-total");
+    const countEl = document.getElementById("cart-count");
 
-    const totalEl = document.getElementById("cart-total")
-    if(totalEl) totalEl.textContent = "₹" + total
+    if (cartEl)  cartEl.innerHTML  = html || `<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Your cart is empty</p>`;
+    if (totalEl) totalEl.textContent = `₹${total}`;
+    if (countEl) countEl.textContent = cart.length;
 }
 
-// ─── CHECKOUT ───
-function checkout(){
-    if(cart.length === 0){ alert("Your cart is empty!"); return }
+// ── Checkout ──────────────────────────────────────────────────────────────────
+function checkout() {
+    if (cart.length === 0) {
+        showToast("⚠️ Cart is empty!", "error");
+        return;
+    }
 
-    const user = JSON.parse(localStorage.getItem("user"))
-    const params = new URLSearchParams(window.location.search)
-    const canteen = params.get("canteen")
-    const btn = document.getElementById("checkoutBtn")
+    const params   = new URLSearchParams(window.location.search);
+    const canteenId = params.get("canteen");
+    const btn       = document.getElementById("checkoutBtn");
 
-    if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Placing order...' }
+    if (btn) { btn.disabled = true; btn.textContent = "Placing order..."; }
 
     fetch(API + "/order/create", {
-        method: "POST",
+        method:  "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ canteen_id: canteen, student_id: user.id, items: cart })
+        body:    JSON.stringify({ canteen_id: canteenId, items: cart })
     })
     .then(r => r.json())
     .then(d => {
-        localStorage.setItem("order", d.order_id)
-        window.location = "order_status.html"
+        if (d.error) {
+            showToast("❌ " + d.error, "error");
+            if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
+            return;
+        }
+        localStorage.setItem("order", d.order_id);
+        window.location = "order_status.html";
     })
     .catch(() => {
-        alert("Failed to place order. Please try again.")
-        if(btn){ btn.disabled = false; btn.innerHTML = "🛒 Place Order" }
-    })
+        showToast("❌ Could not connect to server.", "error");
+        if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
+    });
 }
 
-// ─── STATUS TRACKER ───
-const STATUS_STEPS = ["WAITING","ACCEPTED","PREPARING","READY","COMPLETED"]
-const STATUS_ICONS  = ["⏳","✅","👨‍🍳","🔔","🎉"]
-const STATUS_LABELS = ["Waiting","Accepted","Preparing","Ready","Done"]
+// ── Student order status polling ──────────────────────────────────────────────
+function pollStudent() {
+    const id = localStorage.getItem("order");
+    if (!id) return;
 
-function updateTracker(status){
-    const idx = STATUS_STEPS.indexOf(status)
-    STATUS_STEPS.forEach((s, i) => {
-        const dot = document.getElementById("dot-" + i)
-        const step = document.getElementById("step-" + i)
-        if(!dot || !step) return
-        dot.classList.remove("done","active")
-        step.classList.remove("done","active")
-        if(i < idx){ dot.classList.add("done"); step.classList.add("done"); dot.innerHTML = "✓" }
-        else if(i === idx){ dot.classList.add("active"); step.classList.add("active"); dot.innerHTML = STATUS_ICONS[i] }
-        else { dot.innerHTML = STATUS_ICONS[i] }
-    })
-}
-
-// ─── STUDENT POLLING ───
-function pollStudent(){
-    let id = localStorage.getItem("order")
-    if(!id) return
-
-    function fetchStatus(){
+    const poll = () => {
         fetch(API + "/order/status/" + id, { headers: authHeaders() })
         .then(r => r.json())
         .then(o => {
-            if(!o.status) return
-            const statusEl = document.getElementById("status-text")
-            if(statusEl){ statusEl.textContent = o.status; statusEl.className = "status " + o.status }
-            const priceEl = document.getElementById("price")
-            if(priceEl) priceEl.textContent = "₹" + o.price
-            const expectedEl = document.getElementById("expected")
-            if(expectedEl) expectedEl.textContent = o.expected_time + " min"
-            let itemsHTML = ""
-            if(o.items) o.items.forEach(i => { itemsHTML += `<li>• ${i.name} <span class="text-muted" style="font-size:12px">₹${i.price}</span></li>` })
-            const itemsEl = document.getElementById("items")
-            if(itemsEl) itemsEl.innerHTML = itemsHTML
-            updateTracker(o.status)
+            if (!o.status) return;
+
+            const statusEl  = document.getElementById("status");
+            const priceEl   = document.getElementById("price");
+            const expectedEl= document.getElementById("expected");
+            const itemsEl   = document.getElementById("items");
+
+            if (statusEl)   statusEl.textContent  = o.status;
+            if (priceEl)    priceEl.textContent    = "₹" + o.price;
+            if (expectedEl) expectedEl.textContent = o.expected_time + " mins";
+
+            if (itemsEl && o.items) {
+                itemsEl.innerHTML = o.items.map(i =>
+                    `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">• ${i.name} — ₹${i.price}</div>`
+                ).join("");
+            }
+
+            // Update progress bar
+            const steps  = ["WAITING","ACCEPTED","PREPARING","READY","COMPLETED"];
+            const stepIdx = steps.indexOf(o.status);
+            document.querySelectorAll(".progress-step").forEach((el, i) => {
+                el.classList.toggle("active",    i <= stepIdx);
+                el.classList.toggle("current",   i === stepIdx);
+            });
+
+            if (o.status === "COMPLETED") {
+                showToast("🎉 Your order is ready! Go pick it up.");
+            }
         })
-    }
-    fetchStatus()
-    setInterval(fetchStatus, 2500)
+        .catch(() => {});
+    };
+
+    poll();
+    setInterval(poll, 3000);
 }
 
-// ─── CANTEEN ORDERS ───
-function loadOrders(){
-    let waiting=0, preparing=0, ready=0
-
-    function fetchOrders(){
+// ── Canteen dashboard polling ─────────────────────────────────────────────────
+function loadOrders() {
+    const poll = () => {
         fetch(API + "/canteen/orders", { headers: authHeaders() })
         .then(r => r.json())
         .then(data => {
-            waiting = data.filter(o=>o.status==="WAITING").length
-            preparing = data.filter(o=>o.status==="PREPARING"||o.status==="ACCEPTED").length
-            ready = data.filter(o=>o.status==="READY").length
+            if (!Array.isArray(data)) return;
 
-            const wEl = document.getElementById("stat-waiting")
-            const pEl = document.getElementById("stat-preparing")
-            const rEl = document.getElementById("stat-ready")
-            if(wEl) wEl.textContent = waiting
-            if(pEl) pEl.textContent = preparing
-            if(rEl) rEl.textContent = ready
+            const ordersEl = document.getElementById("orders");
+            if (!ordersEl) return;
 
-            let html = ""
-            if(data.length === 0){ html = `<div style="text-align:center;padding:60px;color:var(--text-dim)">🎉 No active orders right now</div>`}
+            if (data.length === 0) {
+                ordersEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:60px 20px;">
+                  <div style="font-size:48px;margin-bottom:12px;">🍽️</div>
+                  <p>No orders yet. Waiting for hungry students...</p></div>`;
+                return;
+            }
 
-            data.forEach(o => {
-                const isUrgent = o.queue_position === 1
-                const itemsList = o.items.map(i => `<li>${i.name}</li>`).join("")
-                html += `
-                <div class="order-card ${isUrgent ? 'urgent' : ''}">
-                    <div class="order-header">
-                        <div>
-                            <div class="order-id">#${o.order_id}</div>
-                            <div class="order-meta">
-                                <span class="badge badge-pos">Queue #${o.queue_position}</span>
-                                <span class="status ${o.status}">${o.status}</span>
-                            </div>
-                        </div>
-                        <div style="text-align:right;font-size:13px;color:var(--text-muted)">
-                            <div>Priority <strong style="color:var(--accent)">${o.priority}</strong></div>
-                            <div>ETA ${o.expected_time} min</div>
-                        </div>
-                    </div>
-                    <ul class="order-items">${itemsList}</ul>
-                    <div style="font-size:14px;font-weight:700;color:var(--accent)">Total: ₹${o.price}</div>
-                    <div class="order-actions">
-                        <button class="btn-sm btn-success" onclick="update(${o.order_id},'accept')">✅ Accept</button>
-                        <button class="btn-sm btn-purple" onclick="update(${o.order_id},'preparing')">👨‍🍳 Preparing</button>
-                        <button class="btn-sm btn-info"   onclick="update(${o.order_id},'ready')">🔔 Ready</button>
-                        <button class="btn-sm btn-ghost"  onclick="update(${o.order_id},'complete')">Done</button>
-                    </div>
-                </div>`
-            })
-            const ordersEl = document.getElementById("orders")
-            if(ordersEl) ordersEl.innerHTML = html
+            ordersEl.innerHTML = data.map(o => `
+              <div class="card" style="${o.queue_position === 1 ? 'border-color:#ff6b35;box-shadow:0 0 20px rgba(255,107,53,0.3);' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                  <span style="font-weight:700;font-size:16px;">Order #${o.order_id}</span>
+                  <span class="status ${o.status}">${o.status}</span>
+                </div>
+                <p style="font-size:13px;color:rgba(240,240,255,0.5);">
+                  Queue: <b style="color:#ffd60a;">#${o.queue_position}</b> &nbsp;|&nbsp;
+                  Priority: ${o.priority} &nbsp;|&nbsp;
+                  Total: <b style="color:#10b981;">₹${o.price}</b>
+                </p>
+                <div style="margin:12px 0;">
+                  ${o.items.map(i => `<span style="display:inline-block;padding:3px 10px;background:rgba(255,255,255,0.06);border-radius:20px;font-size:12px;margin:3px;">${i.name}</span>`).join("")}
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                  <button onclick="update(${o.order_id},'accept')"   style="background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Accept</button>
+                  <button onclick="update(${o.order_id},'preparing')"style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);color:#c4b5fd;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Preparing</button>
+                  <button onclick="update(${o.order_id},'ready')"    style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4);color:#86efac;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Ready</button>
+                  <button onclick="update(${o.order_id},'complete')" style="background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:#4ade80;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Completed</button>
+                </div>
+              </div>`).join("");
         })
-    }
-    fetchOrders()
-    setInterval(fetchOrders, 2500)
+        .catch(() => {});
+    };
+
+    poll();
+    setInterval(poll, 3000);
 }
 
-// ─── UPDATE ORDER STATUS ───
-function update(id, type){
-    const urls = { accept:"/order/accept", preparing:"/order/preparing", ready:"/order/ready", complete:"/order/complete" }
-    fetch(API + urls[type], {
-        method: "POST",
+// ── Update order status ───────────────────────────────────────────────────────
+function update(id, type) {
+    const endpoints = {
+        accept:    "/order/accept",
+        preparing: "/order/preparing",
+        ready:     "/order/ready",
+        complete:  "/order/complete"
+    };
+    fetch(API + endpoints[type], {
+        method:  "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ order_id: id })
-    })
+        body:    JSON.stringify({ order_id: id })
+    }).then(() => loadOrders()).catch(() => {});
 }
 
-// ─── ROUTE PROTECTION ───
-function protectPage(requiredRole){
-    const token = localStorage.getItem("token")
-    const user = JSON.parse(localStorage.getItem("user") || "null")
-    if(!token || token === "undefined"){
-        window.location.href = "../student/login.html"; return
-    }
-    if(!user || !user.role){
-        localStorage.clear(); window.location.href = "../student/login.html"; return
-    }
-    if(requiredRole && user.role !== requiredRole){
-        alert("Unauthorized access")
-        localStorage.clear(); window.location.href = "../student/login.html"; return
-    }
+// ── Toast notifications ───────────────────────────────────────────────────────
+function showToast(msg, type = "success") {
+    const existing = document.getElementById("bu-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "bu-toast";
+    const bg = type === "error" ? "rgba(239,68,68,0.9)" : "rgba(16,185,129,0.9)";
+    toast.style.cssText = `
+      position:fixed;bottom:28px;right:28px;z-index:9999;
+      padding:14px 22px;background:${bg};color:white;
+      border-radius:14px;font-family:Poppins,sans-serif;font-size:14px;font-weight:600;
+      box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      animation:toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      backdrop-filter:blur(10px);max-width:320px;`;
+    toast.textContent = msg;
+
+    const style = document.createElement("style");
+    style.textContent = `@keyframes toastIn{from{opacity:0;transform:translateY(20px) scale(0.9)}to{opacity:1;transform:translateY(0) scale(1)}}`;
+    document.head.appendChild(style);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
 }
 
-// ─── LOGOUT ───
-function logout(){
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    localStorage.removeItem("order")
-    window.location = "../student/login.html"
-}
+// ── Session keepalive check ───────────────────────────────────────────────────
+setInterval(() => {
+    const token = localStorage.getItem("token");
+    if (!token && window.location.pathname.includes("menu.html")) {
+        window.location = "../student/login.html";
+    }
+}, 15000);
