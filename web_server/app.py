@@ -444,7 +444,7 @@ def student_history():
 
     conn, ph = db_conn()
     cur  = conn.cursor()
-    cur.execute(f"SELECT * FROM orders WHERE student_id = {ph} ORDER BY created_time DESC", (user["id"],))
+    cur.execute(f"SELECT * FROM orders WHERE student_id = {ph} ORDER BY created_time DESC LIMIT 10", (user["id"],))
     rows = cur.fetchall()
     conn.close()
 
