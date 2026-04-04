@@ -1,13 +1,5 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/", "destination": "student/index.html" },
-    { "source": "/login", "destination": "student/login.html" },
-    { "source": "/register", "destination": "student/register.html" },
-    { "source": "/canteen", "destination": "canteen/login.html" },
-    { "source": "/history", "destination": "student/history.html" },
-    { "source": "/order-status", "destination": "student/order_status.html" }
-  ]
+  "trailingSlash": false
 }
