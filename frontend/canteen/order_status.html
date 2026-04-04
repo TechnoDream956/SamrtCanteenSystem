@@ -1,30 +1,702 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-<title>Canteen Order Status</title>
-<link rel="stylesheet" href="../common/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Status — B.U Eats Staff</title>
+    <script src="../common/config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --bg-card: #13121e;
+            --bg-high: #1e1d2e;
+            --primary: #c97cff;
+            --primary-2: #6b6bff;
+            --amber: #e0b8ff;
+            --green: #4fffb0;
+            --red: #ff6b6b;
+            --blue: #6bb8ff;
+            --muted: #9998aa;
+            --outline: rgba(72, 71, 81, 0.4);
+            --text: #e7e4f0
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            cursor: none
+        }
+
+        #cursor-dot {
+            width: 8px;
+            height: 8px;
+            background: #c97cff;
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999
+        }
+
+        #cursor-ring {
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid rgba(201, 124, 255, .5);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transition: width .3s, height .3s, left .12s, top .12s
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(201, 124, 255, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(201, 124, 255, .03) 1px, transparent 1px);
+            background-size: 40px 40px
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(150, 80, 255, .06);
+            top: -100px;
+            left: -100px;
+            animation: orbF 12s ease-in-out infinite
+        }
+
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: rgba(201, 124, 255, .05);
+            bottom: -100px;
+            right: -100px;
+            animation: orbF 15s ease-in-out infinite reverse
+        }
+
+        @keyframes orbF {
+
+            0%,
+            100% {
+                transform: scale(1) translateY(0)
+            }
+
+            50% {
+                transform: scale(1.1) translateY(-20px)
+            }
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            background: rgba(10, 10, 20, .85);
+            backdrop-filter: blur(20px);
+            border-bottom: .5px solid var(--outline)
+        }
+
+        .hd-left {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .hd-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #c97cff, #6b6bff);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 0 20px rgba(150, 80, 255, .4)
+        }
+
+        .hd-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            font-weight: 800
+        }
+
+        .hd-title span {
+            background: linear-gradient(90deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .live-dot {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--green)
+        }
+
+        .live-dot::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: livePulse 1.4s ease-in-out infinite;
+            box-shadow: 0 0 8px var(--green)
+        }
+
+        @keyframes livePulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            background: rgba(201, 124, 255, .08);
+            border: .5px solid rgba(201, 124, 255, .25);
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: none;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn-back:hover {
+            background: rgba(201, 124, 255, .15)
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            padding: 88px 24px 48px;
+            max-width: 900px;
+            margin: 0 auto
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px
+        }
+
+        .page-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 800
+        }
+
+        .page-title span {
+            background: linear-gradient(90deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            background: var(--bg-card);
+            border: .5px solid var(--outline);
+            border-radius: 14px;
+            margin-bottom: 20px;
+            transition: border-color .2s
+        }
+
+        .search-bar:focus-within {
+            border-color: rgba(201, 124, 255, .4)
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            cursor: none
+        }
+
+        .search-bar input::placeholder {
+            color: var(--muted)
+        }
+
+        .search-icon {
+            font-size: 16px;
+            color: var(--muted)
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px
+        }
+
+        .filter-btn {
+            padding: 7px 16px;
+            background: var(--bg-card);
+            border: .5px solid var(--outline);
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            cursor: none;
+            transition: all .2s
+        }
+
+        .filter-btn.active {
+            background: rgba(201, 124, 255, .12);
+            border-color: rgba(201, 124, 255, .4);
+            color: var(--primary)
+        }
+
+        .orders-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .order-card {
+            background: var(--bg-card);
+            border: .5px solid var(--outline);
+            border-radius: 18px;
+            padding: 18px 22px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 16px;
+            align-items: center;
+            transition: all .3s;
+            cursor: none;
+            position: relative;
+            overflow: hidden;
+            animation: cardIn .4s ease both;
+            text-decoration: none;
+            color: inherit
+        }
+
+        .order-card:hover {
+            border-color: rgba(201, 124, 255, .3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .3)
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .order-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 18px 0 0 18px
+        }
+
+        .order-card.WAITING::before {
+            background: var(--amber)
+        }
+
+        .order-card.ACCEPTED::before {
+            background: var(--blue)
+        }
+
+        .order-card.PREPARING::before {
+            background: var(--primary)
+        }
+
+        .order-card.READY::before {
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green)
+        }
+
+        .order-card.COMPLETED {
+            opacity: .5
+        }
+
+        .order-card.COMPLETED::before {
+            background: var(--muted)
+        }
+
+        .order-num {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            width: 44px;
+            text-align: center
+        }
+
+        .order-info {}
+
+        .order-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap
+        }
+
+        .order-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted)
+        }
+
+        .status-badge {
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase
+        }
+
+        .status-badge.WAITING {
+            background: rgba(224, 184, 255, .12);
+            color: var(--amber);
+            border: .5px solid rgba(224, 184, 255, .3)
+        }
+
+        .status-badge.ACCEPTED {
+            background: rgba(107, 184, 255, .12);
+            color: var(--blue);
+            border: .5px solid rgba(107, 184, 255, .3)
+        }
+
+        .status-badge.PREPARING {
+            background: rgba(201, 124, 255, .12);
+            color: var(--primary);
+            border: .5px solid rgba(201, 124, 255, .3)
+        }
+
+        .status-badge.READY {
+            background: rgba(79, 255, 176, .12);
+            color: var(--green);
+            border: .5px solid rgba(79, 255, 176, .3);
+            box-shadow: 0 0 10px rgba(79, 255, 176, .2)
+        }
+
+        .status-badge.COMPLETED {
+            background: rgba(153, 152, 170, .12);
+            color: var(--muted);
+            border: .5px solid rgba(153, 152, 170, .3)
+        }
+
+        .order-student {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px
+        }
+
+        .order-meta-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap
+        }
+
+        .meta-chip {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .order-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px
+        }
+
+        .order-price {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--primary)
+        }
+
+        .view-btn {
+            padding: 7px 16px;
+            background: rgba(201, 124, 255, .1);
+            border: .5px solid rgba(201, 124, 255, .25);
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: var(--bg-card);
+            border: .5px dashed var(--outline);
+            border-radius: 20px
+        }
+
+        .empty-icon {
+            font-size: 56px;
+            margin-bottom: 16px
+        }
+
+        .empty-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px
+        }
+
+        .empty-sub {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-high) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: skelAnim 1.4s ease-in-out infinite;
+            border-radius: 18px;
+            height: 88px
+        }
+
+        @keyframes skelAnim {
+            0% {
+                background-position: 200% 0
+            }
+
+            100% {
+                background-position: -200% 0
+            }
+        }
+
+        @media(max-width:600px) {
+            main {
+                padding: 80px 16px 40px
+            }
+
+            header {
+                padding: 0 16px
+            }
+
+            .page-title {
+                font-size: 22px
+            }
+
+            .order-card {
+                grid-template-columns: auto 1fr;
+                gap: 12px;
+                padding: 14px 16px
+            }
+
+            .order-right {
+                grid-column: 1/-1;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
 
-<div class="navbar">
-<h2>Canteen Order Status</h2>
-</div>
+    <header>
+        <div class="hd-left">
+            <div class="hd-logo">🍽️</div>
+            <div class="hd-title"><span>B.U</span> Eats · Order Status</div>
+            <div class="live-dot">LIVE</div>
+        </div>
+        <a href="dashboard.html" class="btn-back">← Dashboard</a>
+    </header>
 
-<div class="container">
+    <main>
+        <div class="page-header">
+            <div>
+                <div class="page-title">All <span>Orders</span></div>
+                <div class="page-sub">Live status board — auto-refreshes every 10 seconds</div>
+            </div>
+        </div>
 
-<div class="card">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search by student name or order ID…"
+                oninput="renderOrders()" />
+        </div>
 
-<h3>Order #101</h3>
-<p>Student Order Progress</p>
+        <div class="filters">
+            <button class="filter-btn active" onclick="setFilter('ALL',this)">All</button>
+            <button class="filter-btn" onclick="setFilter('WAITING',this)">⏳ Waiting</button>
+            <button class="filter-btn" onclick="setFilter('ACCEPTED',this)">✅ Accepted</button>
+            <button class="filter-btn" onclick="setFilter('PREPARING',this)">👨‍🍳 Preparing</button>
+            <button class="filter-btn" onclick="setFilter('READY',this)">🔔 Ready</button>
+            <button class="filter-btn" onclick="setFilter('COMPLETED',this)">✔ Completed</button>
+        </div>
 
-<div class="status">
-Waiting / Accepted / Preparing / Ready / Completed
-</div>
+        <div class="orders-grid" id="ordersGrid">
+            <div class="skeleton"></div>
+            <div class="skeleton" style="height:72px;opacity:.6"></div>
+            <div class="skeleton" style="height:72px;opacity:.3"></div>
+        </div>
+    </main>
 
-</div>
+    <script src="../common/app.js"></script>
+    <script>
+        const dot = document.getElementById('cursor-dot'), ring = document.getElementById('cursor-ring');
+        document.addEventListener('mousemove', e => { dot.style.left = e.clientX - 4 + 'px'; dot.style.top = e.clientY - 4 + 'px'; ring.style.left = e.clientX - 18 + 'px'; ring.style.top = e.clientY - 18 + 'px' });
 
-</div>
+        const token = localStorage.getItem('token'), user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (!token || !user || user.role !== 'canteen') window.location.href = 'login.html';
 
+        let allOrders = [], currentFilter = 'ALL';
+
+        const STATUS_ICONS = { WAITING: '⏳', ACCEPTED: '✅', PREPARING: '👨‍🍳', READY: '🔔', COMPLETED: '✔️' };
+        const STATUS_LABELS = { WAITING: 'Waiting', ACCEPTED: 'Accepted', PREPARING: 'Preparing', READY: 'Ready', COMPLETED: 'Done' };
+
+        function fmt(ts) { if (!ts) return '—'; const d = new Date(ts * 1000); return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) }
+        function ago(ts) { const m = Math.floor((Date.now() / 1000 - ts) / 60); return m < 1 ? 'Just now' : m + 'm ago' }
+
+        async function load() {
+            try {
+                const res = await fetch(`${API}/canteen/orders`, { headers: { Authorization: `Bearer ${token}` } });
+                if (res.status === 401) { localStorage.clear(); window.location.href = 'login.html'; return }
+                if (!res.ok) throw new Error();
+                allOrders = await res.json();
+                renderOrders();
+            } catch (e) {
+                document.getElementById('ordersGrid').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load orders</div><div class="empty-sub">Check your connection and try again.</div></div>';
+            }
+        }
+
+        function renderOrders() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            let orders = currentFilter === 'ALL' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+            if (query) orders = orders.filter(o => (o.student_name || '').toLowerCase().includes(query) || String(o.order_id).includes(query));
+            const grid = document.getElementById('ordersGrid');
+            if (!orders.length) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">No orders found</div><div class="empty-sub">Try a different filter or search term.</div></div>';
+                return;
+            }
+            grid.innerHTML = orders.map((o, i) => {
+                const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
+                const itemNames = items.map(i => `${i.emoji || '🍽️'} ${i.name}`).join(', ');
+                return `<a class="order-card ${o.status}" href="order_detail.html?id=${o.order_id}" style="animation-delay:${i * 0.04}s">
+      <div class="order-num">${o.queue_position || i + 1}</div>
+      <div class="order-info">
+        <div class="order-top">
+          <span class="order-id">#${String(o.order_id).slice(-6)}</span>
+          <span class="status-badge ${o.status}">${STATUS_ICONS[o.status]} ${STATUS_LABELS[o.status]}</span>
+        </div>
+        <div class="order-student">${o.student_name || 'Unknown Student'}</div>
+        <div class="order-meta-row">
+          <span class="meta-chip">🍽️ ${o.items_count} item${o.items_count > 1 ? 's' : ''}</span>
+          <span class="meta-chip">⏱ ${o.expected_time}min</span>
+          <span class="meta-chip">🕐 ${ago(o.created_time)}</span>
+        </div>
+      </div>
+      <div class="order-right">
+        <div class="order-price">₹${(o.price || 0).toFixed(0)}</div>
+        <div class="view-btn">View Details →</div>
+      </div>
+    </a>`;
+            }).join('');
+
+            document.querySelectorAll('a,button').forEach(el => {
+                el.addEventListener('mouseenter', () => { ring.style.width = '50px'; ring.style.height = '50px'; ring.style.borderColor = 'rgba(201,124,255,.8)' });
+                el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; ring.style.borderColor = 'rgba(201,124,255,.5)' });
+            });
+        }
+
+        function setFilter(f, btn) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderOrders();
+        }
+
+        load();
+        setInterval(load, 10000);
+    </script>
 </body>
+
 </html>

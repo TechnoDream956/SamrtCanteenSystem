@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Detail — B.U Eats Staff</title>
+    <script src="../common/config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --bg-card: #13121e;
+            --bg-high: #1e1d2e;
+            --primary: #c97cff;
+            --primary-2: #6b6bff;
+            --amber: #e0b8ff;
+            --green: #4fffb0;
+            --red: #ff6b6b;
+            --blue: #6bb8ff;
+            --muted: #9998aa;
+            --outline: rgba(72, 71, 81, 0.4);
+            --text: #e7e4f0
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            cursor: none
+        }
+
+        #cursor-dot {
+            width: 8px;
+            height: 8px;
+            background: #c97cff;
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9999
+        }
+
+        #cursor-ring {
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid rgba(201, 124, 255, .5);
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transition: width .3s, height .3s, left .12s, top .12s
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: linear-gradient(rgba(201, 124, 255, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(201, 124, 255, .03) 1px, transparent 1px);
+            background-size: 40px 40px
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(150, 80, 255, .06);
+            top: -100px;
+            left: -100px;
+            animation: orbF 12s ease-in-out infinite
+        }
+
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: rgba(201, 124, 255, .05);
+            bottom: -100px;
+            right: -100px;
+            animation: orbF 15s ease-in-out infinite reverse
+        }
+
+        @keyframes orbF {
+
+            0%,
+            100% {
+                transform: scale(1) translateY(0)
+            }
+
+            50% {
+                transform: scale(1.1) translateY(-20px)
+            }
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            background: rgba(10, 10, 20, .85);
+            backdrop-filter: blur(20px);
+            border-bottom: .5px solid var(--outline)
+        }
+
+        .hd-left {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .hd-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #c97cff, #6b6bff);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 0 20px rgba(150, 80, 255, .4)
+        }
+
+        .hd-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            font-weight: 800
+        }
+
+        .hd-title span {
+            background: linear-gradient(90deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            background: rgba(201, 124, 255, .08);
+            border: .5px solid rgba(201, 124, 255, .25);
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: none;
+            transition: all .2s;
+            text-decoration: none
+        }
+
+        .btn-back:hover {
+            background: rgba(201, 124, 255, .15)
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            padding: 88px 24px 48px;
+            max-width: 800px;
+            margin: 0 auto
+        }
+
+        .page-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px
+        }
+
+        .page-title span {
+            background: linear-gradient(90deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 28px
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: .5px solid var(--outline);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 18px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #c97cff, #6b6bff);
+            border-radius: 20px 20px 0 0
+        }
+
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .order-id-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px
+        }
+
+        .status-pill.WAITING {
+            background: rgba(224, 184, 255, .12);
+            color: var(--amber);
+            border: .5px solid rgba(224, 184, 255, .3)
+        }
+
+        .status-pill.ACCEPTED {
+            background: rgba(107, 184, 255, .12);
+            color: var(--blue);
+            border: .5px solid rgba(107, 184, 255, .3)
+        }
+
+        .status-pill.PREPARING {
+            background: rgba(201, 124, 255, .12);
+            color: var(--primary);
+            border: .5px solid rgba(201, 124, 255, .3)
+        }
+
+        .status-pill.READY {
+            background: rgba(79, 255, 176, .12);
+            color: var(--green);
+            border: .5px solid rgba(79, 255, 176, .3);
+            box-shadow: 0 0 12px rgba(79, 255, 176, .2)
+        }
+
+        .status-pill.COMPLETED {
+            background: rgba(153, 152, 170, .12);
+            color: var(--muted);
+            border: .5px solid rgba(153, 152, 170, .3)
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 4px
+        }
+
+        .meta-item {
+            background: var(--bg-high);
+            border: .5px solid var(--outline);
+            border-radius: 12px;
+            padding: 14px 16px
+        }
+
+        .meta-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 6px
+        }
+
+        .meta-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text)
+        }
+
+        .meta-value.purple {
+            background: linear-gradient(90deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .meta-value.green {
+            color: var(--green)
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(201, 124, 255, .05);
+            border: .5px solid rgba(201, 124, 255, .15);
+            border-radius: 14px;
+            margin-bottom: 4px
+        }
+
+        .student-avatar {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #c97cff, #6b6bff);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0
+        }
+
+        .student-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 4px
+        }
+
+        .student-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--muted)
+        }
+
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--bg-high);
+            border: .5px solid var(--outline);
+            border-radius: 12px;
+            transition: border-color .2s
+        }
+
+        .item-row:hover {
+            border-color: rgba(201, 124, 255, .3)
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .item-emoji {
+            font-size: 24px
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text)
+        }
+
+        .item-qty {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .item-price {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--primary)
+        }
+
+        .total-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: rgba(201, 124, 255, .08);
+            border: .5px solid rgba(201, 124, 255, .25);
+            border-radius: 14px;
+            margin-top: 14px
+        }
+
+        .total-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text)
+        }
+
+        .total-amt {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #c97cff, #e0b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: none;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .15), transparent);
+            animation: shimmer 2.5s infinite
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%
+            }
+
+            100% {
+                left: 100%
+            }
+        }
+
+        .btn-accept {
+            background: linear-gradient(135deg, #e0b8ff, #c97cff);
+            color: #1a0026;
+            box-shadow: 0 6px 24px rgba(201, 124, 255, .35)
+        }
+
+        .btn-accept:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 32px rgba(201, 124, 255, .5)
+        }
+
+        .btn-prepare {
+            background: linear-gradient(135deg, #c97cff, #6b6bff);
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(201, 124, 255, .35)
+        }
+
+        .btn-prepare:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 32px rgba(201, 124, 255, .5)
+        }
+
+        .btn-ready {
+            background: linear-gradient(135deg, #4fffb0, #6bb8ff);
+            color: #001a12;
+            box-shadow: 0 6px 24px rgba(79, 255, 176, .3)
+        }
+
+        .btn-ready:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 32px rgba(79, 255, 176, .5)
+        }
+
+        .btn-complete {
+            background: rgba(153, 152, 170, .15);
+            color: var(--muted);
+            border: .5px solid var(--outline)
+        }
+
+        .btn-done {
+            background: rgba(79, 255, 176, .08);
+            color: var(--green);
+            border: .5px solid rgba(79, 255, 176, .2);
+            padding: 14px;
+            border-radius: 14px;
+            text-align: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            margin-top: 6px
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0
+        }
+
+        .tl-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 0;
+            position: relative
+        }
+
+        .tl-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 36px;
+            bottom: 0;
+            width: 1px;
+            background: var(--outline)
+        }
+
+        .tl-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            border: .5px solid var(--outline)
+        }
+
+        .tl-dot.done {
+            background: rgba(201, 124, 255, .15);
+            border-color: rgba(201, 124, 255, .4)
+        }
+
+        .tl-dot.active {
+            background: rgba(79, 255, 176, .15);
+            border-color: rgba(79, 255, 176, .4);
+            box-shadow: 0 0 12px rgba(79, 255, 176, .3);
+            animation: tlPulse 1.4s ease-in-out infinite
+        }
+
+        @keyframes tlPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(79, 255, 176, .3)
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(79, 255, 176, .6)
+            }
+        }
+
+        .tl-dot.pending {
+            background: var(--bg-high)
+        }
+
+        .tl-content {
+            padding-top: 4px
+        }
+
+        .tl-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px
+        }
+
+        .tl-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--muted)
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--bg-card);
+            border: .5px solid var(--outline);
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all .35s cubic-bezier(.4, 0, .2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .4)
+        }
+
+        .toast.show {
+            transform: none;
+            opacity: 1
+        }
+
+        .toast.success {
+            border-color: rgba(79, 255, 176, .4);
+            color: var(--green)
+        }
+
+        .toast.error {
+            border-color: rgba(255, 107, 107, .4);
+            color: #fca5a5
+        }
+
+        .loading {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--muted)
+        }
+
+        .loading-spin {
+            font-size: 40px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-bottom: 16px
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @media(max-width:600px) {
+            main {
+                padding: 80px 16px 40px
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            header {
+                padding: 0 16px
+            }
+
+            .page-title {
+                font-size: 22px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <header>
+        <div class="hd-left">
+            <div class="hd-logo">🍽️</div>
+            <div class="hd-title"><span>B.U</span> Eats · Order Detail</div>
+        </div>
+        <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+    </header>
+
+    <main id="mainContent">
+        <div class="loading">
+            <div class="loading-spin">⚙️</div>
+            <div>Loading order details…</div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../common/app.js"></script>
+    <script>
+        const dot = document.getElementById('cursor-dot'), ring = document.getElementById('cursor-ring');
+        document.addEventListener('mousemove', e => { dot.style.left = e.clientX - 4 + 'px'; dot.style.top = e.clientY - 4 + 'px'; ring.style.left = e.clientX - 18 + 'px'; ring.style.top = e.clientY - 18 + 'px' });
+        document.querySelectorAll('button,a').forEach(el => {
+            el.addEventListener('mouseenter', () => { ring.style.width = '50px'; ring.style.height = '50px'; ring.style.borderColor = 'rgba(201,124,255,.8)' });
+            el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; ring.style.borderColor = 'rgba(201,124,255,.5)' });
+        });
+
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (!token || !user || user.role !== 'canteen') window.location.href = 'login.html';
+
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('id');
+
+        const STATUS_STEPS = ['WAITING', 'ACCEPTED', 'PREPARING', 'READY', 'COMPLETED'];
+        const STATUS_ICONS = { WAITING: '⏳', ACCEPTED: '✅', PREPARING: '👨‍🍳', READY: '🔔', COMPLETED: '✔️' };
+        const STATUS_LABELS = { WAITING: 'Waiting', ACCEPTED: 'Accepted', PREPARING: 'Preparing', READY: 'Ready for Pickup', COMPLETED: 'Completed' };
+
+        function fmt(ts) { if (!ts) return '—'; return new Date(ts * 1000).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }); }
+
+        async function load() {
+            if (!orderId) { document.getElementById('mainContent').innerHTML = '<div class="loading">No order ID provided.</div>'; return; }
+            try {
+                const res = await fetch(`${API}/order/status/${orderId}`, { headers: { Authorization: `Bearer ${token}` } });
+                if (!res.ok) throw new Error('Order not found');
+                const o = await res.json();
+                render(o);
+            } catch (e) {
+                document.getElementById('mainContent').innerHTML = `<div class="loading">⚠️ ${e.message}</div>`;
+            }
+        }
+
+        function render(o) {
+            const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
+            const stepIdx = STATUS_STEPS.indexOf(o.status);
+            const initials = (o.student_name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+            const itemsHTML = items.map(i => `
+    <div class="item-row">
+      <div class="item-left">
+        <div class="item-emoji">${i.emoji || '🍽️'}</div>
+        <div><div class="item-name">${i.name}</div><div class="item-qty">Qty: ${i.qty || 1}</div></div>
+      </div>
+      <div class="item-price">₹${((i.price || 0) * (i.qty || 1)).toFixed(0)}</div>
+    </div>`).join('');
+
+            const timelineHTML = STATUS_STEPS.map((s, idx) => {
+                const cls = idx < stepIdx ? 'done' : idx === stepIdx ? 'active' : 'pending';
+                const ts = s === 'WAITING' ? o.created_time : s === 'ACCEPTED' ? o.accepted_time : s === 'READY' ? o.ready_time : null;
+                return `<div class="tl-item">
+      <div class="tl-dot ${cls}">${STATUS_ICONS[s]}</div>
+      <div class="tl-content">
+        <div class="tl-label" style="color:${cls === 'active' ? 'var(--green)' : cls === 'pending' ? 'var(--muted)' : 'var(--text)'}">${STATUS_LABELS[s]}</div>
+        <div class="tl-time">${ts ? fmt(ts) : (cls === 'pending' ? 'Pending' : '—')}</div>
+      </div>
+    </div>`;
+            }).join('');
+
+            const actionHTML = {
+                WAITING: `<button class="action-btn btn-accept" onclick="act('accept')">✅ Accept Order</button>`,
+                ACCEPTED: `<button class="action-btn btn-prepare" onclick="act('preparing')">👨‍🍳 Start Preparing</button>`,
+                PREPARING: `<button class="action-btn btn-ready" onclick="act('ready')">🔔 Mark as Ready</button>`,
+                READY: `<button class="action-btn btn-complete" onclick="act('complete')">✔ Mark Completed</button>`,
+                COMPLETED: `<div class="btn-done">✔ Order Delivered Successfully</div>`
+            }[o.status] || '';
+
+            document.getElementById('mainContent').innerHTML = `
+    <div class="page-title">Order <span>#${String(o.order_id).slice(-6)}</span></div>
+    <div class="page-sub">Full details for this student order</div>
+
+    <div class="card">
+      <div class="card-title">📋 Order Overview</div>
+      <div class="order-id-badge">#${String(o.order_id).slice(-6)}</div>
+      <div class="status-pill ${o.status}">${STATUS_ICONS[o.status]} ${STATUS_LABELS[o.status]}</div>
+      <div class="meta-grid">
+        <div class="meta-item"><div class="meta-label">Total Price</div><div class="meta-value purple">₹${(o.price || 0).toFixed(0)}</div></div>
+        <div class="meta-item"><div class="meta-label">Items Count</div><div class="meta-value">${o.items_count}</div></div>
+        <div class="meta-item"><div class="meta-label">Est. Prep Time</div><div class="meta-value">${o.expected_time} min</div></div>
+        <div class="meta-item"><div class="meta-label">Placed At</div><div class="meta-value" style="font-size:14px">${fmt(o.created_time)}</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👤 Student Info</div>
+      <div class="student-info">
+        <div class="student-avatar">${initials}</div>
+        <div>
+          <div class="student-name">${o.student_name || 'Unknown Student'}</div>
+          <div class="student-meta">${o.enrollment_no || 'No enrollment no.'} ${o.student_phone ? '· 📞 +91 ' + o.student_phone : ''}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🍽️ Items Ordered</div>
+      <div class="items-list">${itemsHTML}</div>
+      <div class="total-row"><span class="total-label">Total</span><span class="total-amt">₹${(o.price || 0).toFixed(0)}</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📍 Order Timeline</div>
+      <div class="timeline">${timelineHTML}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Action</div>
+      ${actionHTML}
+    </div>`;
+
+            // Re-bind cursor on new elements
+            document.querySelectorAll('button,a').forEach(el => {
+                el.addEventListener('mouseenter', () => { ring.style.width = '50px'; ring.style.height = '50px'; ring.style.borderColor = 'rgba(201,124,255,.8)' });
+                el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; ring.style.borderColor = 'rgba(201,124,255,.5)' });
+            });
+        }
+
+        async function act(action) {
+            try {
+                const res = await fetch(`${API}/order/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ order_id: parseInt(orderId) }) });
+                if (!res.ok) throw new Error('Update failed');
+                showToast('✅ Status updated!', 'success');
+                setTimeout(load, 600);
+            } catch (e) { showToast('❌ Failed: ' + e.message, 'error'); }
+        }
+
+        function showToast(msg, type) { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast ${type} show`; setTimeout(() => t.classList.remove('show'), 3000) }
+
+        load();
+    </script>
+</body>
+
+</html>
