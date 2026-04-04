@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/student/(.*)", "destination": "/frontend/student/$1" },
+    { "source": "/canteen/(.*)", "destination": "/frontend/canteen/$1" },
+    { "source": "/common/(.*)", "destination": "/frontend/common/$1" }
+  ]
+}
