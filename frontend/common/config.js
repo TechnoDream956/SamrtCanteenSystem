@@ -9,7 +9,8 @@
  * You only need to change ONE line here and everything else updates automatically.
  */
 
-const RAILWAY_URL = "https://smartcanteensystem-1.onrender.com";  // ✅ Render backend
+// --- UPDATED TO MATCH YOUR RENDER DASHBOARD URL ---
+const RAILWAY_URL = "https://samrtcanteensystem.onrender.com"; 
 
 // Auto-select: use Railway URL in production, localhost in dev
 const API = RAILWAY_URL
