@@ -182,7 +182,7 @@ def send_email(to_addr, otp):
     </div>"""
 
     msg.attach(MIMEText(html, "html"))
-    with smtplib.SMTP("smtp.gmail.com", 587) as s:
+    with smtplib.SMTP("smtp-mail.outlook.com", 587) as s:
         s.starttls()
         s.login(SMTP_EMAIL, SMTP_PASSWORD)
         s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
@@ -298,7 +298,7 @@ def password_reset_request():
             </div>"""
             msg.attach(MIMEText(html, "html"))
             
-            with smtplib.SMTP("smtp.gmail.com", 587) as s:
+            with smtplib.SMTP("smtp-mail.outlook.com", 587) as s:
                 s.starttls()
                 s.login(SMTP_EMAIL, SMTP_PASSWORD)
                 s.sendmail(SMTP_EMAIL, email, msg.as_string())
