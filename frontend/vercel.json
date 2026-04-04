@@ -5,11 +5,27 @@
   "rewrites": [
     {
       "source": "/order-status",
-      "destination": "/order_status"
+      "destination": "/order_status.html"
     },
     {
-      "source": "/order_status",
-      "destination": "/order_status.html"
+      "source": "/canteen/login",
+      "destination": "/canteen/login.html"
+    },
+    {
+      "source": "/canteen/register",
+      "destination": "/canteen/register.html"
+    },
+    {
+      "source": "/canteen/dashboard",
+      "destination": "/canteen/dashboard.html"
+    },
+    {
+      "source": "/canteen/order-detail",
+      "destination": "/canteen/order_detail.html"
+    },
+    {
+      "source": "/canteen/order-status",
+      "destination": "/canteen/order_status.html"
     }
   ]
 }
