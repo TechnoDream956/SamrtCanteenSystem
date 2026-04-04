@@ -847,7 +847,7 @@
         <span class="chip">🍜 Noodles</span>
       </div>
       <div class="canteen-foot">
-        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="live-indicator" id="live-ind-1"><div class="live-dot"></div> Open Now</div>
         <div class="time-label">⏱ ~5 mins</div>
       </div>
       <button class="btn-canteen"><span>Order Now →</span></button>
@@ -864,7 +864,7 @@
         <span class="chip">🌿 Veg</span>
       </div>
       <div class="canteen-foot">
-        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="live-indicator" id="live-ind-2"><div class="live-dot"></div> Open Now</div>
         <div class="time-label">⏱ ~8 mins</div>
       </div>
       <button class="btn-canteen"><span>Order Now →</span></button>
@@ -881,7 +881,7 @@
         <span class="chip">🔥 Trending</span>
       </div>
       <div class="canteen-foot">
-        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="live-indicator" id="live-ind-3"><div class="live-dot"></div> Open Now</div>
         <div class="time-label">⏱ ~6 mins</div>
       </div>
       <button class="btn-canteen"><span>Order Now →</span></button>
@@ -898,7 +898,7 @@
         <span class="chip">♾️ Variety</span>
       </div>
       <div class="canteen-foot">
-        <div class="live-indicator"><div class="live-dot"></div> Open Now</div>
+        <div class="live-indicator" id="live-ind-4"><div class="live-dot"></div> Open Now</div>
         <div class="time-label">⏱ ~10 mins</div>
       </div>
       <button class="btn-canteen"><span>Order Now →</span></button>
@@ -1163,6 +1163,22 @@ window.addEventListener('scroll',()=>{
   document.getElementById('mobileMenu').classList.remove('open');
   document.getElementById('hamburger').classList.remove('open');
 },{ passive: true });
+
+// Fetch Real-time Canteen Status
+fetch(API + "/canteens/status")
+  .then(r => r.json())
+  .then(data => {
+    Object.keys(data).forEach(cId => {
+      const ind = document.getElementById("live-ind-" + cId);
+      if(!ind) return;
+      const count = data[cId];
+      let config = { col: "var(--tertiary)", text: "Fast" };
+      if(count >= 16) config = { col: "#ef4444", text: "Busy ⏳" };
+      else if(count >= 8) config = { col: "#facc15", text: "Moderate" };
+      
+      ind.innerHTML = `<div class="live-dot" style="background:${config.col}; box-shadow:0 0 8px ${config.col};"></div> <span style="color:${config.col};font-weight:700;">${config.text}</span> <span style="color:var(--muted);font-size:10px;margin-left:4px;">(${count} active)</span>`;
+    });
+  }).catch(()=>{});
 
 </script>
 </body>

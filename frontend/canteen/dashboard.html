@@ -452,25 +452,25 @@
 
   <!-- Stats -->
   <div class="stats-row">
-    <div class="stat-card s-total">
-      <div class="stat-label">Total Today</div>
-      <div class="stat-num" id="statTotal">0</div>
-      <div class="stat-sub">orders received</div>
+    <div class="stat-card s-total" style="background:rgba(142,255,113,0.05); border-color:rgba(142,255,113,0.3);">
+      <div class="stat-label" style="color:var(--tertiary);">Revenue Today</div>
+      <div class="stat-num" id="statRevenue" style="color:var(--tertiary);">₹0</div>
+      <div class="stat-sub">total earnings</div>
     </div>
     <div class="stat-card s-wait">
-      <div class="stat-label">Waiting</div>
-      <div class="stat-num" id="statWaiting">0</div>
-      <div class="stat-sub">need attention</div>
+      <div class="stat-label">Completed Today</div>
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-sub">served today</div>
     </div>
     <div class="stat-card s-prep">
-      <div class="stat-label">In Progress</div>
-      <div class="stat-num" id="statInProg">0</div>
-      <div class="stat-sub">being prepared</div>
+      <div class="stat-label">Active Orders</div>
+      <div class="stat-num" id="statActive">0</div>
+      <div class="stat-sub">wait + prep</div>
     </div>
-    <div class="stat-card s-done">
-      <div class="stat-label">Completed</div>
-      <div class="stat-num" id="statDone">0</div>
-      <div class="stat-sub">served today</div>
+    <div class="stat-card s-done" style="background:rgba(255,159,74,0.08); border-color:rgba(255,159,74,0.3);">
+      <div class="stat-label" style="color:var(--primary);">Needs Action</div>
+      <div class="stat-num" id="statWaiting" style="color:var(--primary);">0</div>
+      <div class="stat-sub">waiting acceptance</div>
     </div>
   </div>
 
@@ -675,11 +675,17 @@ async function updateStatus(orderId, action){
 }
 
 /* ── Stats ── */
-function updateStats(){
-  document.getElementById('statTotal').textContent   = allOrders.length;
+async function updateStats(){
   document.getElementById('statWaiting').textContent = allOrders.filter(o => o.status === 'WAITING').length;
-  document.getElementById('statInProg').textContent  = allOrders.filter(o => ['ACCEPTED','PREPARING'].includes(o.status)).length;
-  document.getElementById('statDone').textContent    = allOrders.filter(o => o.status === 'COMPLETED').length;
+  try {
+    const res = await fetch(`${API}/canteen/analytics`, { headers: { Authorization: `Bearer ${token}` } });
+    if(res.ok) {
+      const data = await res.json();
+      document.getElementById('statTotal').textContent = data.total_orders;
+      document.getElementById('statActive').textContent = data.active_orders;
+      document.getElementById('statRevenue').textContent = "₹" + data.revenue;
+    }
+  } catch(e){}
 }
 
 /* ── Filters ── */

@@ -413,6 +413,51 @@ def canteen_orders():
 
     return jsonify(result)
 
+# ── CANTEEN ANALYTICS ─────────────────────────────────────────────────────────
+@app.route("/canteen/analytics", methods=["GET"])
+@jwt_required()
+def canteen_analytics():
+    user = get_jwt_identity()
+    if user["role"] != "canteen":
+        return jsonify({"error": "Only canteen staff"}), 403
+
+    conn, ph = db_conn()
+    cur  = conn.cursor()
+    # Active orders
+    cur.execute(f"SELECT COUNT(*) FROM orders WHERE canteen_id = {ph} AND status IN ('WAITING', 'ACCEPTED', 'PREPARING')", (user["canteen_id"],))
+    active_count = cur.fetchone()[0]
+
+    # Today's completed orders & revenue (past 24h)
+    day_ago = time.time() - (24 * 3600)
+    cur.execute(f"SELECT COUNT(*), SUM(price) FROM orders WHERE canteen_id = {ph} AND status = 'COMPLETED' AND created_time >= {ph}", (user["canteen_id"], day_ago))
+    row = cur.fetchone()
+    completed_count = row[0] if row and row[0] else 0
+    revenue = row[1] if row and row[1] else 0
+
+    conn.close()
+
+    return jsonify({
+        "active_orders": active_count,
+        "total_orders": completed_count,
+        "revenue": revenue
+    })
+
+# ── CANTEENS STATUS ───────────────────────────────────────────────────────────
+@app.route("/canteens/status", methods=["GET"])
+def canteens_status():
+    conn, ph = db_conn()
+    cur  = conn.cursor()
+    cur.execute("SELECT canteen_id, COUNT(*) FROM orders WHERE status IN ('WAITING', 'ACCEPTED', 'PREPARING') GROUP BY canteen_id")
+    rows = cur.fetchall()
+    conn.close()
+
+    # Default to 0 for the 4 seeded canteens
+    result = {1: 0, 2: 0, 3: 0, 4: 0} 
+    for r in rows:
+        result[r[0]] = r[1]
+    
+    return jsonify(result)
+
 # ── ORDER STATUS ──────────────────────────────────────────────────────────────
 @app.route("/order/status/<int:oid>", methods=["GET"])
 @jwt_required()
