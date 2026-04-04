@@ -1,5 +1,15 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/order-status",
+      "destination": "/order_status"
+    },
+    {
+      "source": "/order_status",
+      "destination": "/order_status.html"
+    }
+  ]
 }
