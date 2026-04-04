@@ -298,11 +298,11 @@
           <input id="email" type="email" placeholder="you@bennett.edu.in" autocomplete="email" style="flex:1;"/>
           <button type="button" id="sendOtpBtn" onclick="sendOtp()" style="
             padding:0 16px;
-            background:linear-gradient(135deg,#c97cff,#6b6bff);
+            background:linear-gradient(135deg, var(--primary), var(--primary-2));
             border:none;border-radius:12px;
-            color:#fff;font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;
-            cursor:pointer;white-space:nowrap;transition:all 0.2s;
-            box-shadow:0 4px 14px rgba(201,124,255,0.3);
+            color:#1a0a00;font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;
+            cursor:none;white-space:nowrap;transition:all 0.2s;
+            box-shadow:0 4px 14px rgba(255,140,0,0.3);
           ">Send OTP</button>
         </div>
         <div style="font-size:11px;color:#acaab5;margin-top:6px;">&#x1F512; Only @bennett.edu.in emails accepted &bull; Enrollment no. auto-extracted</div>
@@ -318,17 +318,18 @@
                  oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)" />
           <button type="button" onclick="verifyOtp()" style="
             padding:0 18px;
-            background:linear-gradient(135deg,#4fffb0,#6bb8ff);
+            background:linear-gradient(135deg, var(--primary), var(--amber));
             border:none;border-radius:12px;
-            color:#001a12;font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;
-            cursor:pointer;white-space:nowrap;
+            color:#1a0a00;font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;
+            cursor:none;white-space:nowrap;transition:all 0.2s;
+            box-shadow:0 4px 14px rgba(255,140,0,0.2);
           ">&#x2713; Verify</button>
         </div>
         <div id="otpStatus" style="font-size:11px;margin-top:6px;"></div>
       </div>
 
       <!-- Verified badge -->
-      <div id="emailVerifiedBadge" style="display:none;padding:8px 14px;background:rgba(79,255,176,0.08);border:0.5px solid rgba(79,255,176,0.25);border-radius:10px;font-size:12px;font-weight:700;color:#4fffb0;margin-bottom:4px;">
+      <div id="emailVerifiedBadge" style="display:none;padding:8px 14px;background:rgba(255,159,74,0.08);border:0.5px solid rgba(255,159,74,0.25);border-radius:10px;font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px;">
         &#x2705; College email verified!
       </div>
 
