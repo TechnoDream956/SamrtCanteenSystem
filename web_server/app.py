@@ -6,9 +6,12 @@ import time, json, os, subprocess
 
 app = Flask(__name__)
 
-# ── CORS: JWT uses headers, so we don't need credentials/cookies enabled.
+# ── CORS: Simple wildcard for production, more robust for cross-site fetches
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*")
-CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=False)
+CORS(app, origins=ALLOWED_ORIGINS, 
+     supports_credentials=False,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "OPTIONS"])
 
 # ── JWT: reads JWT_SECRET_KEY or API_SECRET (Railway sets API_SECRET) ─────────
 app.config["JWT_SECRET_KEY"] = (
