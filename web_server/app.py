@@ -236,10 +236,17 @@ def verify_otp():
 # We use the C++ 'auth_tool' for core logic to satisfy performance and logic requirements.
 
 def call_canteen_tool(args):
-    """Helper to call our C++ canteen utility."""
+    """Helper to call our C++ canteen utility with Render-safe path resolution."""
     try:
-        # Path to the compiled C++ binary
-        binary = os.path.join(os.path.dirname(__file__), "..", "backend", "bin", "canteen_tool")
+        # Path resolution that works both locally and on Render Linux
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        binary = os.path.join(base_dir, "backend", "bin", "canteen_tool")
+        
+        # Performance check
+        if not os.path.exists(binary):
+            print(f"CRITICAL: C++ Binary missing at {binary}")
+            return None
+            
         result = subprocess.run([binary] + args, capture_output=True, text=True)
         return result
     except Exception as e:
