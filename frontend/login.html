@@ -9,21 +9,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:         #0d0d16;
-      --bg-low:     #13121c;
-      --bg-card:    #1f1e2b;
-      --bg-high:    #252532;
-      --primary:    #ff9f4a;
-      --primary-2:  #fd8b00;
-      --secondary:  #c97cff;
-      --tertiary:   #8eff71;
-      --on-surface: #e7e4f0;
-      --muted:      #acaab5;
-      --outline:    #484751;
+      --bg:          #0d0d16;
+      --bg-low:      #13121c;
+      --bg-card:     #1f1e2b;
+      --bg-high:     #252532;
+      --primary:     #ff9f4a;
+      --primary-2:   #fd8b00;
+      --secondary:   #c97cff;
+      --tertiary:    #8eff71;
+      --amber:       #ffe393;
+      --on-surface:  #e7e4f0;
+      --muted:       #acaab5;
+      --outline:     #484751;
+      --radius:      12px;
+      --radius-lg:   20px;
+      --radius-full: 9999px;
     }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
       font-family: 'Manrope', sans-serif;
       background: var(--bg);
@@ -373,13 +378,13 @@
         <div class="divider-line"></div>
       </div>
 
-      <div class="form-footer">
-        <a href="/register" style="display:block;padding:12px;background:rgba(255,159,74,0.07);border:0.5px solid rgba(255,159,74,0.25);border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;color:var(--primary);transition:all .3s">
+       <div class="form-footer">
+        <a href="/register" style="display:block;padding:14px;background:rgba(255,159,74,0.08);border:0.5px solid rgba(255,159,74,0.25);border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:800;text-decoration:none;color:var(--primary);transition:all .3s;box-shadow:0 4px 12px rgba(255,159,74,0.1)">
           Create your B.U Eats account →
         </a>
       </div>
 
-      <div class="secure-note">🔒 Secured with JWT · Your data stays private</div>
+      <div class="secure-note">🔒 Secured with JWT · Track your food live</div>
     </div>
   </div>
 
