@@ -6,21 +6,11 @@ import time, json, os, subprocess
 
 app = Flask(__name__)
 
-# ── CORS: Simple wildcard for production, more robust for cross-site fetches
-# ── CORS: Production-ready handling for Vercel and local dev
-CORP_ORIGINS = [
-    "https://samrt-canteen-system.vercel.app", 
-    "https://samrtcanteensystem.vercel.app",  # backup if misspelled
-    "http://localhost:5500",
-    "http://127.0.0.1:5500"
-]
-# If env var exists, add it to the list
-if os.environ.get("ALLOWED_ORIGINS"):
-    CORP_ORIGINS.append(os.environ.get("ALLOWED_ORIGINS"))
-
-CORS(app, origins=CORP_ORIGINS, 
+# ── CORS: Production-ready Universal Policy for Launch
+CORS(app, 
+     origins="*", 
      supports_credentials=False,
-     allow_headers=["Content-Type", "Authorization", "Accept"],
+     allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
      methods=["GET", "POST", "OPTIONS"])
 
 # ── JWT: reads JWT_SECRET_KEY or API_SECRET (Railway sets API_SECRET) ─────────
@@ -38,10 +28,19 @@ def handle_exception(e):
     if isinstance(e, HTTPException): return e
     
     # Return JSON with error details
-    # CORS is normally handled by the middleware, but for 500s we ensure it:
+    # FORCE EXPLICIT HEADERS for CORS-safe error reporting
     response = jsonify({"error": f"🔥 SERVER ERROR: {str(e)}"})
-    response.headers.add("Access-Control-Allow-Origin", request.headers.get("Origin", "*"))
+    response.headers["Access-Control-Allow-Origin"] = "*"
     return response, 500
+
+@app.route("/")
+def health_check():
+    return jsonify({
+        "status": "ok",
+        "service": "B.U Eats API",
+        "version": "2.1",
+        "db": "postgresql" if USE_POSTGRES else "sqlite"
+    }), 200
 
 # ── Database: PostgreSQL on Railway, SQLite locally ───────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
