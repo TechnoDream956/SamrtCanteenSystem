@@ -181,9 +181,15 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 otp_store = {}
+import random
+import secrets
 
 SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+
+def generate_otp_python():
+    """Pure-Python 6-digit OTP — used when C++ binary is unavailable (e.g. wrong arch on Render)."""
+    return str(secrets.randbelow(900000) + 100000)  # always 6 digits, cryptographically random
 
 def send_email(to_addr, otp):
     msg            = MIMEMultipart("alternative")
@@ -217,12 +223,14 @@ def send_otp():
     if not email.endswith("@bennett.edu.in"):
         return jsonify({"error": "Only @bennett.edu.in emails are accepted."}), 400
 
-    # --- CALL C++ FOR OTP GENERATION ---
+    # --- OTP GENERATION: Try C++ first, fall back to Python if binary fails ---
     res = call_canteen_tool(["--generate-otp"])
-    if not res or res.returncode != 0:
-        return jsonify({"error": "Failed to generate OTP in C++."}), 500
-    
-    otp = res.stdout.strip()
+    if res and res.returncode == 0 and res.stdout.strip():
+        otp = res.stdout.strip()
+        print(f"OTP generated via C++ binary")
+    else:
+        otp = generate_otp_python()
+        print(f"OTP generated via Python fallback (C++ binary unavailable or failed)")
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
     dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
@@ -291,12 +299,13 @@ def password_reset_request():
     if not user:
         return jsonify({"error": "No account found with this email."}), 404
 
-    # --- CALL C++ FOR OTP GENERATION ---
+    # --- OTP GENERATION: Try C++ first, fall back to Python if binary fails ---
     res = call_canteen_tool(["--generate-otp"])
-    if not res or res.returncode != 0:
-        return jsonify({"error": "Failed to generate recovery code in C++."}), 500
-    
-    otp = res.stdout.strip()
+    if res and res.returncode == 0 and res.stdout.strip():
+        otp = res.stdout.strip()
+    else:
+        otp = generate_otp_python()
+        print("Reset OTP generated via Python fallback (C++ binary unavailable)")
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
     dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
@@ -339,10 +348,15 @@ def password_reset_confirm():
     otp   = (request.json.get("otp")   or "").strip()
     new_password = (request.json.get("password") or "").strip()
 
-    # --- CALL C++ FOR PASSWORD VALIDATION ---
+    # --- PASSWORD VALIDATION: Try C++ first, fall back to Python ---
     res = call_canteen_tool(["--validate-password", new_password])
-    if not res or res.returncode != 0:
-        return jsonify({"error": "Password does not meet C++ security requirements (must be >= 6 chars and contain a digit)."}), 400
+    if res is None:
+        # C++ binary unavailable — validate in Python
+        import re
+        if len(new_password) < 6 or not re.search(r'\d', new_password):
+            return jsonify({"error": "Password must be at least 6 characters and contain a digit."}), 400
+    elif res.returncode != 0:
+        return jsonify({"error": "Password does not meet security requirements (must be >= 6 chars and contain a digit)."}), 400
 
     record = otp_store.get(email)
     if not record:
