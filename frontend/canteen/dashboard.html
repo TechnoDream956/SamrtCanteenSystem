@@ -943,14 +943,19 @@
 
     <!-- OS Algorithm info panel -->
     <div class="algo-panel">
-      <div class="algo-icon">⚙️</div>
+      <div class="algo-icon">🟢</div>
       <div class="algo-text">
-        <h3>SJF + Aging Priority Algorithm</h3>
-        <p>Orders are automatically sorted by an OS scheduling algorithm. Lower score = higher priority. Waiting orders
-          gain priority over time (aging prevents starvation).</p>
+        <h3 id="canteenStatusTitle">Canteen is Open</h3>
+        <p id="canteenStatusSub">Accepting and processing student orders right now. Orders auto-sort by wait time —
+          oldest waiting orders appear first.</p>
       </div>
-      <div class="algo-formula">
-        Priority = (prep_time × 2) + (items × 3) − (wait_secs / 10)
+      <div style="display:flex;gap:10px;margin-left:auto;flex-wrap:wrap;align-items:center;">
+        <div
+          style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber);background:rgba(224,184,255,0.07);border:0.5px solid rgba(224,184,255,0.2);border-radius:8px;padding:8px 14px;white-space:nowrap;"
+          id="shiftTime">🕐 Shift started at --:--</div>
+        <button onclick="toggleCanteenStatus()" id="statusToggleBtn"
+          style="padding:8px 18px;background:rgba(255,107,107,0.1);border:0.5px solid rgba(255,107,107,0.3);color:#fca5a5;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;border-radius:9999px;cursor:pointer;transition:all 0.2s;">🔴
+          Close Canteen</button>
       </div>
     </div>
 
@@ -1221,6 +1226,38 @@
     /* ── Auto-refresh every 10s ── */
     loadOrders();
     setInterval(loadOrders, 10000);
+
+    /* ── Shift start time ── */
+    const shiftStart = new Date();
+    document.getElementById('shiftTime').textContent =
+      '🕐 Shift started at ' + shiftStart.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    /* ── Canteen open/close toggle (local UI only) ── */
+    let canteenOpen = true;
+    function toggleCanteenStatus() {
+      canteenOpen = !canteenOpen;
+      const icon = document.querySelector('.algo-panel .algo-icon');
+      const title = document.getElementById('canteenStatusTitle');
+      const sub = document.getElementById('canteenStatusSub');
+      const btn = document.getElementById('statusToggleBtn');
+      if (canteenOpen) {
+        icon.textContent = '🟢';
+        title.textContent = 'Canteen is Open';
+        sub.textContent = 'Accepting and processing student orders right now. Orders auto-sort by wait time — oldest waiting orders appear first.';
+        btn.textContent = '🔴 Close Canteen';
+        btn.style.background = 'rgba(255,107,107,0.1)';
+        btn.style.borderColor = 'rgba(255,107,107,0.3)';
+        btn.style.color = '#fca5a5';
+      } else {
+        icon.textContent = '🔴';
+        title.textContent = 'Canteen is Closed';
+        sub.textContent = 'No new orders are being accepted. Complete remaining orders and close out for the day.';
+        btn.textContent = '🟢 Reopen Canteen';
+        btn.style.background = 'rgba(79,255,176,0.1)';
+        btn.style.borderColor = 'rgba(79,255,176,0.3)';
+        btn.style.color = 'var(--green)';
+      }
+    }
   </script>
 </body>
 
