@@ -441,7 +441,7 @@
     <div id="msg"></div>
 
     <div class="form-footer" style="margin-top:20px;">
-      Already have an account? <a href="login.html">Sign in →</a>
+      Already have an account? <a href="/login">Sign in →</a>
     </div>
   </div>
 </div>
@@ -553,7 +553,7 @@ function register(){
     msgEl.className='msg msg-success';
     msgEl.textContent='🎉 Account created! Redirecting to login...';
     btnText.innerHTML='✅ Account Created!';
-    setTimeout(()=>window.location='login.html',1500);
+    setTimeout(()=>window.location='/login',1500);
   })
   .catch(()=>{
     msgEl.className='msg msg-error';

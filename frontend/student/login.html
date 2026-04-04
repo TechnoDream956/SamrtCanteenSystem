@@ -333,7 +333,7 @@
   <div class="panel-right">
     <div class="form-wrap">
 
-      <a href="index.html" class="form-logo">
+      <a href="/" class="form-logo">
         <div class="form-logo-badge">🍽️</div>
         <span><span class="grad">B.U</span> Eats</span>
       </a>
@@ -374,7 +374,7 @@
       </div>
 
       <div class="form-footer">
-        <a href="register.html" style="display:block;padding:12px;background:rgba(255,159,74,0.07);border:0.5px solid rgba(255,159,74,0.25);border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;color:var(--primary);transition:all .3s">
+        <a href="/register" style="display:block;padding:12px;background:rgba(255,159,74,0.07);border:0.5px solid rgba(255,159,74,0.25);border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;color:var(--primary);transition:all .3s">
           Create your B.U Eats account →
         </a>
       </div>
@@ -489,7 +489,7 @@ async function doLogin(e){
     btn.style.background='linear-gradient(135deg,#22c55e,#16a34a)';
 
     setTimeout(()=>{
-      const redirect=localStorage.getItem('redirectAfterLogin')||'index.html';
+      const redirect=localStorage.getItem('redirectAfterLogin')||'/';
       localStorage.removeItem('redirectAfterLogin');
       window.location=redirect;
     },600);
