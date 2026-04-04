@@ -6,20 +6,35 @@ import time, json, os, subprocess
 
 app = Flask(__name__)
 
-# ── CORS: explicitly allow Vercel frontend + all origins
+# ── CORS: explicitly allow all origins including Vercel
 CORS(app, 
      origins="*", 
      supports_credentials=False,
      allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
      methods=["GET", "POST", "OPTIONS"])
 
-# Ensure CORS headers are present even on error responses
+# Force CORS headers on every response including errors and OPTIONS preflight
 @app.after_request
 def apply_cors(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, X-Requested-With"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
+
+# Handle OPTIONS preflight requests explicitly
+@app.route("/send-otp", methods=["OPTIONS"])
+@app.route("/verify-otp", methods=["OPTIONS"])
+@app.route("/register", methods=["OPTIONS"])
+@app.route("/login", methods=["OPTIONS"])
+@app.route("/password-reset/request", methods=["OPTIONS"])
+@app.route("/password-reset/confirm", methods=["OPTIONS"])
+def handle_options(**kwargs):
+    from flask import Response
+    r = Response("", status=200)
+    r.headers["Access-Control-Allow-Origin"] = "*"
+    r.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept"
+    r.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return r
 
 # ── JWT: reads JWT_SECRET_KEY or API_SECRET (Railway sets API_SECRET) ─────────
 app.config["JWT_SECRET_KEY"] = (
