@@ -249,7 +249,7 @@ def send_email(to_addr, otp):
       <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
     </div>"""
     payload = json.dumps({
-        "sender": {"name": "B.U Eats", "email": "bueatsnoreply@gmail.com"},
+        "sender": {"name": "B.U Eats", "email": "bueatsoncampus@gmail.com"},
         "to": [{"email": to_addr}],
         "subject": f"Your B.U Eats verification code: {otp}",
         "htmlContent": html
@@ -369,7 +369,7 @@ def password_reset_request():
               </div>
             </div>"""
             payload = json.dumps({
-                "sender": {"name": "B.U Eats", "email": "bueatsnoreply@gmail.com"},
+                "sender": {"name": "B.U Eats", "email": "bueatsoncampus@gmail.com"},
                 "to": [{"email": email}],
                 "subject": f"Your B.U Eats password reset code: {otp}",
                 "htmlContent": html
