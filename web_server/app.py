@@ -6,12 +6,20 @@ import time, json, os, subprocess
 
 app = Flask(__name__)
 
-# ── CORS: Production-ready Universal Policy for Launch
+# ── CORS: explicitly allow Vercel frontend + all origins
 CORS(app, 
      origins="*", 
      supports_credentials=False,
      allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
      methods=["GET", "POST", "OPTIONS"])
+
+# Ensure CORS headers are present even on error responses
+@app.after_request
+def apply_cors(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
 
 # ── JWT: reads JWT_SECRET_KEY or API_SECRET (Railway sets API_SECRET) ─────────
 app.config["JWT_SECRET_KEY"] = (
@@ -238,11 +246,11 @@ def send_otp():
         try:
             send_email(email, otp)
         except Exception as e:
-            return jsonify({"error": f"Email send failed: {str(e)}"}), 500
+            return jsonify({"error": f"Email send failed: {str(e)}"}), 200
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
 
     # Dev mode — no SMTP configured, return OTP in response
-    return jsonify({"msg": "DEV MODE: OTP generated via C++ (no SMTP configured)",
+    return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
                     "dev_mode": True, "otp": otp})
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
@@ -334,7 +342,7 @@ def password_reset_request():
                 s.login(SMTP_EMAIL, SMTP_PASSWORD)
                 s.sendmail(SMTP_EMAIL, email, msg.as_string())
         except Exception as e:
-            return jsonify({"error": f"Email send failed: {str(e)}"}), 500
+            return jsonify({"error": f"Email send failed: {str(e)}"}), 200
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
 
     return jsonify({"msg": "DEV MODE: Reset OTP generated via C++", "dev_mode": True, "otp": otp})
