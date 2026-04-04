@@ -17,6 +17,14 @@ app.config["JWT_SECRET_KEY"] = (
     "local-dev-secret-change-in-prod"
 )
 jwt = JWTManager(app)
+# --- GLOBAL ERROR HANDLER FOR CORS-SAFE ERROR REPORTING ---
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Pass through HTTP errors
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException): return e
+    # Return JSON with CORS headers for everything else
+    return jsonify({"error": f"🔥 SERVER CRASH: {str(e)}"}), 500
 
 # ── Database: PostgreSQL on Railway, SQLite locally ───────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")

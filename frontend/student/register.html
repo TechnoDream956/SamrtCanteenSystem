@@ -592,7 +592,7 @@ async function sendOtp(){
 
     if(!res.ok){
       msgEl.className='msg msg-error';
-      msgEl.textContent='❌ ' + data.error;
+      msgEl.textContent='❌ ' + (data.error || data.msg || 'OTP failed');
       btn.disabled=false; btn.textContent='Send OTP';
       return;
     }
@@ -613,10 +613,9 @@ async function sendOtp(){
     startTimer(600);
     btn.textContent = 'Resend OTP';
     btn.disabled = false;
-
   } catch(e){
     msgEl.className='msg msg-error';
-    msgEl.textContent='❌ Server unreachable.';
+    msgEl.textContent='❌ Connection failed: ' + e.message;
     btn.disabled=false; btn.textContent='Send OTP';
   }
 }
