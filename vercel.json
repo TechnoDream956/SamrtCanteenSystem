@@ -7,6 +7,8 @@
     { "source": "/login", "destination": "/frontend/student/login.html" },
     { "source": "/register", "destination": "/frontend/student/register.html" },
     { "source": "/canteen", "destination": "/frontend/canteen/login.html" },
+    { "source": "/frontend/register", "destination": "/frontend/student/register.html" },
+    { "source": "/frontend/login", "destination": "/frontend/student/login.html" },
     { "source": "/history", "destination": "/frontend/student/history.html" },
     { "source": "/order-status", "destination": "/frontend/student/order_status.html" }
   ]
