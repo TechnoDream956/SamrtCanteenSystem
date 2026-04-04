@@ -223,26 +223,18 @@ def seed():
 seed()
 
 # ── In-memory OTP store {email: {otp, expires, verified}} ───────────────────
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 otp_store = {}
-import random
 import secrets
 
-SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 
 def generate_otp_python():
-    """Pure-Python 6-digit OTP — used when C++ binary is unavailable (e.g. wrong arch on Render)."""
-    return str(secrets.randbelow(900000) + 100000)  # always 6 digits, cryptographically random
+    """Pure-Python 6-digit OTP."""
+    return str(secrets.randbelow(900000) + 100000)
 
 def send_email(to_addr, otp):
-    msg            = MIMEMultipart("alternative")
-    msg["Subject"] = f"🍽️ B.U Eats — Your Verification Code: {otp}"
-    msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
-    msg["To"]      = to_addr
-
+    """Send OTP via Resend HTTP API — works on Render free tier (no SMTP ports needed)."""
+    import urllib.request
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
       <div style="text-align:center;margin-bottom:24px;">
@@ -256,11 +248,20 @@ def send_email(to_addr, otp):
       </div>
       <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
     </div>"""
-
-    msg.attach(MIMEText(html, "html"))
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-        s.login(SMTP_EMAIL, SMTP_PASSWORD)
-        s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+    payload = json.dumps({
+        "from": "B.U Eats <onboarding@resend.dev>",
+        "to": [to_addr],
+        "subject": f"Your B.U Eats verification code: {otp}",
+        "html": html
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return resp.read()
 
 @app.route("/send-otp", methods=["POST"])
 def send_otp():
@@ -278,7 +279,7 @@ def send_otp():
         print(f"OTP generated via Python fallback (C++ binary unavailable or failed)")
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
-    dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
+    dev_mode = not bool(RESEND_API_KEY)
 
     if not dev_mode:
         try:
@@ -287,8 +288,8 @@ def send_otp():
             return jsonify({"error": f"Email send failed: {str(e)}"}), 200
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
 
-    # Dev mode — no SMTP configured, return OTP in response
-    return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
+    # Dev mode — no Resend API key configured, return OTP in response
+    return jsonify({"msg": "DEV MODE: OTP generated (no RESEND_API_KEY configured)",
                     "dev_mode": True, "otp": otp})
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
@@ -353,37 +354,39 @@ def password_reset_request():
         print("Reset OTP generated via Python fallback (C++ binary unavailable)")
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
-    dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
+    dev_mode = not bool(RESEND_API_KEY)
 
     if not dev_mode:
         try:
-            msg            = MIMEMultipart("alternative")
-            msg["Subject"] = f"🔐 B.U Eats — Password Reset Code: {otp}"
-            msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
-            msg["To"]      = email
-            
+            import urllib.request
             html = f"""
             <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="font-size:48px;">&#x1F512;</div>
-                <h2 style="color:#ff9f4a;margin:8px 0;font-size:22px;">Password Reset</h2>
-                <p style="color:#9998aa;font-size:13px;">Use the code below to reset your password</p>
-              </div>
+              <div style="text-align:center;"><div style="font-size:48px;">&#x1F512;</div>
+                <h2 style="color:#ff9f4a;">Password Reset</h2></div>
               <div style="background:#1e1d2e;border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
                 <div style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ffe393;font-family:monospace;">{otp}</div>
-                <p style="color:#9998aa;font-size:12px;margin-top:8px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>.</p>
+                <p style="color:#9998aa;font-size:12px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>.</p>
               </div>
             </div>"""
-            msg.attach(MIMEText(html, "html"))
-            
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-                s.login(SMTP_EMAIL, SMTP_PASSWORD)
-                s.sendmail(SMTP_EMAIL, email, msg.as_string())
+            payload = json.dumps({
+                "from": "B.U Eats <onboarding@resend.dev>",
+                "to": [email],
+                "subject": f"Your B.U Eats password reset code: {otp}",
+                "html": html
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=payload,
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                resp.read()
         except Exception as e:
             return jsonify({"error": f"Email send failed: {str(e)}"}), 200
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
 
-    return jsonify({"msg": "DEV MODE: Reset OTP generated via C++", "dev_mode": True, "otp": otp})
+    return jsonify({"msg": "DEV MODE: Reset OTP generated", "dev_mode": True, "otp": otp})
 
 @app.route("/password-reset/confirm", methods=["POST"])
 def password_reset_confirm():
