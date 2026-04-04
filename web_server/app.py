@@ -226,14 +226,14 @@ seed()
 otp_store = {}
 import secrets
 
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
 
 def generate_otp_python():
     """Pure-Python 6-digit OTP."""
     return str(secrets.randbelow(900000) + 100000)
 
 def send_email(to_addr, otp):
-    """Send OTP via Resend HTTP API — works on Render free tier (no SMTP ports needed)."""
+    """Send OTP via Brevo HTTP API — works on Render free tier."""
     import urllib.request
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
@@ -249,15 +249,15 @@ def send_email(to_addr, otp):
       <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
     </div>"""
     payload = json.dumps({
-        "from": "B.U Eats <onboarding@resend.dev>",
-        "to": [to_addr],
+        "sender": {"name": "B.U Eats", "email": "bueatsnoreply@gmail.com"},
+        "to": [{"email": to_addr}],
         "subject": f"Your B.U Eats verification code: {otp}",
-        "html": html
+        "htmlContent": html
     }).encode("utf-8")
     req = urllib.request.Request(
-        "https://api.resend.com/emails",
+        "https://api.brevo.com/v3/smtp/email",
         data=payload,
-        headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+        headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
         method="POST"
     )
     with urllib.request.urlopen(req, timeout=10) as resp:
@@ -279,7 +279,7 @@ def send_otp():
         print(f"OTP generated via Python fallback (C++ binary unavailable or failed)")
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
-    dev_mode = not bool(RESEND_API_KEY)
+    dev_mode = not bool(BREVO_API_KEY)
 
     if not dev_mode:
         try:
@@ -354,7 +354,7 @@ def password_reset_request():
         print("Reset OTP generated via Python fallback (C++ binary unavailable)")
     otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
-    dev_mode = not bool(RESEND_API_KEY)
+    dev_mode = not bool(BREVO_API_KEY)
 
     if not dev_mode:
         try:
@@ -369,15 +369,15 @@ def password_reset_request():
               </div>
             </div>"""
             payload = json.dumps({
-                "from": "B.U Eats <onboarding@resend.dev>",
-                "to": [email],
+                "sender": {"name": "B.U Eats", "email": "bueatsnoreply@gmail.com"},
+                "to": [{"email": email}],
                 "subject": f"Your B.U Eats password reset code: {otp}",
-                "html": html
+                "htmlContent": html
             }).encode("utf-8")
             req = urllib.request.Request(
-                "https://api.resend.com/emails",
+                "https://api.brevo.com/v3/smtp/email",
                 data=payload,
-                headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+                headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
                 method="POST"
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
