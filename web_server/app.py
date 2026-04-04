@@ -6,10 +6,33 @@ import time, json, os, subprocess
 
 app = Flask(__name__)
 
-# ── CORS: explicitly allow all origins including Vercel
-CORS(app, 
-     origins="*", 
-     supports_credentials=False,
+# ── WSGI-level CORS middleware — runs before Flask, catches ALL responses ──────
+class CORSMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+    def __call__(self, environ, start_response):
+        if environ.get("REQUEST_METHOD") == "OPTIONS":
+            headers = [
+                ("Access-Control-Allow-Origin", "*"),
+                ("Access-Control-Allow-Methods", "GET, POST, OPTIONS"),
+                ("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept"),
+                ("Content-Length", "0"),
+            ]
+            start_response("200 OK", headers)
+            return [b""]
+        def cors_start_response(status, headers, exc_info=None):
+            headers = [(k, v) for k, v in headers
+                       if k.lower() != "access-control-allow-origin"]
+            headers.append(("Access-Control-Allow-Origin", "*"))
+            headers.append(("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept"))
+            headers.append(("Access-Control-Allow-Methods", "GET, POST, OPTIONS"))
+            return start_response(status, headers, exc_info)
+        return self.wsgi_app(environ, cors_start_response)
+
+app.wsgi_app = CORSMiddleware(app.wsgi_app)
+
+# ── Flask-CORS as backup
+CORS(app, origins="*", supports_credentials=False,
      allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
      methods=["GET", "POST", "OPTIONS"])
 
