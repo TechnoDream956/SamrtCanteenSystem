@@ -280,6 +280,29 @@
       gap: 12px;
     }
 
+    .btn-welcome {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, .04);
+      border: .5px solid rgba(255, 255, 255, .08);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-decoration: none;
+      transition: all .2s;
+      cursor: none;
+      letter-spacing: .3px;
+    }
+
+    .btn-welcome:hover {
+      background: rgba(255, 255, 255, .08);
+      color: var(--on-surface);
+    }
+
+
     .btn-ghost {
       padding: 9px 22px;
       background: transparent;
@@ -1497,10 +1520,14 @@
     <div class="nav-btns" id="navBtns">
       <!-- Populated by JS based on login state -->
     </div>
-    <!-- Hamburger (mobile only) -->
-    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="nav-btns" style="display:flex;align-items:center;gap:12px;">
+      <a href="/" class="btn-welcome">← Welcome</a>
+      <div id="nav-user-btns" style="display:flex;align-items:center;gap:12px;">
+      </div>
+      <!-- Hamburger (mobile only) -->
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
   </nav>
 
   <!-- Mobile slide-down menu -->

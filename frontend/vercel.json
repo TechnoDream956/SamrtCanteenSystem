@@ -12,6 +12,10 @@
       "destination": "/order_status.html"
     },
     {
+      "source": "/canteen",
+      "destination": "/canteen/index.html"
+    },
+    {
       "source": "/canteen/login",
       "destination": "/canteen/login.html"
     },
