@@ -4,12 +4,8 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/welcome.html"
-    },
-    {
       "source": "/home",
-      "destination": "/index.html"
+      "destination": "/home.html"
     },
     {
       "source": "/order-status",

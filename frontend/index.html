@@ -4,15 +4,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>B.U Eats | Campus Food Ordering</title>
-  <meta name="description"
-    content="Order from your favourite campus canteens instantly. B.U Eats — skip the queue, enjoy the food." />
+  <title>B.U Eats — Campus Dining</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap"
     rel="stylesheet" />
-  <script src="common/config.js?v=13"></script>
   <style>
+    :root {
+      --bg: #05050f;
+      --orange: #ff9f4a;
+      --orange-d: #c96800;
+      --purple: #c97cff;
+      --purple-d: #5b21b6;
+      --text: #ede8ff;
+      --muted: #5a5770;
+      --line: rgba(255, 255, 255, 0.05);
+    }
+
     *,
     *::before,
     *::after {
@@ -21,1448 +29,595 @@
       padding: 0;
     }
 
-    html {
-      scroll-behavior: smooth;
-    }
-
-    :root {
-      --bg: #0d0d16;
-      --bg-low: #13121c;
-      --bg-card: #1f1e2b;
-      --bg-high: #252532;
-      --primary: #ff9f4a;
-      --primary-2: #fd8b00;
-      --secondary: #c97cff;
-      --tertiary: #8eff71;
-      --amber: #ffe393;
-      --on-surface: #e7e4f0;
-      --muted: #acaab5;
-      --outline: #484751;
-      --radius: 12px;
-      --radius-lg: 20px;
-      --radius-full: 9999px;
-    }
-
+    html,
     body {
-      font-family: 'Manrope', sans-serif;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: var(--bg);
-      color: var(--on-surface);
-      min-height: 100vh;
-      overflow-x: hidden;
+      font-family: 'Cabinet Grotesk', sans-serif;
+      color: var(--text);
       cursor: none;
     }
 
-    /* ── Custom cursor ─────────────────────────────────────── */
-    #cursor-dot {
+    @media (max-width: 700px) {
+
+      html,
+      body {
+        overflow-y: auto;
+      }
+    }
+
+    /* cursor */
+    #cur {
       width: 8px;
       height: 8px;
-      background: var(--primary);
+      background: #fff;
       border-radius: 50%;
       position: fixed;
-      top: 0;
-      left: 0;
       pointer-events: none;
       z-index: 9999;
-      transition: transform 0.1s ease;
+      mix-blend-mode: difference;
+      transform: translate(-50%, -50%);
+      transition: transform .2s;
     }
 
-    #cursor-ring {
-      width: 36px;
-      height: 36px;
-      border: 1.5px solid rgba(255, 159, 74, 0.5);
+    #cur.big {
+      transform: translate(-50%, -50%) scale(6);
+      background: rgba(255, 255, 255, .08);
+    }
+
+    #cur-trail {
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255, 255, 255, .2);
       border-radius: 50%;
       position: fixed;
-      top: 0;
-      left: 0;
       pointer-events: none;
       z-index: 9998;
-      transition: width 0.3s ease, height 0.3s ease, left 0.12s ease, top 0.12s ease, opacity 0.3s ease;
+      transform: translate(-50%, -50%);
+      transition: left .12s, top .12s, width .3s, height .3s;
     }
 
-    body:hover #cursor-ring {
-      opacity: 1;
-    }
-
-    /* ── Scrollbar ──────────────────────────────────────────── */
-    ::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--bg);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--primary);
-      border-radius: 5px;
-    }
-
-    /* ── Background: ambient orbs ───────────────────────────── */
-    .bg-orbs {
+    /* SVG background lines */
+    #lines {
       position: fixed;
       inset: 0;
       z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
       opacity: 0;
-      animation: orbFloat ease-in-out infinite;
+      animation: fadeInLines 1.5s .3s forwards;
     }
 
-    .orb-1 {
-      width: 600px;
-      height: 600px;
-      background: rgba(255, 140, 0, 0.08);
-      top: -200px;
-      left: -150px;
-      animation-duration: 12s;
-      animation-delay: 0s;
+    @keyframes fadeInLines {
+      to {
+        opacity: 1;
+      }
     }
 
-    .orb-2 {
-      width: 500px;
-      height: 500px;
-      background: rgba(144, 0, 222, 0.07);
-      bottom: -150px;
-      right: -100px;
-      animation-duration: 15s;
-      animation-delay: -5s;
+    /* noise grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: -50%;
+      width: 200%;
+      height: 200%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: .5;
+      animation: grainAnim 0.5s steps(2) infinite;
     }
 
-    .orb-3 {
-      width: 350px;
-      height: 350px;
-      background: rgba(142, 255, 113, 0.04);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation-duration: 10s;
-      animation-delay: -3s;
-    }
+    @keyframes grainAnim {
+      0% {
+        transform: translate(0, 0)
+      }
 
-    @keyframes orbFloat {
-
-      0%,
-      100% {
-        opacity: 0.6;
-        transform: translateY(0) scale(1);
+      25% {
+        transform: translate(-2%, 2%)
       }
 
       50% {
-        opacity: 1;
-        transform: translateY(-30px) scale(1.05);
+        transform: translate(2%, -2%)
+      }
+
+      75% {
+        transform: translate(-1%, 1%)
       }
     }
 
-    /* ── Canvas for particles ──────────────────────────────── */
-    #particle-canvas {
+    /* main layout */
+    .wrap {
       position: fixed;
       inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      opacity: 0.5;
-    }
-
-    /* ── Navbar ───────────────────────────────────────────── */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
+      z-index: 2;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 48px;
-      height: 72px;
-      background: rgba(13, 13, 22, 0.7);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-bottom: 0.5px solid rgba(72, 71, 81, 0.3);
-      transition: background 0.3s ease;
-    }
-
-    nav.scrolled {
-      background: rgba(13, 13, 22, 0.95);
-    }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--on-surface);
-      text-decoration: none;
-      letter-spacing: -0.5px;
-    }
-
-    .nav-logo-badge {
-      width: 38px;
-      height: 38px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border-radius: 10px;
-      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 0 20px rgba(255, 140, 0, 0.4);
-      animation: logoPulse 2.5s ease-in-out infinite;
+      padding: 40px 24px;
+      gap: 0;
     }
 
-    @keyframes logoPulse {
-
-      0%,
-      100% {
-        box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
-      }
-
-      50% {
-        box-shadow: 0 0 40px rgba(255, 140, 0, 0.6);
+    @media (max-width: 700px) {
+      .wrap {
+        position: relative;
+        min-height: 100vh;
+        padding: 60px 20px 80px;
       }
     }
 
-    .logo-gradient {
-      background: linear-gradient(90deg, var(--primary), var(--amber));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      list-style: none;
-    }
-
-    .nav-links a {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      text-decoration: none;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      transition: color 0.2s ease;
-      position: relative;
-    }
-
-    .nav-links a::after {
-      content: '';
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      right: 0;
-      height: 1.5px;
-      background: linear-gradient(90deg, var(--primary), var(--amber));
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s ease;
-    }
-
-    .nav-links a:hover {
-      color: var(--on-surface);
-    }
-
-    .nav-links a:hover::after {
-      transform: scaleX(1);
-    }
-
-    .nav-btns {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-ghost {
-      padding: 9px 22px;
-      background: transparent;
-      border: 0.5px solid rgba(255, 159, 74, 0.4);
-      color: var(--primary);
-      font-family: 'Manrope', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      border-radius: var(--radius-full);
-      cursor: none;
-      transition: all 0.3s ease;
-      letter-spacing: 0.3px;
-    }
-
-    .btn-ghost:hover {
-      background: rgba(255, 159, 74, 0.1);
-      border-color: var(--primary);
-      box-shadow: 0 0 20px rgba(255, 159, 74, 0.25);
-    }
-
-    .btn-solid {
-      padding: 10px 24px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border: none;
-      color: #2a1400;
-      font-family: 'Manrope', sans-serif;
-      font-size: 13px;
-      font-weight: 800;
-      border-radius: var(--radius-full);
-      cursor: none;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 16px rgba(255, 140, 0, 0.3);
-    }
-
-    .btn-solid::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 200%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-      0% {
-        left: -100%;
-      }
-
-      100% {
-        left: 100%;
-      }
-    }
-
-    .btn-solid:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(255, 140, 0, 0.5);
-    }
-
-    .btn-solid span {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ── Hero ─────────────────────────────────────────────── */
-    .hero {
-      position: relative;
-      z-index: 1;
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      gap: 60px;
-      padding: 100px 80px 60px;
-    }
-
-    @media (max-width: 1000px) {
-      .hero {
-        grid-template-columns: 1fr;
-        padding: 100px 32px 60px;
-      }
-
-      .hero-visual {
-        display: none;
-      }
-    }
-
-    .hero-eyebrow {
+    /* eyebrow tag */
+    .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 6px 16px;
-      background: rgba(255, 159, 74, 0.08);
-      border: 0.5px solid rgba(255, 159, 74, 0.25);
-      border-radius: var(--radius-full);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 11px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .08);
+      font-size: 10px;
       font-weight: 700;
-      color: var(--primary);
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       text-transform: uppercase;
+      color: var(--muted);
       margin-bottom: 28px;
-      animation: eyebrowGlow 3s ease-in-out infinite;
-    }
-
-    @keyframes eyebrowGlow {
-
-      0%,
-      100% {
-        box-shadow: 0 0 0 0 rgba(255, 159, 74, 0);
-      }
-
-      50% {
-        box-shadow: 0 0 0 6px rgba(255, 159, 74, 0);
-        border-color: rgba(255, 159, 74, 0.5);
-      }
+      opacity: 0;
+      animation: riseUp .6s cubic-bezier(.4, 0, .2, 1) .3s forwards;
     }
 
     .eyebrow-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--primary);
+      width: 6px;
+      height: 6px;
+      background: var(--orange);
       border-radius: 50%;
-      animation: blink 1.2s ease-in-out infinite;
+      animation: blink 1.4s ease-in-out infinite;
     }
 
     @keyframes blink {
 
       0%,
       100% {
-        opacity: 1;
-        transform: scale(1)
+        opacity: 1
       }
 
       50% {
-        opacity: 0.3;
-        transform: scale(0.6)
+        opacity: .3
       }
     }
 
-    .hero h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(44px, 6vw, 80px);
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -2px;
-      margin-bottom: 24px;
+    /* hero text */
+    .hero-text {
+      text-align: center;
+      margin-bottom: 52px;
     }
 
-    .hero h1 .word {
-      display: inline-block;
-      overflow: hidden;
+    .hero-line-1 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(36px, 6vw, 80px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -3px;
+      color: var(--text);
+      opacity: 0;
+      animation: riseUp .7s cubic-bezier(.4, 0, .2, 1) .5s forwards;
+      display: block;
     }
 
-    .hero h1 .word span {
-      display: inline-block;
-      animation: wordReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
-    }
-
-    .hero h1 .word:nth-child(1) span {
-      animation-delay: 0.1s;
-    }
-
-    .hero h1 .word:nth-child(2) span {
-      animation-delay: 0.2s;
-    }
-
-    .hero h1 .word:nth-child(3) span {
-      animation-delay: 0.3s;
-      animation-name: wordRevealGrad;
-    }
-
-    .hero h1 .word:nth-child(4) span {
-      animation-delay: 0.4s;
-      animation-name: wordRevealGrad;
-    }
-
-    @keyframes wordReveal {
-      from {
-        transform: translateY(110%);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes wordRevealGrad {
-      from {
-        transform: translateY(110%);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .gradient-text {
-      background: linear-gradient(90deg, var(--primary) 0%, var(--amber) 50%, var(--primary) 100%);
-      background-size: 200% auto;
+    .hero-line-2 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(36px, 6vw, 80px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -3px;
+      background: linear-gradient(90deg, var(--orange), var(--purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: gradientMove 4s linear infinite;
+      background-size: 200%;
+      animation: riseUp .7s cubic-bezier(.4, 0, .2, 1) .65s forwards, gradFlow 4s ease-in-out infinite alternate;
+      opacity: 0;
+      display: block;
+      margin-top: 4px;
     }
 
-    @keyframes gradientMove {
-      to {
-        background-position: 200% center;
+    @keyframes gradFlow {
+      0% {
+        background-position: 0%
+      }
+
+      100% {
+        background-position: 100%
       }
     }
 
     .hero-sub {
-      font-size: 17px;
+      font-size: clamp(12px, 1.5vw, 15px);
       color: var(--muted);
-      line-height: 1.75;
-      margin-bottom: 40px;
-      max-width: 480px;
-      animation: fadeUp 0.8s ease 0.6s both;
+      margin-top: 18px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      opacity: 0;
+      animation: riseUp .6s .85s forwards;
     }
 
-    @keyframes fadeUp {
+    @keyframes riseUp {
       from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(24px)
       }
 
       to {
         opacity: 1;
-        transform: none;
+        transform: none
       }
     }
 
-    .hero-cta {
+    /* portal cards row */
+    .portals {
       display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-      animation: fadeUp 0.8s ease 0.75s both;
+      gap: 20px;
+      align-items: stretch;
+      opacity: 0;
+      animation: riseUp .8s 1s forwards;
     }
 
-    .btn-hero {
-      display: inline-flex;
+    @media (max-width: 700px) {
+      .portals {
+        flex-direction: column;
+        width: 100%;
+        max-width: 380px;
+      }
+    }
+
+    /* the divider between cards */
+    .divider-v {
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 10px;
-      padding: 16px 36px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border: none;
-      color: #1a0a00;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 15px;
-      font-weight: 800;
-      border-radius: var(--radius-full);
-      cursor: none;
-      text-decoration: none;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.35s ease;
-      box-shadow: 0 8px 32px rgba(255, 140, 0, 0.4);
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      flex-shrink: 0;
     }
 
-    .btn-hero::before {
+    .divider-v::before,
+    .divider-v::after {
+      content: '';
+      width: 1px;
+      height: 36px;
+      background: var(--line);
+    }
+
+    @media (max-width: 700px) {
+      .divider-v {
+        flex-direction: row;
+      }
+
+      .divider-v::before,
+      .divider-v::after {
+        width: 36px;
+        height: 1px;
+      }
+    }
+
+    /* portal */
+    .portal {
+      position: relative;
+      width: 260px;
+      padding: 32px 26px 28px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, .07);
+      background: rgba(255, 255, 255, .02);
+      backdrop-filter: blur(24px);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform .35s cubic-bezier(.4, 0, .2, 1), border-color .35s, box-shadow .35s;
+      overflow: hidden;
+      cursor: none;
+    }
+
+    @media (max-width: 700px) {
+      .portal {
+        width: 100%;
+      }
+    }
+
+    /* top glow line */
+    .portal::before {
       content: '';
       position: absolute;
       top: 0;
-      left: -100%;
-      width: 200%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
-      animation: shimmer 2s infinite;
-    }
-
-    .btn-hero:hover {
-      transform: translateY(-4px) scale(1.04);
-      box-shadow: 0 16px 48px rgba(255, 140, 0, 0.6);
-    }
-
-    .btn-hero-icon {
-      font-size: 20px;
-      animation: rocketAnim 1.5s ease-in-out infinite;
-    }
-
-    @keyframes rocketAnim {
-
-      0%,
-      100% {
-        transform: translateY(0) rotate(0);
-      }
-
-      50% {
-        transform: translateY(-5px) rotate(-8deg);
-      }
-    }
-
-    .btn-outline-hero {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 15px 32px;
-      background: rgba(255, 159, 74, 0.07);
-      border: 0.5px solid rgba(255, 159, 74, 0.35);
-      color: var(--primary);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      border-radius: var(--radius-full);
-      cursor: none;
-      text-decoration: none;
-      transition: all 0.3s ease;
-    }
-
-    .btn-outline-hero:hover {
-      background: rgba(255, 159, 74, 0.14);
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(255, 159, 74, 0.2);
-    }
-
-    .hero-stats {
-      display: flex;
-      gap: 36px;
-      margin-top: 56px;
-      padding-top: 40px;
-      border-top: 0.5px solid rgba(72, 71, 81, 0.4);
-      animation: fadeUp 0.8s ease 0.9s both;
-    }
-
-    .stat-num {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 36px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--primary), var(--amber));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .stat-label {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-top: 2px;
-    }
-
-    /* ── Hero visual: orbiting food ────────────────────────── */
-    .hero-visual {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: fadeUp 0.8s ease 0.5s both;
-    }
-
-    .visual-core {
-      position: relative;
-      width: 220px;
-      height: 220px;
-      background: linear-gradient(135deg, rgba(255, 140, 0, 0.15), rgba(253, 139, 0, 0.05));
-      border: 0.5px solid rgba(255, 159, 74, 0.2);
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 90px;
-      box-shadow: 0 0 80px rgba(255, 140, 0, 0.2), inset 0 0 40px rgba(255, 140, 0, 0.05);
-      backdrop-filter: blur(20px);
-      animation: coreFloat 5s ease-in-out infinite;
-    }
-
-    @keyframes coreFloat {
-
-      0%,
-      100% {
-        transform: translateY(0) rotate(0deg);
-      }
-
-      33% {
-        transform: translateY(-12px) rotate(2deg);
-      }
-
-      66% {
-        transform: translateY(6px) rotate(-1deg);
-      }
-    }
-
-    .orbit {
-      position: absolute;
+      left: 10%;
+      width: 80%;
+      height: 1px;
       border-radius: 50%;
-      border: 0.5px dashed rgba(255, 159, 74, 0.15);
+      opacity: 0;
+      transition: opacity .35s;
     }
 
-    .orbit-1 {
-      width: 300px;
-      height: 300px;
-      animation: spin 12s linear infinite;
+    .portal-o::before {
+      background: linear-gradient(90deg, transparent, var(--orange), transparent);
+      box-shadow: 0 0 16px 2px rgba(255, 140, 0, .5);
     }
 
-    .orbit-2 {
-      width: 420px;
-      height: 420px;
-      animation: spin 20s linear infinite reverse;
-      border-color: rgba(201, 124, 255, 0.1);
+    .portal-p::before {
+      background: linear-gradient(90deg, transparent, var(--purple), transparent);
+      box-shadow: 0 0 16px 2px rgba(201, 124, 255, .5);
     }
 
-    .orbit-3 {
-      width: 540px;
-      height: 540px;
-      animation: spin 30s linear infinite;
-      border-color: rgba(142, 255, 113, 0.06);
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .orbit-item {
+    /* corner accent */
+    .portal::after {
+      content: '';
       position: absolute;
-      width: 52px;
-      height: 52px;
-      background: rgba(31, 30, 43, 0.8);
-      border: 0.5px solid rgba(72, 71, 81, 0.5);
+      inset: 0;
+      border-radius: 24px;
+      opacity: 0;
+      transition: opacity .35s;
+    }
+
+    .portal-o::after {
+      background: radial-gradient(ellipse at 50% -20%, rgba(255, 140, 0, .08), transparent 60%);
+    }
+
+    .portal-p::after {
+      background: radial-gradient(ellipse at 50% -20%, rgba(201, 124, 255, .08), transparent 60%);
+    }
+
+    .portal:hover {
+      transform: translateY(-6px);
+    }
+
+    .portal-o:hover {
+      border-color: rgba(255, 159, 74, .35);
+      box-shadow: 0 20px 60px rgba(255, 140, 0, .12), 0 0 0 1px rgba(255, 159, 74, .15);
+    }
+
+    .portal-p:hover {
+      border-color: rgba(201, 124, 255, .35);
+      box-shadow: 0 20px 60px rgba(201, 124, 255, .12), 0 0 0 1px rgba(201, 124, 255, .15);
+    }
+
+    .portal:hover::before,
+    .portal:hover::after {
+      opacity: 1;
+    }
+
+    /* icon */
+    .p-icon {
+      width: 48px;
+      height: 48px;
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
-
-    /* place items on orbit rings */
-    .orbit-1 .orbit-item:nth-child(1) {
-      top: -26px;
-      left: calc(50% - 26px);
-    }
-
-    .orbit-1 .orbit-item:nth-child(2) {
-      bottom: -26px;
-      left: calc(50% - 26px);
-    }
-
-    .orbit-2 .orbit-item:nth-child(1) {
-      top: -26px;
-      left: calc(50% - 26px);
-    }
-
-    .orbit-2 .orbit-item:nth-child(2) {
-      bottom: -26px;
-      left: calc(50% - 26px);
-    }
-
-    .orbit-2 .orbit-item:nth-child(3) {
-      left: -26px;
-      top: calc(50% - 26px);
-    }
-
-    .orbit-2 .orbit-item:nth-child(4) {
-      right: -26px;
-      top: calc(50% - 26px);
-    }
-
-    /* Glow halo */
-    .visual-glow {
-      position: absolute;
-      width: 300px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(255, 140, 0, 0.08) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: glowPulse 4s ease-in-out infinite;
-    }
-
-    @keyframes glowPulse {
-
-      0%,
-      100% {
-        opacity: 0.6;
-        transform: scale(1)
-      }
-
-      50% {
-        opacity: 1;
-        transform: scale(1.15)
-      }
-    }
-
-    /* ── Section ───────────────────────────────────────────── */
-    section {
+      font-size: 22px;
+      margin-bottom: 18px;
       position: relative;
       z-index: 1;
-      padding: 100px 80px;
     }
 
-    @media (max-width: 800px) {
-      section {
-        padding: 80px 24px;
-      }
+    .portal-o .p-icon {
+      background: rgba(255, 159, 74, .1);
+      border: 1px solid rgba(255, 159, 74, .2);
     }
 
-    .section-eyebrow {
-      display: inline-block;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--primary);
+    .portal-p .p-icon {
+      background: rgba(201, 124, 255, .1);
+      border: 1px solid rgba(201, 124, 255, .2);
+    }
+
+    .p-tag {
+      font-size: 9px;
+      font-weight: 800;
       letter-spacing: 2.5px;
       text-transform: uppercase;
-      margin-bottom: 14px;
-      opacity: 0;
-      transform: translateY(16px);
-      transition: all 0.6s ease;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
     }
 
-    .section-eyebrow.visible {
-      opacity: 1;
-      transform: none;
+    .portal-o .p-tag {
+      color: var(--orange);
     }
 
-    .section-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(30px, 4vw, 48px);
-      font-weight: 800;
+    .portal-p .p-tag {
+      color: var(--purple);
+    }
+
+    .p-title {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
       letter-spacing: -1px;
-      line-height: 1.15;
-      margin-bottom: 14px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.6s ease 0.1s;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
     }
 
-    .section-title.visible {
-      opacity: 1;
-      transform: none;
-    }
-
-    .section-sub {
-      font-size: 16px;
+    .p-desc {
+      font-size: 12px;
       color: var(--muted);
       line-height: 1.7;
-      max-width: 480px;
-      margin-bottom: 60px;
-      opacity: 0;
-      transform: translateY(16px);
-      transition: all 0.6s ease 0.2s;
-    }
-
-    .section-sub.visible {
-      opacity: 1;
-      transform: none;
-    }
-
-    /* ── Canteen grid ──────────────────────────────────────── */
-    .canteen-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-    }
-
-    .canteen-card {
-      position: relative;
-      background: var(--bg-card);
-      border: 0.5px solid rgba(72, 71, 81, 0.4);
-      border-radius: var(--radius-lg);
-      padding: 32px 28px;
-      overflow: hidden;
-      cursor: none;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-style: preserve-3d;
-
-      opacity: 0;
-      transform: translateY(30px) scale(0.97);
-    }
-
-    .canteen-card.visible {
-      opacity: 1;
-      transform: none;
-    }
-
-    /* top glow bar */
-    .canteen-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
-      opacity: 0;
-      transition: opacity 0.4s;
-    }
-
-    /* radial glow on hover */
-    .canteen-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--card-glow), transparent);
-      opacity: 0;
-      transition: opacity 0.4s;
-      border-radius: inherit;
-    }
-
-    .canteen-card:hover {
-      transform: translateY(-10px) scale(1.02) rotateX(2deg);
-      border-color: var(--card-accent);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 0.5px var(--card-accent), 0 0 60px var(--card-glow);
-    }
-
-    .canteen-card:hover::before {
-      opacity: 1;
-    }
-
-    .canteen-card:hover::after {
-      opacity: 1;
-    }
-
-    .canteen-card:nth-child(1) {
-      --card-accent: #ff9f4a;
-      --card-glow: rgba(255, 159, 74, 0.15);
-      transition-delay: 0.05s;
-    }
-
-    .canteen-card:nth-child(2) {
-      --card-accent: #8eff71;
-      --card-glow: rgba(142, 255, 113, 0.12);
-      transition-delay: 0.10s;
-    }
-
-    .canteen-card:nth-child(3) {
-      --card-accent: #c97cff;
-      --card-glow: rgba(201, 124, 255, 0.15);
-      transition-delay: 0.15s;
-    }
-
-    .canteen-card:nth-child(4) {
-      --card-accent: #06b6d4;
-      --card-glow: rgba(6, 182, 212, 0.12);
-      transition-delay: 0.20s;
-    }
-
-    .canteen-badge {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--card-accent);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .canteen-icon {
-      font-size: 54px;
-      display: block;
-      margin-bottom: 18px;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 8px 16px var(--card-glow));
-    }
-
-    .canteen-card:hover .canteen-icon {
-      transform: scale(1.22) translateY(-4px) rotate(-6deg);
-    }
-
-    .canteen-name {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 10px;
-    }
-
-    .canteen-desc {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.65;
-      margin-bottom: 18px;
-    }
-
-    .canteen-chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
       margin-bottom: 22px;
+      position: relative;
+      z-index: 1;
+      flex: 1;
     }
 
-    .chip {
-      padding: 4px 12px;
-      background: var(--bg-high);
-      border-radius: var(--radius-full);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      transition: all 0.25s;
-    }
-
-    .canteen-card:hover .chip {
-      border: 0.5px solid var(--card-accent);
-      color: var(--card-accent);
-      background: transparent;
-    }
-
-    .canteen-foot {
+    /* feature pills */
+    .p-pills {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-top: 20px;
-      border-top: 0.5px solid rgba(72, 71, 81, 0.3);
-      margin-bottom: 18px;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
     }
 
-    .live-indicator {
+    .pill {
       display: flex;
       align-items: center;
       gap: 7px;
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(237, 232, 255, .6);
     }
 
-    .live-dot {
-      width: 8px;
-      height: 8px;
+    .pill-dot {
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
-      background: var(--tertiary);
-      box-shadow: 0 0 8px var(--tertiary);
-      animation: blink 1.5s ease-in-out infinite;
+      flex-shrink: 0;
     }
 
-    .time-label {
-      font-size: 12px;
-      color: var(--muted);
+    .portal-o .pill-dot {
+      background: var(--orange);
     }
 
-    .btn-canteen {
-      position: relative;
+    .portal-p .pill-dot {
+      background: var(--purple);
+    }
+
+    /* CTA */
+    .p-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       width: 100%;
       padding: 13px;
       border: none;
-      color: #1a0a00;
-      font-family: 'Space Grotesk', sans-serif;
+      border-radius: 12px;
+      font-family: 'Cabinet Grotesk', sans-serif;
       font-size: 13px;
       font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      border-radius: 10px;
-      cursor: none;
+      position: relative;
+      z-index: 1;
       overflow: hidden;
-      transition: all 0.3s ease;
+      transition: box-shadow .3s, transform .3s;
+      cursor: none;
     }
 
-    .canteen-card:nth-child(1) .btn-canteen {
-      background: linear-gradient(135deg, #ff9f4a, #fd8b00);
-      box-shadow: 0 6px 24px rgba(255, 140, 0, 0.35);
+    .p-btn-arrow {
+      transition: transform .3s;
     }
 
-    .canteen-card:nth-child(2) .btn-canteen {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      box-shadow: 0 6px 24px rgba(34, 197, 94, 0.35);
+    .portal:hover .p-btn-arrow {
+      transform: translateX(4px);
     }
 
-    .canteen-card:nth-child(3) .btn-canteen {
-      background: linear-gradient(135deg, #c97cff, #9000de);
-      box-shadow: 0 6px 24px rgba(201, 124, 255, 0.35);
-    }
-
-    .canteen-card:nth-child(4) .btn-canteen {
-      background: linear-gradient(135deg, #22d3ee, #0891b2);
-      box-shadow: 0 6px 24px rgba(6, 182, 212, 0.35);
-    }
-
-    .btn-canteen::before {
+    .p-btn::before {
       content: '';
       position: absolute;
       top: 0;
       left: -100%;
       width: 200%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .15), transparent);
       animation: shimmer 2.5s infinite;
     }
 
-    .btn-canteen:hover {
-      transform: translateY(-3px);
-      filter: brightness(1.1);
+    @keyframes shimmer {
+      0% {
+        left: -100%
+      }
+
+      100% {
+        left: 100%
+      }
     }
 
-    .btn-canteen span {
+    .p-btn span {
       position: relative;
       z-index: 1;
     }
 
-    /* ── Features strip ────────────────────────────────────── */
-    .features-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      margin-top: 70px;
-      border: 0.5px solid rgba(72, 71, 81, 0.3);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
+    .portal-o .p-btn {
+      background: linear-gradient(135deg, var(--orange), var(--orange-d));
+      color: #1a0800;
+      box-shadow: 0 4px 20px rgba(255, 140, 0, .25);
     }
 
-    @media (max-width: 700px) {
-      .features-strip {
-        grid-template-columns: 1fr 1fr;
-      }
+    .portal-o:hover .p-btn {
+      box-shadow: 0 8px 32px rgba(255, 140, 0, .4);
     }
 
-    .feature-cell {
-      padding: 32px 24px;
-      background: var(--bg-low);
-      text-align: center;
-      border-right: 0.5px solid rgba(72, 71, 81, 0.3);
-      transition: background 0.3s ease;
-      opacity: 0;
-      transform: translateY(16px);
-      transition: all 0.5s ease;
+    .portal-p .p-btn {
+      background: linear-gradient(135deg, var(--purple), var(--purple-d));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(201, 124, 255, .25);
     }
 
-    .feature-cell.visible {
-      opacity: 1;
-      transform: none;
+    .portal-p:hover .p-btn {
+      box-shadow: 0 8px 32px rgba(201, 124, 255, .4);
     }
 
-    .feature-cell:last-child {
-      border-right: none;
-    }
-
-    .feature-cell:hover {
-      background: rgba(255, 159, 74, 0.05);
-    }
-
-    .feature-emoji {
-      font-size: 36px;
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .feature-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .feature-desc {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    /* ── Footer ────────────────────────────────────────────── */
-    footer {
-      position: relative;
-      z-index: 1;
-      border-top: 0.5px solid rgba(72, 71, 81, 0.3);
-      padding: 48px 80px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-
-    @media (max-width: 700px) {
-      footer {
-        padding: 40px 24px;
-        flex-direction: column;
-        text-align: center;
-      }
-    }
-
-    .footer-brand {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-    }
-
-    .footer-text {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .footer-love {
-      color: var(--primary);
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       MOBILE RESPONSIVE — all breakpoints
-    ═══════════════════════════════════════════════════════════ */
-
-    /* Hamburger button */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 5px;
-      width: 40px;
-      height: 40px;
-      background: rgba(255, 159, 74, 0.08);
-      border: 0.5px solid rgba(255, 159, 74, 0.25);
-      border-radius: 10px;
-      cursor: pointer;
-      z-index: 200;
-    }
-
-    .hamburger span {
-      width: 20px;
-      height: 2px;
-      background: var(--primary);
-      border-radius: 2px;
-      transition: all 0.3s ease;
-      display: block;
-    }
-
-    .hamburger.open span:nth-child(1) {
-      transform: translateY(7px) rotate(45deg);
-    }
-
-    .hamburger.open span:nth-child(2) {
-      opacity: 0;
-    }
-
-    .hamburger.open span:nth-child(3) {
-      transform: translateY(-7px) rotate(-45deg);
-    }
-
-    /* Mobile drawer */
-    .mobile-menu {
-      display: none;
+    /* bottom badge */
+    .bottom {
       position: fixed;
-      top: 72px;
+      bottom: 24px;
       left: 0;
       right: 0;
-      bottom: 0;
-      background: rgba(13, 13, 22, 0.97);
-      backdrop-filter: blur(24px);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 32px;
-      z-index: 99;
-      animation: menuSlide 0.3s ease;
+      text-align: center;
+      z-index: 3;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      opacity: 0;
+      animation: riseUp .6s 1.3s forwards;
     }
 
-    @keyframes menuSlide {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
-
-    .mobile-menu.open {
-      display: flex;
-    }
-
-    .mobile-menu a {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--on-surface);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .mobile-menu a:hover {
-      color: var(--primary);
-    }
-
-    .mobile-menu-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center;
-      margin-top: 16px;
-    }
-
-    @media (max-width: 768px) {
-
-      /* Hide desktop cursor on touch devices */
-      #cursor-dot,
-      #cursor-ring {
+    @media (max-width: 700px) {
+      .bottom {
         display: none;
       }
-
-      body {
-        cursor: auto;
-      }
-
-      a,
-      button {
-        cursor: pointer;
-      }
-
-      /* Navbar */
-      nav {
-        padding: 0 20px;
-      }
-
-      .nav-links {
-        display: none;
-      }
-
-      .nav-btns {
-        display: none;
-      }
-
-      .hamburger {
-        display: flex;
-      }
-
-      /* Hero */
-      .hero {
-        grid-template-columns: 1fr;
-        padding: 90px 20px 50px;
-        min-height: auto;
-        gap: 32px;
-        text-align: center;
-      }
-
-      .hero-visual {
-        display: none !important;
-      }
-
-      .hero-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .hero-eyebrow {
-        margin-bottom: 20px;
-      }
-
-      .hero h1 {
-        font-size: clamp(36px, 9vw, 52px);
-        letter-spacing: -1.5px;
-      }
-
-      .hero-sub {
-        font-size: 15px;
-        text-align: center;
-        max-width: 100%;
-      }
-
-      .hero-cta {
-        justify-content: center;
-      }
-
-      .btn-hero {
-        padding: 14px 28px;
-        font-size: 14px;
-      }
-
-      .btn-outline-hero {
-        padding: 13px 24px;
-        font-size: 14px;
-      }
-
-      .hero-stats {
-        margin-top: 36px;
-        padding-top: 28px;
-        justify-content: center;
-        gap: 24px;
-      }
-
-      .stat-num {
-        font-size: 28px;
-      }
-
-      /* Section */
-      section {
-        padding: 60px 20px;
-      }
-
-      .section-sub {
-        margin-bottom: 36px;
-      }
-
-      /* Canteen grid — 2 columns on mobile */
-      .canteen-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-
-      .canteen-card {
-        padding: 20px 16px;
-      }
-
-      .canteen-icon {
-        font-size: 38px;
-        margin-bottom: 12px;
-      }
-
-      .canteen-name {
-        font-size: 16px;
-      }
-
-      .canteen-desc {
-        font-size: 12px;
-        margin-bottom: 12px;
-        display: none;
-      }
-
-      .canteen-chips {
-        display: none;
-      }
-
-      .canteen-foot {
-        margin-bottom: 12px;
-      }
-
-      .btn-canteen {
-        padding: 11px;
-        font-size: 11px;
-      }
-
-      /* Features strip — 2x2 */
-      .features-strip {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .feature-cell {
-        padding: 24px 16px;
-        border-bottom: 0.5px solid rgba(72, 71, 81, 0.3);
-      }
-
-      .feature-emoji {
-        font-size: 28px;
-      }
-
-      .feature-title {
-        font-size: 13px;
-      }
-
-      .feature-desc {
-        font-size: 11px;
-      }
-
-      /* Footer */
-      footer {
-        padding: 32px 20px;
-        flex-direction: column;
-        text-align: center;
-        gap: 12px;
-      }
     }
 
-    @media (max-width: 400px) {
-      .canteen-grid {
-        grid-template-columns: 1fr;
+    /* floating orbs (subtle) */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-o {
+      width: 500px;
+      height: 500px;
+      background: rgba(255, 140, 0, .04);
+      top: -100px;
+      left: -100px;
+      animation: drift 18s ease-in-out infinite;
+    }
+
+    .orb-p {
+      width: 500px;
+      height: 500px;
+      background: rgba(201, 124, 255, .04);
+      bottom: -100px;
+      right: -100px;
+      animation: drift 22s ease-in-out infinite reverse;
+    }
+
+    @keyframes drift {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1)
       }
 
-      .hero h1 {
-        font-size: 32px;
-      }
-
-      .hero-cta {
-        flex-direction: column;
-        width: 100%;
-      }
-
-      .btn-hero,
-      .btn-outline-hero {
-        width: 100%;
-        justify-content: center;
+      50% {
+        transform: translate(30px, -30px) scale(1.1)
       }
     }
   </style>
@@ -1470,478 +625,134 @@
 
 <body>
 
-  <!-- Custom cursor -->
-  <div id="cursor-dot"></div>
-  <div id="cursor-ring"></div>
+  <div id="cur"></div>
+  <div id="cur-trail"></div>
+  <div class="orb orb-o"></div>
+  <div class="orb orb-p"></div>
 
-  <!-- Ambient orbs -->
-  <div class="bg-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
+  <!-- Animated SVG background lines -->
+  <svg id="lines" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ff9f4a" stop-opacity="0" />
+        <stop offset="50%" stop-color="#ff9f4a" stop-opacity="0.08" />
+        <stop offset="100%" stop-color="#ff9f4a" stop-opacity="0" />
+      </linearGradient>
+      <linearGradient id="lg2" x1="100%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#c97cff" stop-opacity="0" />
+        <stop offset="50%" stop-color="#c97cff" stop-opacity="0.08" />
+        <stop offset="100%" stop-color="#c97cff" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    <!-- diagonal lines -->
+    <line x1="-10%" y1="30%" x2="110%" y2="70%" stroke="url(#lg1)" stroke-width="1">
+      <animate attributeName="y1" values="30%;35%;30%" dur="8s" repeatCount="indefinite" />
+      <animate attributeName="y2" values="70%;65%;70%" dur="8s" repeatCount="indefinite" />
+    </line>
+    <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
+    <line x1="110%" y1="25%" x2="-10%" y2="75%" stroke="url(#lg2)" stroke-width="1">
+      <animate attributeName="y1" values="25%;20%;25%" dur="10s" repeatCount="indefinite" />
+      <animate attributeName="y2" values="75%;80%;75%" dur="10s" repeatCount="indefinite" />
+    </line>
+    <!-- vertical subtle -->
+    <line x1="33%" y1="0%" x2="33%" y2="100%" stroke="rgba(255,255,255,0.02)" stroke-width="1" />
+    <line x1="66%" y1="0%" x2="66%" y2="100%" stroke="rgba(255,255,255,0.02)" stroke-width="1" />
+    <!-- corner accents -->
+    <path d="M0,0 L80,0 L80,2 L2,2 L2,80 L0,80 Z" fill="rgba(255,159,74,0.15)" />
+    <path d="M100%,100% L100%-80,100% L100%-80,100%-2 L100%-2,100%-2 L100%-2,100%-80 L100%,100%-80 Z"
+      fill="rgba(201,124,255,0.15)" />
+  </svg>
 
-  <!-- Particle canvas -->
-  <canvas id="particle-canvas"></canvas>
-
-  <!-- Navbar -->
-  <nav id="navbar">
-    <a href="/" class="nav-logo">
-      <div class="nav-logo-badge">🍽️</div>
-      <span><span class="logo-gradient">B.U</span> Eats</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="#canteens">Canteens</a></li>
-      <li><a href="#features">Features</a></li>
-    </ul>
-    <div class="nav-btns" id="navBtns">
-      <!-- Populated by JS based on login state -->
-    </div>
-    <!-- Hamburger (mobile only) -->
-    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
-  </nav>
-
-  <!-- Mobile slide-down menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <a href="#canteens" onclick="toggleMenu()">Canteens</a>
-    <a href="#features" onclick="toggleMenu()">Features</a>
-    <div class="mobile-menu-btns" id="mobileNavBtns">
-      <!-- filled by JS -->
-    </div>
-  </div>
-
-  <!-- Hero -->
-  <div class="hero">
-    <!-- Left content -->
-    <div class="hero-content">
-      <div class="hero-eyebrow">
-        <div class="eyebrow-dot"></div>
-        Now Live · B.U Campus
-      </div>
-
-      <h1>
-        <span class="word"><span>Campus</span></span>&nbsp;
-        <span class="word"><span>Food,</span></span><br>
-        <span class="word"><span class="gradient-text">Ordered</span></span>&nbsp;
-        <span class="word"><span class="gradient-text">Instantly</span></span>
-      </h1>
-
-      <p class="hero-sub">
-        Skip the queue. Browse 4 campus canteens, add items to your cart,
-        and track your order live — all from your device.
-      </p>
-
-      <div class="hero-cta">
-        <a href="#canteens" class="btn-hero">
-          <span class="btn-hero-icon">🚀</span>
-          <span>Explore Canteens</span>
-        </a>
-        <a href="register.html" class="btn-outline-hero">Join Free</a>
-      </div>
-
-      <div class="hero-stats">
-        <div>
-          <div class="stat-num" data-count="4">0</div>
-          <div class="stat-label">Canteens</div>
-        </div>
-        <div>
-          <div class="stat-num" data-count="32">0</div>
-          <div class="stat-label">Menu Items</div>
-        </div>
-        <div>
-          <div class="stat-num" data-text="Live">—</div>
-          <div class="stat-label">Tracking</div>
-        </div>
-      </div>
+  <div class="wrap">
+    <div class="eyebrow">
+      <div class="eyebrow-dot"></div>Bennett University · Campus Dining Platform
     </div>
 
-    <!-- Right: orbiting food visual -->
-    <div class="hero-visual">
-      <div class="visual-glow"></div>
+    <div class="hero-text">
+      <span class="hero-line-1">Eat Smart,</span>
+      <span class="hero-line-2">Skip the Queue.</span>
+      <div class="hero-sub">Order from 4 campus canteens · Track live · Never wait in line again</div>
+    </div>
 
-      <div class="orbit orbit-1">
-        <div class="orbit-item">🍜</div>
-        <div class="orbit-item">☕</div>
-      </div>
-      <div class="orbit orbit-2">
-        <div class="orbit-item">🍛</div>
-        <div class="orbit-item">🍔</div>
-        <div class="orbit-item">🌮</div>
-        <div class="orbit-item">🍟</div>
-      </div>
-      <div class="orbit orbit-3"></div>
+    <div class="portals">
+      <!-- Student -->
+      <a href="home.html" class="portal portal-o">
+        <div class="p-icon">🎓</div>
+        <div class="p-tag">Student Portal</div>
+        <div class="p-title">Order &amp;<br />Track Live</div>
+        <div class="p-desc">Browse menus, add to cart, and watch your order move through the kitchen in real time.</div>
+        <div class="p-pills">
+          <div class="pill">
+            <div class="pill-dot"></div>4 campus canteens
+          </div>
+          <div class="pill">
+            <div class="pill-dot"></div>Live order tracking
+          </div>
+          <div class="pill">
+            <div class="pill-dot"></div>Order history
+          </div>
+        </div>
+        <button class="p-btn"><span>Enter as Student</span><span class="p-btn-arrow">→</span></button>
+      </a>
 
-      <div class="visual-core">🍽️</div>
+      <div class="divider-v">or</div>
+
+      <!-- Staff -->
+      <a href="canteen/login.html" class="portal portal-p">
+        <div class="p-icon">👨‍🍳</div>
+        <div class="p-tag">Staff Portal</div>
+        <div class="p-title">Manage &amp;<br />Serve Orders</div>
+        <div class="p-desc">Accept orders, update status in one tap, and keep your canteen running at full speed.</div>
+        <div class="p-pills">
+          <div class="pill">
+            <div class="pill-dot"></div>Live order queue
+          </div>
+          <div class="pill">
+            <div class="pill-dot"></div>One-tap status update
+          </div>
+          <div class="pill">
+            <div class="pill-dot"></div>Revenue analytics
+          </div>
+        </div>
+        <button class="p-btn"><span>Enter as Staff</span><span class="p-btn-arrow">→</span></button>
+      </a>
     </div>
   </div>
 
-  <!-- Canteens Section -->
-  <section id="canteens">
-    <div class="section-eyebrow reveal">🏪 Our Canteens</div>
-    <div class="section-title reveal">Pick Your <span class="gradient-text">Spot</span></div>
-    <div class="section-sub reveal">Four unique canteens, each with their own specialty. Login required to order.</div>
-
-    <div class="canteen-grid">
-
-      <div class="canteen-card reveal" onclick="openCanteen(1)" id="canteen-1">
-        <div class="canteen-badge">01 · Noodles & Snacks</div>
-        <span class="canteen-icon">🍜</span>
-        <div class="canteen-name">Maggi Hotspot</div>
-        <div class="canteen-desc">The legendary noodle hub. Loaded Maggi bowls, spicy variations, and quick bites that
-          hit different between lectures.</div>
-        <div class="canteen-chips">
-          <span class="chip">🌶️ Spicy</span>
-          <span class="chip">⚡ Fast</span>
-          <span class="chip">🍜 Noodles</span>
-        </div>
-        <div class="canteen-foot">
-          <div class="live-indicator" id="live-ind-1">
-            <div class="live-dot"></div> Open Now
-          </div>
-          <div class="time-label">⏱ ~5 mins</div>
-        </div>
-        <button class="btn-canteen"><span>Order Now →</span></button>
-      </div>
-
-      <div class="canteen-card reveal" onclick="openCanteen(2)" id="canteen-2">
-        <div class="canteen-badge">02 · South Indian</div>
-        <span class="canteen-icon">🍛</span>
-        <div class="canteen-name">Southern Stories</div>
-        <div class="canteen-desc">Authentic South Indian flavours — crispy dosas, fluffy idlis, steaming sambhar, and
-          filter coffee that wakes you up.</div>
-        <div class="canteen-chips">
-          <span class="chip">🥘 Authentic</span>
-          <span class="chip">☕ Coffee</span>
-          <span class="chip">🌿 Veg</span>
-        </div>
-        <div class="canteen-foot">
-          <div class="live-indicator" id="live-ind-2">
-            <div class="live-dot"></div> Open Now
-          </div>
-          <div class="time-label">⏱ ~8 mins</div>
-        </div>
-        <button class="btn-canteen"><span>Order Now →</span></button>
-      </div>
-
-      <div class="canteen-card reveal" onclick="openCanteen(3)" id="canteen-3">
-        <div class="canteen-badge">03 · Fast Food</div>
-        <span class="canteen-icon">🍔</span>
-        <div class="canteen-name">SnapEats</div>
-        <div class="canteen-desc">Campus fast food done right. Juicy burgers, loaded rolls, crispy fries, and milkshakes
-          — fuel for long study sessions.</div>
-        <div class="canteen-chips">
-          <span class="chip">🍟 Fast Food</span>
-          <span class="chip">🥤 Shakes</span>
-          <span class="chip">🔥 Trending</span>
-        </div>
-        <div class="canteen-foot">
-          <div class="live-indicator" id="live-ind-3">
-            <div class="live-dot"></div> Open Now
-          </div>
-          <div class="time-label">⏱ ~6 mins</div>
-        </div>
-        <button class="btn-canteen"><span>Order Now →</span></button>
-      </div>
-
-      <div class="canteen-card reveal" onclick="openCanteen(4)" id="canteen-4">
-        <div class="canteen-badge">04 · Full Meals</div>
-        <span class="canteen-icon">🌮</span>
-        <div class="canteen-name">Infinity Kitchen</div>
-        <div class="canteen-desc">A never-ending menu of Indian curries, rice specials, stuffed parathas, and fusion
-          street bites for every craving.</div>
-        <div class="canteen-chips">
-          <span class="chip">🍚 Rice</span>
-          <span class="chip">🫓 Parathas</span>
-          <span class="chip">♾️ Variety</span>
-        </div>
-        <div class="canteen-foot">
-          <div class="live-indicator" id="live-ind-4">
-            <div class="live-dot"></div> Open Now
-          </div>
-          <div class="time-label">⏱ ~10 mins</div>
-        </div>
-        <button class="btn-canteen"><span>Order Now →</span></button>
-      </div>
-
-    </div>
-
-    <!-- Features strip -->
-    <div class="features-strip" id="features">
-      <div class="feature-cell reveal">
-        <span class="feature-emoji">⚡</span>
-        <div class="feature-title">Instant Orders</div>
-        <div class="feature-desc">Place orders in seconds from anywhere on campus</div>
-      </div>
-      <div class="feature-cell reveal">
-        <span class="feature-emoji">📡</span>
-        <div class="feature-title">Live Tracking</div>
-        <div class="feature-desc">Know exactly when your food is ready</div>
-      </div>
-      <div class="feature-cell reveal">
-        <span class="feature-emoji">🔒</span>
-        <div class="feature-title">Secure JWT</div>
-        <div class="feature-desc">Safe and private student authentication</div>
-      </div>
-      <div class="feature-cell reveal">
-        <span class="feature-emoji">🍽️</span>
-        <div class="feature-title">Fresh Food</div>
-        <div class="feature-desc">Made to order, served hot every time</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer>
-    <div>
-      <div class="footer-brand"><span class="gradient-text">B.U Eats</span></div>
-      <div class="footer-text" style="margin-top:6px;">Made with <span class="footer-love">❤️</span> for the campus.
-      </div>
-    </div>
-    <div class="footer-text">© 2026 B.U Eats · Smart Canteen System</div>
-  </footer>
+  <div class="bottom">© 2026 B.U Eats · Bennett University · Greater Noida</div>
 
   <script>
-    /* ── Custom cursor ── */
-    const dot = document.getElementById('cursor-dot');
-    const ring = document.getElementById('cursor-ring');
-    let mx = 0, my = 0, rx = 0, ry = 0;
+    // Cursor
+    const cur = document.getElementById('cur');
+    const trail = document.getElementById('cur-trail');
+    let tx = 0, ty = 0;
     document.addEventListener('mousemove', e => {
-      mx = e.clientX; my = e.clientY;
-      dot.style.left = (mx - 4) + 'px';
-      dot.style.top = (my - 4) + 'px';
+      cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+      tx = e.clientX; ty = e.clientY;
     });
-    (function animRing() {
-      rx += (mx - rx) * 0.12;
-      ry += (my - ry) * 0.12;
-      ring.style.left = (rx - 18) + 'px';
-      ring.style.top = (ry - 18) + 'px';
-      requestAnimationFrame(animRing);
-    })();
-    document.querySelectorAll('a,button,.canteen-card').forEach(el => {
-      el.addEventListener('mouseenter', () => {
-        ring.style.width = '56px'; ring.style.height = '56px';
-        ring.style.borderColor = 'rgba(255,159,74,0.7)';
-        dot.style.transform = 'scale(2)';
-      });
-      el.addEventListener('mouseleave', () => {
-        ring.style.width = '36px'; ring.style.height = '36px';
-        ring.style.borderColor = 'rgba(255,159,74,0.5)';
-        dot.style.transform = 'scale(1)';
-      });
-    });
-
-    /* ── Particle canvas ── */
-    const canvas = document.getElementById('particle-canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
-
-    const COLORS = ['rgba(255,159,74,', 'rgba(201,124,255,', 'rgba(142,255,113,', 'rgba(255,227,147,'];
-    const particles = Array.from({ length: 60 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.6 + 0.4,
-      dx: (Math.random() - 0.5) * 0.4,
-      dy: -Math.random() * 0.5 - 0.1,
-      c: COLORS[Math.floor(Math.random() * COLORS.length)],
-      a: Math.random() * 0.5 + 0.1,
-    }));
-
-    (function drawParticles() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
-        p.x += p.dx; p.y += p.dy;
-        if (p.y < -5) { p.y = canvas.height + 5; p.x = Math.random() * canvas.width; }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.c + p.a + ')';
-        ctx.fill();
-      });
-      requestAnimationFrame(drawParticles);
+    (function loop() {
+      const cx = parseFloat(trail.style.left || 0), cy = parseFloat(trail.style.top || 0);
+      trail.style.left = cx + (tx - cx) * .15 + 'px';
+      trail.style.top = cy + (ty - cy) * .15 + 'px';
+      requestAnimationFrame(loop);
     })();
 
-    /* ── Scroll-reveal ── */
-    const revealEls = document.querySelectorAll('.reveal');
-    const io = new IntersectionObserver(entries => {
-      entries.forEach((e, i) => {
-        if (e.isIntersecting) {
-          setTimeout(() => e.target.classList.add('visible'), i * 60);
-          io.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    revealEls.forEach(el => {
-      el.classList.add('section-eyebrow', 'section-title', 'section-sub', 'canteen-card', 'feature-cell');
-      io.observe(el);
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => { cur.classList.add('big'); trail.style.width = '60px'; trail.style.height = '60px'; trail.style.borderColor = 'rgba(255,255,255,.4)'; });
+      el.addEventListener('mouseleave', () => { cur.classList.remove('big'); trail.style.width = '32px'; trail.style.height = '32px'; trail.style.borderColor = 'rgba(255,255,255,.2)'; });
     });
 
-    /* ── Scroll effects ── */
-    window.addEventListener('scroll', () => {
-      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+    // Stagger card entrance with slight tilt then settle
+    const portals = document.querySelectorAll('.portal');
+    portals.forEach((p, i) => {
+      p.style.opacity = '0';
+      p.style.transform = `translateY(40px) rotate(${i === 0 ? -2 : 2}deg)`;
+      setTimeout(() => {
+        p.style.transition = 'opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1)';
+        p.style.opacity = '1';
+        p.style.transform = 'none';
+      }, 1000 + i * 120);
     });
-
-    /* ── Count-up animation ── */
-    document.querySelectorAll('[data-count]').forEach(el => {
-      const target = +el.dataset.count;
-      let cur = 0; const step = Math.ceil(target / 30);
-      const iv = setInterval(() => {
-        cur = Math.min(cur + step, target);
-        el.textContent = cur;
-        if (cur >= target) clearInterval(iv);
-      }, 40);
-    });
-    document.querySelectorAll('[data-text]').forEach(el => {
-      setTimeout(() => el.textContent = el.dataset.text, 800);
-    });
-
-    /* ── 3D tilt on canteen cards ── */
-    document.querySelectorAll('.canteen-card').forEach(card => {
-      card.addEventListener('mousemove', e => {
-        const r = card.getBoundingClientRect();
-        const x = e.clientX - r.left, y = e.clientY - r.top;
-        const cx = r.width / 2, cy = r.height / 2;
-        const rx = (y - cy) / cy * 6, ry = (cx - x) / cx * 6;
-        card.style.transform = `translateY(-10px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`;
-      });
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = '';
-      });
-    });
-
-    /* ── Navbar: show user or login buttons ── */
-    (function updateNav() {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
-      const btns = document.getElementById('navBtns');
-      if (token && user && user.name) {
-        const firstName = user.name.split(' ')[0];
-        btns.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;position:relative;">
-        <div class="user-dropdown" style="position:relative;">
-          <div onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'; event.stopPropagation();" style="
-            display:flex;align-items:center;gap:8px;
-            padding:8px 16px;
-            background:rgba(255,159,74,0.1);
-            border:0.5px solid rgba(255,159,74,0.3);
-            border-radius:9999px;
-            font-family:'Space Grotesk',sans-serif;
-            font-size:13px;font-weight:700;
-            cursor:pointer;
-          ">
-            <span style="font-size:16px;">👋</span>
-            <span style="background:linear-gradient(90deg,#ff9f4a,#ffe393);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-              ${firstName} ▾
-            </span>
-          </div>
-          <div class="dropdown-content" style="
-            display:none; position:absolute; right:0; top:calc(100% + 8px); width:160px;
-            background:rgba(31,30,43,0.95); border:0.5px solid rgba(72,71,81,0.5);
-            border-radius:12px; backdrop-filter:blur(16px);
-            box-shadow:0 8px 32px rgba(0,0,0,0.5); overflow:hidden; z-index:999;
-          ">
-            <a href="/order-status" style="display:block;padding:12px 16px;color:#e7e4f0;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border-bottom:0.5px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,159,74,0.1)'" onmouseout="this.style.background='transparent'">✅ Active Order</a>
-            <a href="/history" style="display:block;padding:12px 16px;color:#e7e4f0;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border-bottom:0.5px solid rgba(255,255,255,0.05);transition:background 0.2s;" onmouseover="this.style.background='rgba(255,159,74,0.1)'" onmouseout="this.style.background='transparent'">📜 Order History</a>
-            <a href="#" onclick="logout()" style="display:block;padding:12px 16px;color:#fca5a5;text-decoration:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">🚪 Sign Out</a>
-          </div>
-        </div>
-      </div>
-    `;
-      } else {
-        btns.innerHTML = `
-      <a href="/login"><button class="btn-ghost" style="cursor:pointer">Login</button></a>
-      <a href="/register"><button class="btn-solid" style="cursor:pointer"><span>Register →</span></button></a>`;
-      }
-    })();
-
-    // Close dropdown on outside click
-    document.addEventListener('click', () => {
-      const dropdowns = document.querySelectorAll('.dropdown-content');
-      dropdowns.forEach(dd => dd.style.display = 'none');
-    });
-
-    function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('order');
-      window.location.reload();
-    }
-    document.querySelectorAll('a[href^="#"]').forEach(a => {
-      a.addEventListener('click', e => {
-        e.preventDefault();
-        const t = document.querySelector(a.getAttribute('href'));
-        if (t) t.scrollIntoView({ behavior: 'smooth' });
-      });
-    });
-
-    /* ── openCanteen logic ── */
-    function openCanteen(id) {
-      const token = localStorage.getItem('token');
-      if (!token || token === 'undefined') {
-        const card = document.getElementById('canteen-' + id);
-        card.style.animation = 'shake 0.4s ease';
-        setTimeout(() => card.style.animation = '', 400);
-        setTimeout(() => {
-          localStorage.setItem('redirectAfterLogin', 'menu.html?canteen=' + id);
-          window.location = '/login';
-        }, 450);
-        return;
-      }
-      window.location = 'menu.html?canteen=' + id;
-    }
-    // inject shake keyframe
-    const ks = document.createElement('style');
-    ks.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
-    document.head.appendChild(ks);
-
-    // Force all reveal elements visible after a delay (fallback)
-    setTimeout(() => document.querySelectorAll('.reveal').forEach(e => e.classList.add('visible')), 200);
-
-    /* ── Hamburger menu ── */
-    function toggleMenu() {
-      const hb = document.getElementById('hamburger');
-      const mm = document.getElementById('mobileMenu');
-      hb.classList.toggle('open');
-      mm.classList.toggle('open');
-      // Populate mobile nav buttons same as desktop
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
-      const mBtns = document.getElementById('mobileNavBtns');
-      if (token && user && user.name) {
-        const firstName = user.name.split(' ')[0];
-        mBtns.innerHTML = `
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:#ff9f4a;">👋 ${firstName}</div>
-      <button onclick="logout()" style="margin-top:8px;padding:12px 32px;background:rgba(239,68,68,0.15);border:0.5px solid rgba(239,68,68,0.4);color:#fca5a5;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;border-radius:9999px;cursor:pointer;">Sign Out</button>`;
-      } else {
-        mBtns.innerHTML = `
-      <a href="/login" style="font-size:22px!important;">Login</a>
-      <a href="/register" style="color:#ff9f4a!important;font-size:22px!important;">Register →</a>`;
-      }
-    }
-    // Close menu on scroll
-    window.addEventListener('scroll', () => {
-      document.getElementById('mobileMenu').classList.remove('open');
-      document.getElementById('hamburger').classList.remove('open');
-    }, { passive: true });
-
-    // Fetch Real-time Canteen Status
-    fetch(API + "/canteens/status")
-      .then(r => r.json())
-      .then(data => {
-        Object.keys(data).forEach(cId => {
-          const ind = document.getElementById("live-ind-" + cId);
-          if (!ind) return;
-          const count = data[cId];
-          let config = { col: "var(--tertiary)", text: "Fast" };
-          if (count >= 16) config = { col: "#ef4444", text: "Busy ⏳" };
-          else if (count >= 8) config = { col: "#facc15", text: "Moderate" };
-
-          ind.innerHTML = `<div class="live-dot" style="background:${config.col}; box-shadow:0 0 8px ${config.col};"></div> <span style="color:${config.col};font-weight:700;">${config.text}</span> <span style="color:var(--muted);font-size:10px;margin-left:4px;">(${count} active)</span>`;
-        });
-      }).catch(() => { });
-
   </script>
 </body>
 
