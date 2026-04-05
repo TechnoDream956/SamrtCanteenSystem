@@ -4,6 +4,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/welcome.html"
+    },
+    {
+      "source": "/home",
+      "destination": "/index.html"
+    },
+    {
       "source": "/order-status",
       "destination": "/order_status.html"
     },

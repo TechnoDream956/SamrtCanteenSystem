@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B.U Eats — Welcome</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #080810;
+      --orange: #ff9f4a;
+      --orange-2: #fd8b00;
+      --orange-glow: rgba(255,140,0,0.25);
+      --purple: #c97cff;
+      --purple-2: #6b6bff;
+      --purple-glow: rgba(201,124,255,0.25);
+      --text: #f0eeff;
+      --muted: #7a7890;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      cursor: none;
+    }
+
+    /* ── Custom cursor ── */
+    #cur { width: 10px; height: 10px; background: #fff; border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transition: transform .15s, background .3s; mix-blend-mode: difference; }
+    #cur-ring { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transition: left .1s, top .1s, width .4s, height .4s, border-color .3s; }
+
+    /* ── Canvas background ── */
+    canvas { position: fixed; inset: 0; z-index: 0; }
+
+    /* ── Diagonal divider line ── */
+    .divider {
+      position: fixed;
+      top: 0; left: 50%;
+      width: 1px; height: 100%;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.06) 30%, rgba(255,255,255,.06) 70%, transparent);
+      z-index: 1;
+      transform: skewX(-4deg);
+    }
+
+    /* ── Main layout ── */
+    .scene {
+      position: fixed; inset: 0; z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Top logo area ── */
+    .logo-area {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeDown .8s cubic-bezier(.4,0,.2,1) .2s both;
+    }
+    .logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--orange), var(--purple));
+      border-radius: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 34px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 40px rgba(255,140,0,.3), 0 0 80px rgba(201,124,255,.15);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+    @keyframes logoPulse {
+      0%,100% { box-shadow: 0 0 40px rgba(255,140,0,.3), 0 0 80px rgba(201,124,255,.15); }
+      50% { box-shadow: 0 0 60px rgba(255,140,0,.5), 0 0 120px rgba(201,124,255,.25); }
+    }
+    .logo-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px; font-weight: 800;
+      letter-spacing: -2px;
+      background: linear-gradient(90deg, var(--orange), #fff, var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      background-size: 200%;
+      animation: gradShift 4s ease-in-out infinite alternate;
+    }
+    @keyframes gradShift { 0%{background-position:0%} 100%{background-position:100%} }
+    .logo-tag {
+      font-size: 13px; color: var(--muted); font-weight: 400; letter-spacing: 3px;
+      text-transform: uppercase; margin-top: 6px;
+    }
+
+    /* ── Cards row ── */
+    .cards {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    /* ── Portal card ── */
+    .portal {
+      position: relative;
+      width: 280px;
+      padding: 36px 28px 32px;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.03);
+      backdrop-filter: blur(20px);
+      cursor: none;
+      overflow: hidden;
+      transition: transform .4s cubic-bezier(.4,0,.2,1), box-shadow .4s;
+      text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
+    .portal::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 28px;
+      opacity: 0;
+      transition: opacity .4s;
+    }
+    .portal:hover { transform: translateY(-8px) scale(1.02); }
+
+    /* Student portal — orange */
+    .portal-student {
+      animation: cardIn .7s cubic-bezier(.4,0,.2,1) .5s both;
+    }
+    .portal-student::before {
+      background: radial-gradient(circle at 50% 0%, var(--orange-glow), transparent 70%);
+    }
+    .portal-student:hover {
+      box-shadow: 0 24px 80px rgba(255,140,0,.2), 0 0 0 1px rgba(255,159,74,.3);
+      border-color: rgba(255,159,74,.4);
+    }
+    .portal-student:hover::before { opacity: 1; }
+
+    /* Staff portal — purple */
+    .portal-staff {
+      animation: cardIn .7s cubic-bezier(.4,0,.2,1) .65s both;
+    }
+    .portal-staff::before {
+      background: radial-gradient(circle at 50% 0%, var(--purple-glow), transparent 70%);
+    }
+    .portal-staff:hover {
+      box-shadow: 0 24px 80px rgba(201,124,255,.2), 0 0 0 1px rgba(201,124,255,.3);
+      border-color: rgba(201,124,255,.4);
+    }
+    .portal-staff:hover::before { opacity: 1; }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(40px) scale(.95); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Glow top accent */
+    .portal-glow {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 1px;
+      border-radius: 50%;
+    }
+    .portal-student .portal-glow { background: linear-gradient(90deg, transparent, var(--orange), transparent); box-shadow: 0 0 20px 4px var(--orange-glow); }
+    .portal-staff   .portal-glow { background: linear-gradient(90deg, transparent, var(--purple), transparent); box-shadow: 0 0 20px 4px var(--purple-glow); }
+
+    /* Icon */
+    .portal-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+      position: relative; z-index: 1;
+    }
+    .portal-student .portal-icon { background: rgba(255,159,74,.12); border: 1px solid rgba(255,159,74,.2); }
+    .portal-staff   .portal-icon { background: rgba(201,124,255,.12); border: 1px solid rgba(201,124,255,.2); }
+
+    .portal-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase;
+      margin-bottom: 8px; position: relative; z-index: 1;
+    }
+    .portal-student .portal-label { color: var(--orange); }
+    .portal-staff   .portal-label { color: var(--purple); }
+
+    .portal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px; font-weight: 800; line-height: 1.15;
+      margin-bottom: 12px; position: relative; z-index: 1;
+    }
+
+    .portal-desc {
+      font-size: 13px; color: var(--muted); line-height: 1.7;
+      margin-bottom: 28px; position: relative; z-index: 1; flex: 1;
+    }
+
+    /* Features list */
+    .portal-features {
+      display: flex; flex-direction: column; gap: 8px;
+      margin-bottom: 28px; position: relative; z-index: 1; width: 100%;
+    }
+    .feat {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: rgba(240,238,255,.7); font-weight: 500;
+    }
+    .feat-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .portal-student .feat-dot { background: var(--orange); }
+    .portal-staff   .feat-dot { background: var(--purple); }
+
+    /* CTA button */
+    .portal-btn {
+      width: 100%; padding: 14px;
+      border: none; border-radius: 14px;
+      font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: none; transition: all .3s; position: relative; z-index: 1;
+      overflow: hidden; text-align: center;
+    }
+    .portal-btn::after {
+      content: '→';
+      margin-left: 8px;
+      display: inline-block;
+      transition: transform .3s;
+    }
+    .portal:hover .portal-btn::after { transform: translateX(4px); }
+
+    .portal-student .portal-btn {
+      background: linear-gradient(135deg, var(--orange), var(--orange-2));
+      color: #1a0800;
+      box-shadow: 0 6px 24px rgba(255,140,0,.3);
+    }
+    .portal-student .portal-btn:hover { box-shadow: 0 10px 36px rgba(255,140,0,.5); }
+
+    .portal-staff .portal-btn {
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      color: #fff;
+      box-shadow: 0 6px 24px rgba(201,124,255,.3);
+    }
+    .portal-staff .portal-btn:hover { box-shadow: 0 10px 36px rgba(201,124,255,.5); }
+
+    /* Shimmer on button */
+    .portal-btn::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 200%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+      animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer { 0%{left:-100%} 100%{left:100%} }
+    .portal-btn span { position: relative; z-index: 1; }
+
+    /* OR divider between cards */
+    .or-pill {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; color: var(--muted); font-size: 11px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase;
+      animation: fadeDown .8s cubic-bezier(.4,0,.2,1) .7s both;
+      flex-shrink: 0;
+    }
+    .or-line { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,.1), transparent); }
+
+    /* ── Bottom hint ── */
+    .bottom-hint {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; color: var(--muted); letter-spacing: 1px;
+      z-index: 3;
+      animation: fadeDown .8s .9s both;
+      white-space: nowrap;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      html, body { overflow-y: auto; }
+      .scene { position: relative; min-height: 100vh; padding: 40px 20px 60px; flex-direction: column; }
+      .cards { flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+      .portal { width: 100%; max-width: 340px; }
+      .or-pill { flex-direction: row; }
+      .or-line { width: 40px; height: 1px; }
+      .logo-name { font-size: 32px; }
+      .logo-icon { width: 58px; height: 58px; font-size: 26px; }
+      .logo-area { margin-bottom: 32px; }
+      .bottom-hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<canvas id="bg"></canvas>
+<div class="divider"></div>
+
+<div class="scene">
+  <!-- Logo -->
+  <div class="logo-area">
+    <div class="logo-icon">🍽️</div>
+    <div class="logo-name">B.U Eats</div>
+    <div class="logo-tag">Bennett University · Campus Dining</div>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards">
+
+    <!-- Student portal -->
+    <a href="index.html" class="portal portal-student">
+      <div class="portal-glow"></div>
+      <div class="portal-icon">🎓</div>
+      <div class="portal-label">Student Portal</div>
+      <div class="portal-title">Order Food,<br/>Skip the Line</div>
+      <div class="portal-desc">Browse canteen menus, order ahead, and track your food live — all from your phone.</div>
+      <div class="portal-features">
+        <div class="feat"><div class="feat-dot"></div>Browse 4 campus canteens</div>
+        <div class="feat"><div class="feat-dot"></div>Real-time order tracking</div>
+        <div class="feat"><div class="feat-dot"></div>Order history & reorder</div>
+      </div>
+      <div class="portal-btn"><span>Enter as Student</span></div>
+    </a>
+
+    <!-- OR -->
+    <div class="or-pill">
+      <div class="or-line"></div>
+      OR
+      <div class="or-line"></div>
+    </div>
+
+    <!-- Staff portal -->
+    <a href="canteen/login.html" class="portal portal-staff">
+      <div class="portal-glow"></div>
+      <div class="portal-icon">👨‍🍳</div>
+      <div class="portal-label">Staff Portal</div>
+      <div class="portal-title">Manage Orders,<br/>Run the Kitchen</div>
+      <div class="portal-desc">Accept orders, update status, and keep your canteen running smoothly with the staff dashboard.</div>
+      <div class="portal-features">
+        <div class="feat"><div class="feat-dot"></div>Live order queue</div>
+        <div class="feat"><div class="feat-dot"></div>One-tap status updates</div>
+        <div class="feat"><div class="feat-dot"></div>Revenue & analytics</div>
+      </div>
+      <div class="portal-btn"><span>Enter as Staff</span></div>
+    </a>
+
+  </div>
+</div>
+
+<div class="bottom-hint">© 2026 B.U Eats · Bennett University</div>
+
+<script>
+/* ── Cursor ── */
+const cur = document.getElementById('cur');
+const ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx-5+'px'; cur.style.top=my-5+'px'; });
+(function loop(){ rx+=(mx-rx-20)*.12; ry+=(my-ry-20)*.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+
+document.querySelectorAll('a,.portal').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width='60px'; ring.style.height='60px'; ring.style.borderColor='rgba(255,255,255,.5)'; });
+  el.addEventListener('mouseleave', () => { ring.style.width='40px'; ring.style.height='40px'; ring.style.borderColor='rgba(255,255,255,.3)'; });
+});
+
+/* ── Particle canvas ── */
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+const EMOJIS = ['🍜','🍛','⚡','🌌','🍱','🥘','🫕','🍲','🥗','🧆','🍔','🥙'];
+
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor(){
+    this.reset(true);
+  }
+  reset(init=false){
+    this.x = Math.random() * W;
+    this.y = init ? Math.random() * H : H + 40;
+    this.size = 14 + Math.random() * 18;
+    this.speed = .2 + Math.random() * .4;
+    this.drift = (Math.random()-.5) * .3;
+    this.opacity = 0;
+    this.targetOp = .05 + Math.random() * .08;
+    this.emoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+    this.rot = Math.random()*360;
+    this.rotSpeed = (Math.random()-.5)*.4;
+  }
+  update(){
+    this.y -= this.speed;
+    this.x += this.drift;
+    this.rot += this.rotSpeed;
+    this.opacity += (this.targetOp - this.opacity) * .02;
+    if(this.y < -40) this.reset();
+  }
+  draw(){
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot * Math.PI/180);
+    ctx.font = `${this.size}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(this.emoji, 0, 0);
+    ctx.restore();
+  }
+}
+
+for(let i=0;i<28;i++) particles.push(new Particle());
+
+/* Draw faint glow blobs in background */
+function drawGlows(){
+  // Orange blob left
+  const g1 = ctx.createRadialGradient(W*.2, H*.5, 0, W*.2, H*.5, W*.35);
+  g1.addColorStop(0,'rgba(255,140,0,.04)');
+  g1.addColorStop(1,'transparent');
+  ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
+  // Purple blob right
+  const g2 = ctx.createRadialGradient(W*.8, H*.5, 0, W*.8, H*.5, W*.35);
+  g2.addColorStop(0,'rgba(201,124,255,.04)');
+  g2.addColorStop(1,'transparent');
+  ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
+}
+
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  drawGlows();
+  particles.forEach(p=>{ p.update(); p.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
