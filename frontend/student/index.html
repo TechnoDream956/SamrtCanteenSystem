@@ -1307,18 +1307,27 @@ async function loadCredits(){
         margin-bottom:10px;
         font-size:12px;
       ">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <span style="font-weight:700;color:#e7e4f0;">Order #${o.order_id}</span>
-          <span style="
-            padding:3px 8px;
-            background:rgba(255,159,74,0.2);
-            border-radius:6px;
+          <button style="
+            padding:4px 12px;
+            background:linear-gradient(135deg,rgba(255,159,74,0.2),rgba(255,159,74,0.1));
+            border:0.5px solid rgba(255,159,74,0.4);
             color:#ff9f4a;
+            font-family:'Manrope',sans-serif;
+            font-size:11px;
             font-weight:700;
-          ">${o.status}</span>
+            border-radius:6px;
+            cursor:pointer;
+            transition:all 0.2s;
+          " onmouseover="this.style.background='linear-gradient(135deg,rgba(255,159,74,0.3),rgba(255,159,74,0.2))'; this.style.boxShadow='0 0 12px rgba(255,159,74,0.2)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,159,74,0.2),rgba(255,159,74,0.1))'; this.style.boxShadow='none'">
+            📋 ${o.items_count} item${o.items_count > 1 ? 's' : ''}
+          </button>
         </div>
-        <div style="color:#9998aa;">₹${o.price} • ${o.items_count} items</div>
-        ${o.late_penalty > 0 ? `<div style="color:#fca5a5;margin-top:6px;">Late penalty: ₹${o.late_penalty}</div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="color:#9998aa;">₹${o.price} total</div>
+          ${o.late_penalty > 0 ? `<div style="color:#fca5a5;font-weight:700;">Fine: ₹${o.late_penalty}</div>` : ''}
+        </div>
       </div>
     `).join('');
     
