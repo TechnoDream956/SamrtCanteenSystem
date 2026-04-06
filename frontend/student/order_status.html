@@ -352,10 +352,10 @@ function updateUI(o) {
 }
 
 // Override pollStudent to use updateUI
-const orderId = localStorage.getItem("order");
+const orderId = localStorage.getItem("student_order");
 if (orderId) {
   const poll = () => {
-    fetch(API + "/order/status/" + orderId, { headers: authHeaders() })
+    fetch(API + "/order/status/" + orderId, { headers: authHeaders("student") })
     .then(r => r.json())
     .then(o => { if (o.status) updateUI(o); })
     .catch(() => {});

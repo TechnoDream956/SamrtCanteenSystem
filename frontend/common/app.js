@@ -124,7 +124,7 @@ function checkout() {
 
     fetch(API + "/order/create", {
         method:  "POST",
-        headers: authHeaders(),
+        headers: authHeaders("student"),
         body:    JSON.stringify({ canteen_id: canteenId, items: cart })
     })
     .then(r => r.json())
@@ -134,7 +134,7 @@ function checkout() {
             if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
             return;
         }
-        localStorage.setItem("order", d.order_id);
+        localStorage.setItem("student_order", d.order_id);
         window.location = "order_status.html";
     })
     .catch(() => {
