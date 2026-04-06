@@ -432,7 +432,7 @@
       <div class="staff-avatar" id="staffInitial">?</div>
       <span class="staff-name" id="staffName">Staff</span>
     </div>
-    <button class="btn-logout" onclick="logout()">Sign Out</button>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
 </header>
 
@@ -550,7 +550,7 @@ async function loadOrders(){
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (res.status === 401) { logout(); return; }
+    if (res.status === 401) { doLogout(); return; }
     if (!res.ok) throw new Error('Server error');
 
     allOrders = await res.json();
@@ -699,8 +699,10 @@ function showToast(msg, type='success'){
 }
 
 /* ── Logout ── */
-function logout(){
-  logout('canteen', 'login.html');
+function doLogout(){
+  localStorage.removeItem('staff_token');
+  localStorage.removeItem('staff_user');
+  window.location.href = 'login.html';
 }
 
 /* ── Auto-refresh every 10s ── */

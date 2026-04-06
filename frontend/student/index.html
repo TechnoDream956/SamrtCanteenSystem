@@ -1092,7 +1092,9 @@ document.querySelectorAll('.canteen-card').forEach(card=>{
 })();
 
 function logout(){
-  logout('student', 'login.html');
+  localStorage.removeItem('student_token');
+  localStorage.removeItem('student_user');
+  localStorage.removeItem('student_order');
   window.location.reload();
 }
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
