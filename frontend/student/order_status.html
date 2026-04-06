@@ -120,6 +120,13 @@
     .progress-step.active  .step-label { color: var(--orange); }
     .progress-step.current .step-label { color: var(--amber); font-weight: 700; }
 
+    .step-time {
+      font-size: 9px; font-weight: 500; color: var(--text-muted);
+      margin-top: 2px; letter-spacing: 0px; opacity: 0.7;
+    }
+    .progress-step.active .step-time { color: rgba(255,107,53,0.8); opacity: 1; }
+    .progress-step.current .step-time { color: var(--amber); opacity: 1; font-weight: 600; }
+
     /* Status card */
     .status-card {
       background: var(--glass-bg);
@@ -237,22 +244,27 @@
       <div class="progress-step" id="step-WAITING">
         <div class="step-circle">⏳</div>
         <div class="step-label">Waiting</div>
+        <div class="step-time" id="time-WAITING">—</div>
       </div>
       <div class="progress-step" id="step-ACCEPTED">
         <div class="step-circle">✅</div>
         <div class="step-label">Accepted</div>
+        <div class="step-time" id="time-ACCEPTED">—</div>
       </div>
       <div class="progress-step" id="step-PREPARING">
         <div class="step-circle">👨‍🍳</div>
         <div class="step-label">Preparing</div>
+        <div class="step-time" id="time-PREPARING">—</div>
       </div>
       <div class="progress-step" id="step-READY">
         <div class="step-circle">🔔</div>
         <div class="step-label">Ready!</div>
+        <div class="step-time" id="time-READY">—</div>
       </div>
       <div class="progress-step" id="step-COMPLETED">
         <div class="step-circle">🎉</div>
         <div class="step-label">Done</div>
+        <div class="step-time" id="time-COMPLETED">—</div>
       </div>
     </div>
 
@@ -302,6 +314,14 @@ const STEPS = ["WAITING","ACCEPTED","PREPARING","READY","COMPLETED"];
 
 let lastStatus = null;
 
+function formatTime(unix_timestamp) {
+  if (!unix_timestamp) return "—";
+  const date = new Date(unix_timestamp * 1000);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const mins = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${mins}`;
+}
+
 function updateUI(o) {
   const info      = STATUS_INFO[o.status] || STATUS_INFO.WAITING;
   const stepIdx   = STEPS.indexOf(o.status);
@@ -316,12 +336,28 @@ function updateUI(o) {
   // Progress fill
   document.getElementById("progressFill").style.width = info.fill;
 
-  // Step highlights
+  // Step highlights & timestamps
   STEPS.forEach((s, i) => {
     const el = document.getElementById("step-" + s);
     if (!el) return;
     el.classList.toggle("active",  i <= stepIdx);
     el.classList.toggle("current", i === stepIdx);
+    
+    // Update timestamps
+    let timeStr = "—";
+    if (s === "WAITING" && o.created_time) {
+      timeStr = formatTime(o.created_time);
+    } else if (s === "ACCEPTED" && o.accepted_time) {
+      timeStr = formatTime(o.accepted_time);
+    } else if (s === "PREPARING" && o.accepted_time) {
+      timeStr = formatTime(o.accepted_time);
+    } else if (s === "READY" && o.ready_time) {
+      timeStr = formatTime(o.ready_time);
+    } else if (s === "COMPLETED" && o.completed_time) {
+      timeStr = formatTime(o.completed_time);
+    }
+    const timeEl = document.getElementById("time-" + s);
+    if (timeEl) timeEl.textContent = timeStr;
   });
 
   // Items
