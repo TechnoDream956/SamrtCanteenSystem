@@ -206,10 +206,16 @@ def send_email(to_addr, otp):
     </div>"""
 
     msg.attach(MIMEText(html, "html"))
-    with smtplib.SMTP("smtp.gmail.com", 587) as s:
-        s.starttls()
-        s.login(SMTP_EMAIL, SMTP_PASSWORD)
-        s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+    
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+            s.starttls()
+            s.login(SMTP_EMAIL, SMTP_PASSWORD)
+            s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"Email send error: {e}")
+        return False
 
 # ── SEND OTP (email-based) ──────────────────────────────────────────────────────
 @app.route("/send-otp", methods=["POST"])
@@ -223,16 +229,18 @@ def send_otp():
 
     dev_mode = not bool(SMTP_EMAIL and SMTP_PASSWORD)
 
-    if not dev_mode:
-        try:
-            send_email(email, otp)
-        except Exception as e:
-            return jsonify({"error": f"Email send failed: {str(e)}"}), 500
-        return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False})
-
-    # Dev mode — no SMTP configured, return OTP in response
-    return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
-                    "dev_mode": True, "otp": otp})
+    if dev_mode:
+        # Dev mode — no SMTP configured, return OTP in response
+        return jsonify({"msg": "DEV MODE: OTP generated (no SMTP configured)",
+                        "dev_mode": True, "otp": otp}), 200
+    
+    # Prod mode — try to send email
+    if send_email(email, otp):
+        return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False}), 200
+    else:
+        # Fall back to dev mode if email fails
+        return jsonify({"msg": "DEV MODE: Email service unavailable. OTP shown below.",
+                        "dev_mode": True, "otp": otp}), 200
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
 @app.route("/verify-otp", methods=["POST"])
