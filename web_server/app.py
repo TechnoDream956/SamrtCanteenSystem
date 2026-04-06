@@ -518,7 +518,6 @@ def get_order_history():
     query = f"SELECT * FROM orders WHERE student_id = {ph} ORDER BY created_time DESC LIMIT 10"
     cur.execute(query, (int(user_id),))
     rows = cur.fetchall()
-    conn.close()
     
     result = []
     for row in rows:
@@ -526,6 +525,7 @@ def get_order_history():
         o["items"] = json.loads(o["items"])
         result.append(o)
     
+    conn.close()
     return jsonify(result)
 
 # ── UPDATE ORDER STATUS & CALCULATE PENALTIES ─────────────────────────────────
