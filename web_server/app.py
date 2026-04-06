@@ -343,6 +343,24 @@ def login():
         }
     })
 
+# ── GET CANTEENS (for registration/login dropdowns) ──────────────────────────
+@app.route("/canteens", methods=["GET"])
+def get_canteens():
+    conn, ph = db_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM canteens ORDER BY id")
+    rows = cur.fetchall()
+    conn.close()
+    
+    canteens = []
+    for row in rows:
+        canteens.append({
+            "id": row[0] if USE_POSTGRES else row["id"],
+            "name": row[1] if USE_POSTGRES else row["name"]
+        })
+    
+    return jsonify({"canteens": canteens})
+
 # ── CREATE ORDER ──────────────────────────────────────────────────────────────
 @app.route("/order/create", methods=["POST"])
 @jwt_required()

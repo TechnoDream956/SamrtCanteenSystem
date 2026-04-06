@@ -330,7 +330,7 @@ document.getElementById("canteenName").textContent = info.name;
 document.getElementById("canteenSub").textContent  = info.sub;
 
 // User greeting
-const user = JSON.parse(localStorage.getItem("user") || "{}");
+const user = JSON.parse(localStorage.getItem("student_user") || "{}");
 const navUser = document.getElementById("nav-username");
 if (navUser && user.name) navUser.textContent = "👋 " + user.name;
 

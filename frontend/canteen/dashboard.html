@@ -513,9 +513,9 @@
 <script src="../common/config.js"></script>
 <script src="../common/app.js"></script>
 <script>
-/* ── Auth guard ── */
-const token = localStorage.getItem('token');
-const user  = JSON.parse(localStorage.getItem('user') || 'null');
+/* ── Auth guard (staff-specific) ── */
+const token = localStorage.getItem('staff_token');
+const user  = JSON.parse(localStorage.getItem('staff_user') || 'null');
 if (!token || !user || user.role !== 'canteen') {
   window.location.href = 'login.html';
 }
@@ -700,9 +700,7 @@ function showToast(msg, type='success'){
 
 /* ── Logout ── */
 function logout(){
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = 'login.html';
+  logout('canteen', 'login.html');
 }
 
 /* ── Auto-refresh every 10s ── */

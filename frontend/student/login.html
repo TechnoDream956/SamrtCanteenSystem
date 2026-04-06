@@ -421,8 +421,8 @@ async function doLogin(e){
     const data=await res.json();
     if(!res.ok) throw new Error(data.msg || 'Login failed');
 
-    localStorage.setItem('token',data.access_token);
-    localStorage.setItem('user',JSON.stringify(data.user||{name:email}));
+    localStorage.setItem('student_token',data.access_token);
+    localStorage.setItem('student_user',JSON.stringify(data.user||{name:email}));
     txtEl.textContent='✓ Welcome!';
     btn.style.background='linear-gradient(135deg,#22c55e,#16a34a)';
 
@@ -444,8 +444,8 @@ const s=document.createElement('style');
 s.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
 document.head.appendChild(s);
 
-// If already logged in, redirect
-if(localStorage.getItem('token')&&localStorage.getItem('token')!=='undefined'){
+// If already logged in as student, redirect to menu
+if(localStorage.getItem('student_token')&&localStorage.getItem('student_token')!=='undefined'){
   window.location='index.html';
 }
 </script>

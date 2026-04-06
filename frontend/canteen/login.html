@@ -147,11 +147,7 @@
   <div class="form-group">
     <label>Your Canteen</label>
     <select id="canteenSelect">
-      <option value="">— Select your canteen —</option>
-      <option value="1">🍜 Maggi Hotspot</option>
-      <option value="2">🍛 Southern Stories</option>
-      <option value="3">⚡ SnapEats</option>
-      <option value="4">🌌 Infinity Kitchen</option>
+      <option value="">— Loading canteens… —</option>
     </select>
   </div>
 
@@ -187,10 +183,39 @@
 <script src="../common/config.js"></script>
 <script src="../common/app.js"></script>
 <script>
-// Redirect if already logged in as canteen
-const u = JSON.parse(localStorage.getItem('user') || 'null');
-if (u && u.role === 'canteen' && localStorage.getItem('token')) {
+// Redirect if already logged in as canteen staff
+const u = JSON.parse(localStorage.getItem('staff_user') || 'null');
+if (u && u.role === 'canteen' && localStorage.getItem('staff_token')) {
   window.location.href = 'dashboard.html';
+}
+
+// Load canteens on page load
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadCanteens();
+});
+
+async function loadCanteens() {
+  try {
+    const res = await fetch(`${API}/canteens`);
+    const data = await res.json();
+    const select = document.getElementById('canteenSelect');
+    
+    select.innerHTML = '<option value="">— Select your canteen —</option>';
+    
+    if (data.canteens && data.canteens.length > 0) {
+      data.canteens.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+    } else {
+      select.innerHTML = '<option value="">No canteens available</option>';
+    }
+  } catch(e) {
+    console.error('Failed to load canteens:', e);
+    document.getElementById('canteenSelect').innerHTML = '<option value="">Error loading canteens</option>';
+  }
 }
 
 function togglePass(){
@@ -241,8 +266,8 @@ async function doLogin(){
       return;
     }
 
-    localStorage.setItem('token', data.access_token);
-    localStorage.setItem('user',  JSON.stringify(data.user));
+    localStorage.setItem('staff_token', data.access_token);
+    localStorage.setItem('staff_user',  JSON.stringify(data.user));
 
     showMsg('✅ Success! Redirecting to dashboard…', 'success');
     setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);

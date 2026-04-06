@@ -1051,8 +1051,8 @@ document.querySelectorAll('.canteen-card').forEach(card=>{
 
 /* ── Navbar: show user or login buttons ── */
 (function updateNav(){
-  const token = localStorage.getItem('token');
-  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  const token = localStorage.getItem('student_token');
+  const user  = JSON.parse(localStorage.getItem('student_user') || 'null');
   const btns  = document.getElementById('navBtns');
   if(token && user && user.name){
     const firstName = user.name.split(' ')[0];
@@ -1092,9 +1092,7 @@ document.querySelectorAll('.canteen-card').forEach(card=>{
 })();
 
 function logout(){
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('order');
+  logout('student', 'login.html');
   window.location.reload();
 }
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
@@ -1107,7 +1105,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
 
 /* ── openCanteen logic ── */
 function openCanteen(id){
-  const token=localStorage.getItem('token');
+  const token=localStorage.getItem('student_token');
   if(!token||token==='undefined'){
     const card=document.getElementById('canteen-'+id);
     card.style.animation='shake 0.4s ease';
@@ -1135,8 +1133,8 @@ function toggleMenu(){
   hb.classList.toggle('open');
   mm.classList.toggle('open');
   // Populate mobile nav buttons same as desktop
-  const token = localStorage.getItem('token');
-  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  const token = localStorage.getItem('student_token');
+  const user  = JSON.parse(localStorage.getItem('student_user') || 'null');
   const mBtns = document.getElementById('mobileNavBtns');
   if(token && user && user.name){
     const firstName = user.name.split(' ')[0];
