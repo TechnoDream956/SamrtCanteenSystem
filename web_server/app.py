@@ -79,14 +79,6 @@ def handle_exception(e):
     response.headers["Access-Control-Allow-Origin"] = "*"
     return response, 500
 
-@app.route("/")
-def health_check():
-    return jsonify({
-        "status": "ok",
-        "service": "B.U Eats API",
-        "version": "2.1",
-        "db": "postgresql" if USE_POSTGRES else "sqlite"
-    }), 200
 
 # ── Database: PostgreSQL on Railway, SQLite locally ───────────────────────────
 DATABASE_URL = os.environ.get("DATABASE_URL", "")

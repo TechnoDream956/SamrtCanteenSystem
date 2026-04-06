@@ -16,18 +16,18 @@ function protectPage(requiredRole) {
     const user  = JSON.parse(localStorage.getItem("user") || "null");
 
     if (!token || token === "undefined") {
-        window.location.href = "../student/login.html";
+        window.location.href = "../login.html";
         return;
     }
     if (!user || !user.role) {
         localStorage.clear();
-        window.location.href = "../student/login.html";
+        window.location.href = "../login.html";
         return;
     }
     if (requiredRole && user.role !== requiredRole) {
         alert("Unauthorized access");
         localStorage.clear();
-        window.location.href = "../student/login.html";
+        window.location.href = "../login.html";
         return;
     }
 }
@@ -36,7 +36,7 @@ function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("order");
-    window.location = "../student/login.html";
+    window.location = "../login.html";
 }
 
 // ── Cart ──────────────────────────────────────────────────────────────────────
@@ -256,6 +256,6 @@ function showToast(msg, type = "success") {
 setInterval(() => {
     const token = localStorage.getItem("token");
     if (!token && window.location.pathname.includes("menu.html")) {
-        window.location = "../student/login.html";
+        window.location = "../login.html";
     }
 }, 15000);
