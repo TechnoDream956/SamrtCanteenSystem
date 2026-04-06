@@ -19,6 +19,22 @@
     { "src": "/order_status",           "dest": "/student/order_status.html"},
     { "src": "/order_status.html",      "dest": "/student/order_status.html"},
 
+    { "src": "/staff",                  "dest": "/canteen/login.html"       },
+    { "src": "/staff/login",            "dest": "/canteen/login.html"       },
+    { "src": "/staff/login.html",       "dest": "/canteen/login.html"       },
+
+    { "src": "/staff/register",         "dest": "/canteen/register.html"    },
+    { "src": "/staff/register.html",    "dest": "/canteen/register.html"    },
+
+    { "src": "/staff/dashboard",        "dest": "/canteen/dashboard.html"   },
+    { "src": "/staff/dashboard.html",   "dest": "/canteen/dashboard.html"   },
+
+    { "src": "/staff/order_detail",     "dest": "/canteen/order_detail.html"},
+    { "src": "/staff/order_detail.html","dest": "/canteen/order_detail.html"},
+
+    { "src": "/staff/order_status",     "dest": "/canteen/order_status.html"},
+    { "src": "/staff/order_status.html","dest": "/canteen/order_status.html"},
+
     { "src": "/(.*)",                   "dest": "/$1"                       }
   ]
 }
