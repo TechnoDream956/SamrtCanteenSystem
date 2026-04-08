@@ -761,17 +761,17 @@ function orderCard(o, qPos){
       <div style="padding:10px 12px;background:rgba(107,184,255,0.08);border:1px solid rgba(107,184,255,0.25);
                   border-radius:12px;margin-top:10px;display:flex;gap:14px;">
         <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;">
-          <span style="font-size:16px;">⏱</span>
+          <span style="font-size:16px;">⏱️</span>
           <div>
-            <div style="color:#9998aa;font-size:10px;">Started</div>
+            <div style="color:#9998aa;font-size:10px;">Prep Started</div>
             <div style="color:#6bb8ff;">${elapsedMins}m ago</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;">
           <span style="font-size:16px;">⏳</span>
           <div>
-            <div style="color:#9998aa;font-size:10px;">Est. Ready</div>
-            <div style="color:#${expectedRemaining <= 2 ? 'ffb347' : '4fffb0'};">${expectedRemaining}m left</div>
+            <div style="color:#9998aa;font-size:10px;">🔔 Ready In</div>
+            <div style="color:#${expectedRemaining <= 2 ? 'ffb347' : '4fffb0'};">${expectedRemaining}m</div>
           </div>
         </div>
       </div>
@@ -795,8 +795,8 @@ function orderCard(o, qPos){
       <div class="order-meta">
         <div class="meta-chip"><span>⏱</span> ${o.expected_time} min prep</div>
         <div class="meta-chip"><span>🛍</span> ${o.items_count} item${o.items_count>1?'s':''}</div>
-        <div class="meta-chip"><span>�</span> ${o.order_placed || 'Just now'}</div>
-        <div class="meta-chip"><span>�🕐</span> ${waitMins < 1 ? 'Just now' : waitMins + 'm ago'}</div>
+        <div class="meta-chip"><span>📅</span> ${o.order_placed || 'Just now'}</div>
+        <div class="meta-chip"><span>🕐</span> ${waitMins < 1 ? 'Just now' : waitMins + 'm ago'}</div>
         <div class="meta-chip"><span>💰</span> ₹${(o.price||0).toFixed(0)}</div>
       </div>
       ${timerDisplay}
