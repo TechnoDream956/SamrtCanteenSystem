@@ -1440,27 +1440,12 @@ window.addEventListener('load', async () => {
 });
 
 // Background music player with medium volume
-window.addEventListener('load', () => {
-  const audio = document.getElementById('bgMusic');
-  if(audio) {
-    audio.volume = 0.4; // Medium volume (0-1 scale, 0.4 = 40%)
-    audio.muted = false; // Start unmuted
-    audio.play().catch(e => {
-      console.log('Autoplay blocked by browser, will play on user interaction');
-      isMusicPlaying = false;
-    });
-  }
-});
-
-// Try to play when user first interacts with page
-document.addEventListener('click', () => {
-  if(!isMusicPlaying) {
-    const audio = document.getElementById('bgMusic');
-    if(audio && audio.paused) {
-      audio.play().catch(e => console.log('Play failed:', e));
-    }
-  }
-}, { once: true });
+const audio = document.getElementById('bgMusic');
+if(audio) {
+  audio.volume = 0.4; // Medium volume (0-1 scale, 0.4 = 40%)
+  audio.muted = false; // Ensure unmuted
+  audio.play(); // Play immediately
+}
 
 </script>
 
