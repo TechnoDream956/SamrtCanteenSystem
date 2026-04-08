@@ -77,6 +77,11 @@ def init_db():
             name TEXT
         )""")
         cur.execute("""
+        CREATE TABLE IF NOT EXISTS order_counter(
+            id INTEGER PRIMARY KEY,
+            next_order_id BIGINT DEFAULT 1001
+        )""")
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS orders(
             order_id      BIGINT PRIMARY KEY,
             canteen_id    INTEGER,
@@ -92,6 +97,10 @@ def init_db():
             completed_time DOUBLE PRECISION,
             late_penalty  DOUBLE PRECISION DEFAULT 0
         )""")
+        try:
+            cur.execute("INSERT INTO order_counter(id, next_order_id) VALUES (1, 1001)")
+        except Exception:
+            pass
         # Add missing columns if they don't exist
         try:
             cur.execute("ALTER TABLE users ADD COLUMN credits DOUBLE PRECISION DEFAULT 0")
@@ -134,6 +143,11 @@ def init_db():
             name TEXT
         )""")
         cur.execute("""
+        CREATE TABLE IF NOT EXISTS order_counter(
+            id INTEGER PRIMARY KEY,
+            next_order_id INTEGER DEFAULT 1001
+        )""")
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS orders(
             order_id      INTEGER PRIMARY KEY,
             canteen_id    INTEGER,
@@ -149,6 +163,10 @@ def init_db():
             completed_time REAL,
             late_penalty  REAL DEFAULT 0
         )""")
+        try:
+            cur.execute("INSERT INTO order_counter(id, next_order_id) VALUES (1, 1001)")
+        except Exception:
+            pass
         # Add missing columns
         for col, typ in [("completed_time","REAL"),("late_penalty","REAL DEFAULT 0")]:
             try:
@@ -180,6 +198,39 @@ seed()
 import random, smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import datetime
+
+def get_next_order_id():
+    """Get the next sequential order ID."""
+    conn, ph = db_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(f"""
+            UPDATE order_counter 
+            SET next_order_id = next_order_id + 1 
+            WHERE id = 1
+        """)
+        conn.commit()
+        cur.execute("SELECT next_order_id FROM order_counter WHERE id = 1")
+        row = cur.fetchone()
+        next_id = (row[0] - 1) if USE_POSTGRES else (row[0] - 1)
+    except Exception as e:
+        print(f"[ORDER ID] Error getting next ID: {e}")
+        next_id = int(time.time() * 1000)
+    finally:
+        conn.close()
+    return next_id
+
+def format_timestamp(ts):
+    """Convert Unix timestamp to readable date/time format."""
+    if not ts:
+        return None
+    try:
+        dt = datetime.datetime.fromtimestamp(ts)
+        return dt.strftime("%d %b %Y, %I:%M %p")  # e.g., "08 Apr 2026, 02:30 PM"
+    except:
+        return str(ts)
+
 otp_store = {}
 
 SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")
@@ -418,17 +469,18 @@ def create_order():
     conn, ph = db_conn()
     cur  = conn.cursor()
 
-    oid         = int(time.time() * 1000)
+    # Get sequential order ID
+    oid         = get_next_order_id()
     items       = d["items"]
     total_price = sum(i["price"] for i in items)
     total_time  = sum(i["time"]  for i in items)
 
     cur.execute(
-        f"INSERT INTO orders VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph})",
+        f"INSERT INTO orders VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph})",
         (oid, d["canteen_id"], int(user_id),
          json.dumps(items), len(items),
          total_price, total_time,
-         "WAITING", time.time(), None, None)
+         "WAITING", time.time(), None, None, None, 0)
     )
     conn.commit()
     conn.close()
@@ -461,8 +513,11 @@ def canteen_orders():
     result = []
     for r in rows:
         o = row_to_dict(r, cur)
-        o["items"]    = json.loads(o["items"])
-        o["priority"] = round(calc_priority(o), 2)
+        o["items"]        = json.loads(o["items"])
+        o["priority"]     = round(calc_priority(o), 2)
+        # Add formatted date/time for display
+        o["order_placed"]  = format_timestamp(o["created_time"])
+        o["created_time"]  = o["created_time"]  # Keep original timestamp for reference
         result.append(o)
     
     conn.close()
