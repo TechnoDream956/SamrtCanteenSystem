@@ -208,13 +208,25 @@ def send_email(to_addr, otp):
     msg.attach(MIMEText(html, "html"))
     
     try:
+        print(f"[OTP EMAIL] Connecting to SMTP: smtp.gmail.com:587")
+        print(f"[OTP EMAIL] Sender email: {SMTP_EMAIL}")
+        print(f"[OTP EMAIL] Recipient: {to_addr}")
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
             s.starttls()
+            print(f"[OTP EMAIL] TLS started, attempting login...")
             s.login(SMTP_EMAIL, SMTP_PASSWORD)
+            print(f"[OTP EMAIL] Login successful, sending email...")
             s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+            print(f"[OTP EMAIL] Email sent successfully to {to_addr}")
         return True
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"[OTP EMAIL] AUTH ERROR (invalid credentials): {e}")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"[OTP EMAIL] SMTP ERROR: {e}")
+        return False
     except Exception as e:
-        print(f"Email send error: {e}")
+        print(f"[OTP EMAIL] GENERAL ERROR: {type(e).__name__}: {e}")
         return False
 
 # ── SEND OTP (email-based) ──────────────────────────────────────────────────────
@@ -233,12 +245,12 @@ def send_otp():
                         "dev_mode": True, "otp": otp}), 200
     
     # Try to send real email
-    try:
-        send_email(email, otp)
+    print(f"\n[OTP REQUEST] Email: {email}, OTP: {otp}")
+    if send_email(email, otp):
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False}), 200
-    except Exception as e:
-        print(f"Email error: {e}")
-        return jsonify({"error": f"Email service failed: {str(e)}"}), 500
+    else:
+        print(f"[OTP REQUEST] Email send failed - check logs above")
+        return jsonify({"error": "Failed to send OTP - check server logs", "debug": "See backend logs"}), 500
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
 @app.route("/verify-otp", methods=["POST"])
@@ -688,6 +700,46 @@ def ready():
 def complete():
     result = set_status(request.json["order_id"], "COMPLETED")
     return jsonify({"ok": result.get("late_penalty", 0)} if result else {"error": "Failed"})
+
+# ── TEST SMTP CONNECTION (debug OTP issues) ────────────────────────────────────
+@app.route("/test-smtp", methods=["GET"])
+def test_smtp():
+    """Test if SMTP credentials are valid."""
+    if not SMTP_EMAIL or not SMTP_PASSWORD:
+        return jsonify({
+            "status": "FAILED",
+            "error": "SMTP credentials not configured in environment variables",
+            "SMTP_EMAIL": "NOT SET" if not SMTP_EMAIL else "SET",
+            "SMTP_PASSWORD": "NOT SET" if not SMTP_PASSWORD else "SET"
+        }), 400
+    
+    try:
+        print(f"\n[SMTP TEST] Testing connection with {SMTP_EMAIL}")
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+            s.starttls()
+            s.login(SMTP_EMAIL, SMTP_PASSWORD)
+        
+        return jsonify({
+            "status": "SUCCESS",
+            "message": "SMTP connection test passed",
+            "email": SMTP_EMAIL,
+            "server": "smtp.gmail.com:587"
+        }), 200
+    
+    except smtplib.SMTPAuthenticationError as e:
+        return jsonify({
+            "status": "FAILED",
+            "error": "Authentication failed - invalid email or app password",
+            "details": str(e),
+            "email": SMTP_EMAIL
+        }), 401
+    
+    except Exception as e:
+        return jsonify({
+            "status": "FAILED",
+            "error": f"Connection failed: {type(e).__name__}",
+            "details": str(e)
+        }), 500
 
 # ── Run locally ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
