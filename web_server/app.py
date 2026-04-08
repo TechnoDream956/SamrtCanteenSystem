@@ -682,7 +682,7 @@ FLOW = {
     "COMPLETED": []
 }
 
-def set_status(oid, next_status):
+def set_status(oid, next_status, prep_time=None):
     conn, ph = db_conn()
     cur  = conn.cursor()
     cur.execute(f"SELECT status, created_time, expected_time, student_id FROM orders WHERE order_id = {ph}", (oid,))
@@ -717,8 +717,14 @@ def set_status(oid, next_status):
     
     # Update with timestamp
     if next_status == "ACCEPTED":
-        cur.execute(f"UPDATE orders SET status = {ph}, accepted_time = {ph} WHERE order_id = {ph}", 
-                   (next_status, now, oid))
+        # If custom prep_time provided (in minutes), update expected_time
+        if prep_time is not None and prep_time > 0:
+            cur.execute(f"UPDATE orders SET status = {ph}, accepted_time = {ph}, expected_time = {ph} WHERE order_id = {ph}", 
+                       (next_status, now, prep_time, oid))
+            print(f"[ORDER] Order {oid} accepted with custom prep time: {prep_time} minutes")
+        else:
+            cur.execute(f"UPDATE orders SET status = {ph}, accepted_time = {ph} WHERE order_id = {ph}", 
+                       (next_status, now, oid))
     elif next_status == "READY":
         cur.execute(f"UPDATE orders SET status = {ph}, ready_time = {ph} WHERE order_id = {ph}", 
                    (next_status, now, oid))
@@ -735,7 +741,10 @@ def set_status(oid, next_status):
 @app.route("/order/accept",    methods=["POST"])
 @jwt_required()
 def accept():
-    result = set_status(request.json["order_id"], "ACCEPTED")
+    order_id = request.json.get("order_id")
+    prep_time = request.json.get("prep_time")  # Custom prep time in minutes
+    
+    result = set_status(order_id, "ACCEPTED", prep_time)
     return jsonify({"ok": 1} if result is not None else {"error": "Failed"})
 
 @app.route("/order/preparing", methods=["POST"])

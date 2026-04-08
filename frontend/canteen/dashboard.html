@@ -298,6 +298,118 @@
       border: none; border-radius: 10px;
       font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 800;
       cursor: pointer; transition: all 0.25s; text-align: center;
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    .modal.show { display: flex; }
+    
+    .modal-content {
+      background: var(--bg-card);
+      border: 0.5px solid var(--outline);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    
+    .modal-header {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .modal-header span { background: linear-gradient(90deg, var(--primary), var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    
+    .modal-body {
+      display: flex; flex-direction: column; gap: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .input-group {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .input-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .prep-time-input-row {
+      display: flex; gap: 12px; align-items: flex-end;
+    }
+    
+    .prep-time-input-row input {
+      flex: 1;
+      background: var(--bg-high);
+      border: 0.5px solid var(--outline);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .prep-time-input-row input::placeholder { color: rgba(255, 159, 74, 0.5); }
+    .prep-time-input-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 12px rgba(255, 159, 74, 0.2); }
+    
+    .prep-time-unit-select {
+      background: var(--bg-high);
+      border: 0.5px solid var(--outline);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 100px;
+    }
+    .prep-time-unit-select:hover { border-color: var(--primary); }
+    .prep-time-unit-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 12px rgba(255, 159, 74, 0.2); }
+    
+    .modal-footer {
+      display: flex; gap: 12px;
+    }
+    
+    .modal-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .modal-btn-confirm {
+      background: linear-gradient(135deg, var(--primary), #fd8b00);
+      color: white;
+      box-shadow: 0 8px 16px rgba(255, 159, 74, 0.3);
+    }
+    .modal-btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(255, 159, 74, 0.4); }
+    .modal-btn-confirm:active { transform: translateY(0); }
+    
+    .modal-btn-cancel {
+      background: transparent;
+      border: 0.5px solid var(--outline);
+      color: var(--muted);
+    }
+    .modal-btn-cancel:hover { background: rgba(255, 159, 74, 0.04); border-color: var(--primary); color: var(--primary); }
       display: flex; align-items: center; justify-content: center; gap: 6px;
     }
     .btn-accept   { background: linear-gradient(135deg,#ffe393,#ff9f4a); color: #1a0a00; box-shadow: 0 4px 16px rgba(255,159,74,0.3); }
@@ -510,6 +622,31 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Accept Order Modal -->
+<div class="modal" id="acceptOrderModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      Set <span>Prep Time</span> for Order #<span id="modalOrderId">—</span>
+    </div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label>Preparation Duration</label>
+        <div class="prep-time-input-row">
+          <input type="number" id="prepTimeInput" placeholder="e.g., 15" min="1" max="999">
+          <select id="prepTimeUnit" class="prep-time-unit-select">
+            <option value="minutes">Minutes</option>
+            <option value="hours">Hours</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeAcceptModal()">Cancel</button>
+      <button class="modal-btn modal-btn-confirm" onclick="confirmAcceptOrder()">✅ Accept & Schedule</button>
+    </div>
+  </div>
+</div>
+
 <script src="../common/config.js"></script>
 <script src="../common/app.js"></script>
 <script>
@@ -675,7 +812,7 @@ function statusLabel(s){
 function actionHTML(o){
   switch(o.status){
     case 'WAITING':
-      return `<button class="action-btn btn-accept" onclick="updateStatus(${o.order_id},'accept')">✅ Accept Order</button>`;
+      return `<button class="action-btn btn-accept" onclick="openAcceptModal(${o.order_id}, ${o.expected_time})">✅ Accept Order</button>`;
     case 'ACCEPTED':
       return `<button class="action-btn btn-prepare" onclick="updateStatus(${o.order_id},'preparing')">👨‍🍳 Start Preparing</button>`;
     case 'PREPARING':
@@ -689,13 +826,63 @@ function actionHTML(o){
   }
 }
 
+/* ── Accept Order Modal Functions ── */
+let currentOrderToAccept = null;
+
+function openAcceptModal(orderId, suggestedTime) {
+  currentOrderToAccept = orderId;
+  document.getElementById('modalOrderId').textContent = String(orderId).slice(-6);
+  document.getElementById('prepTimeInput').value = suggestedTime || '';
+  document.getElementById('prepTimeUnit').value = 'minutes';
+  document.getElementById('prepTimeInput').focus();
+  document.getElementById('acceptOrderModal').classList.add('show');
+}
+
+function closeAcceptModal() {
+  document.getElementById('acceptOrderModal').classList.remove('show');
+  currentOrderToAccept = null;
+}
+
+function confirmAcceptOrder() {
+  const timeInput = document.getElementById('prepTimeInput').value.trim();
+  const unit = document.getElementById('prepTimeUnit').value;
+  
+  if (!timeInput || isNaN(timeInput) || parseInt(timeInput) < 1) {
+    showToast('❌ Please enter a valid time', 'error');
+    return;
+  }
+  
+  let prepTimeInMinutes = parseInt(timeInput);
+  if (unit === 'hours') {
+    prepTimeInMinutes = prepTimeInMinutes * 60;
+  }
+  
+  updateStatus(currentOrderToAccept, 'accept', prepTimeInMinutes);
+  closeAcceptModal();
+}
+
+// Allow Enter key to confirm
+document.addEventListener('DOMContentLoaded', () => {
+  const prepTimeInput = document.getElementById('prepTimeInput');
+  if (prepTimeInput) {
+    prepTimeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') confirmAcceptOrder();
+    });
+  }
+});
+
 /* ── Update a single order's status ── */
-async function updateStatus(orderId, action){
+async function updateStatus(orderId, action, prepTime = null){
   try {
+    const body = { order_id: orderId };
+    if (action === 'accept' && prepTime !== null) {
+      body.prep_time = prepTime;  // Send custom prep time in minutes
+    }
+    
     const res = await fetch(`${API}/order/${action}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ order_id: orderId })
+      body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error('Failed');
     showToast('✅ Status updated!', 'success');
