@@ -658,7 +658,8 @@ function orderCard(o, qPos){
       <div class="order-meta">
         <div class="meta-chip"><span>⏱</span> ${o.expected_time} min prep</div>
         <div class="meta-chip"><span>🛍</span> ${o.items_count} item${o.items_count>1?'s':''}</div>
-        <div class="meta-chip"><span>🕐</span> ${waitMins < 1 ? 'Just now' : waitMins + 'm ago'}</div>
+        <div class="meta-chip"><span>�</span> ${o.order_placed || 'Just now'}</div>
+        <div class="meta-chip"><span>�🕐</span> ${waitMins < 1 ? 'Just now' : waitMins + 'm ago'}</div>
         <div class="meta-chip"><span>💰</span> ₹${(o.price||0).toFixed(0)}</div>
       </div>
       ${timerDisplay}
