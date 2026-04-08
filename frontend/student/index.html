@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>B.U Eats | Campus Food Ordering</title>
   <meta name="description" content="Order from your favourite campus canteens instantly. B.U Eats — skip the queue, enjoy the food."/>
+  
+  <!-- Background Music - Autoplay -->
+  <audio id="bgMusic" autoplay loop style="display:none;">
+    <source src="../assets/background-music.mp3" type="audio/mpeg">
+  </audio>
+  
+  <script>
+    // Start music immediately in HEAD before page renders
+    const bgAudio = document.getElementById('bgMusic');
+    bgAudio.volume = 0.4;
+    bgAudio.play().catch(err => {
+      // If autoplay is blocked, will play on first user interaction
+      console.log('Autoplay blocked, will play on interaction');
+    });
+  </script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
@@ -1441,22 +1457,6 @@ window.addEventListener('load', async () => {
 
 </script>
 
-<!-- Background Music -->
-<audio id="bgMusic" loop autoplay muted style="display:none;">
-  <source src="../assets/background-music.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
-
-<script>
-// Immediately unmute and play audio as page loads
-const audio = document.getElementById('bgMusic');
-if(audio) {
-  audio.volume = 0.4; // Medium volume (0-1 scale, 0.4 = 40%)
-  audio.muted = false; // Unmute immediately
-  audio.play().catch(e => console.log('Autoplay error:', e));
-}
-</script>
-
 <!-- Music Player Toggle Button -->
 <button onclick="toggleMusic()" style="position: fixed; bottom: 20px; right: 20px; z-index: 100; background: rgba(255, 159, 74, 0.9); border: none; color: white; font-size: 20px; cursor: pointer; padding: 12px 16px; border-radius: 50px; backdrop-filter: blur(10px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease;">
   <span id="musicIcon">🔊</span>
@@ -1479,6 +1479,14 @@ function toggleMusic() {
     isMusicPlaying = false;
   }
 }
+
+// Fallback: Play on first user interaction if autoplay blocked
+document.addEventListener('click', () => {
+  const audio = document.getElementById('bgMusic');
+  if(audio && audio.paused) {
+    audio.play().catch(e => console.log('Play on click failed:', e));
+  }
+}, { once: true });
 </script>
 
 </body>
