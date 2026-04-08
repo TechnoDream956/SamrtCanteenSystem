@@ -1457,9 +1457,15 @@ window.addEventListener('load', async () => {
 const audio = document.getElementById('bgMusic');
 if(audio) {
   audio.volume = 0.4; // Medium volume (0-1 scale, 0.4 = 40%)
-  audio.muted = false; // Ensure unmuted
-  audio.play().catch(e => console.log('Play attempt:', e));
 }
+
+// Play music on first user interaction (click anywhere on page)
+document.addEventListener('click', () => {
+  if(audio && audio.paused) {
+    audio.muted = false;
+    audio.play().catch(e => console.log('Play failed:', e));
+  }
+}, { once: true });
 
 let isMusicPlaying = true;
 
@@ -1468,6 +1474,7 @@ function toggleMusic() {
   const icon = document.getElementById('musicIcon');
   
   if(audio.paused) {
+    audio.muted = false;
     audio.play().catch(e => console.log('Play failed:', e));
     icon.textContent = '🔊';
     isMusicPlaying = true;
