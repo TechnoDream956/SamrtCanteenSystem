@@ -231,6 +231,29 @@
     .btn-solid:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,140,0,0.5); }
     .btn-solid span { position: relative; z-index: 1; }
 
+    /* ── Search Input ─────────────────────────────────────── */
+    #searchInput {
+      transition: all 0.3s ease !important;
+    }
+    #searchInput:focus {
+      background: rgba(255, 159, 74, 0.12) !important;
+      border-color: rgba(255, 159, 74, 0.6) !important;
+      box-shadow: 0 0 20px rgba(255, 159, 74, 0.2) !important;
+    }
+    #searchResults::-webkit-scrollbar {
+      width: 6px;
+    }
+    #searchResults::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #searchResults::-webkit-scrollbar-thumb {
+      background: rgba(255, 159, 74, 0.3);
+      border-radius: 3px;
+    }
+    #searchResults::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 159, 74, 0.5);
+    }
+
     /* ── Hero ─────────────────────────────────────────────── */
     .hero {
       position: relative; z-index: 1;
@@ -875,6 +898,45 @@
   <div class="section-title reveal">Pick Your <span class="gradient-text">Spot</span></div>
   <div class="section-sub reveal">Four unique canteens, each with their own specialty. Login required to order.</div>
 
+  <!-- Search Bar -->
+  <div style="margin-bottom: 48px; margin-top: 40px;">
+    <div style="position: relative; max-width: 600px; margin: 0 auto;">
+      <input 
+        id="searchInput" 
+        type="text" 
+        placeholder="🔍 Search maggi, dosa, burger... Find items across all canteens"
+        style="
+          width: 100%;
+          padding: 16px 20px;
+          background: rgba(255, 159, 74, 0.08);
+          border: 1.5px solid rgba(255, 159, 74, 0.3);
+          border-radius: 50px;
+          color: var(--on-surface);
+          font-family: 'Manrope', sans-serif;
+          font-size: 14px;
+          outline: none;
+          transition: all 0.3s ease;
+        "
+        oninput="filterMenuItems(this.value)"
+      />
+      <div id="searchResults" style="
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 8px;
+        background: var(--bg-card);
+        border: 1px solid rgba(255, 159, 74, 0.2);
+        border-radius: var(--radius-lg);
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      "></div>
+    </div>
+  </div>
+
   <div class="canteen-grid">
 
     <div class="canteen-card reveal" onclick="openCanteen(1)" id="canteen-1">
@@ -1192,6 +1254,87 @@ function openCanteen(id){
   }
   window.location='menu.html?canteen='+id;
 }
+
+// Canteen data with menu items
+const CANTEENS = [
+  { id: 1, name: 'Maggi Hotspot', icon: '🍜', items: ['Loaded Maggi', 'Spicy Maggi', 'Cheese Maggi', 'Maggi Mania', 'Instant Noodles', 'Mixed Veg Maggi', 'Hakka Noodles'] },
+  { id: 2, name: 'Southern Stories', icon: '🍛', items: ['Butter Dosa', 'Masala Dosa', 'Plain Dosa', 'Idli Sambar', 'Vada', 'Filter Coffee', 'South Indian Thali', 'Spicy Uttapam'] },
+  { id: 3, name: 'SnapEats', icon: '🍔', items: ['Burger', 'Cheese Burger', 'Chicken Burger', 'Fries', 'Cheese Fries', 'Milkshake', 'Vanilla Shake', 'Chocolate Shake', 'Fast Food Combo'] },
+  { id: 4, name: 'Infinity Kitchen', icon: '🌮', items: ['Butter Chicken', 'Paneer Tikka Masala', 'Chicken Biryani', 'Aloo Gobi', 'Roti', 'Paratha', 'Stuffed Naan', 'Rice', 'Fusion Wrap', 'Indian Curry'] }
+];
+
+// Real-time search and filter
+function filterMenuItems(searchTerm) {
+  const query = searchTerm.trim().toLowerCase();
+  const resultsDiv = document.getElementById('searchResults');
+  
+  if(!query) {
+    resultsDiv.style.display = 'none';
+    resultsDiv.innerHTML = '';
+    return;
+  }
+
+  // Split query into words for word-by-word matching
+  const words = query.split(/\s+/);
+  
+  // Find matching items from all canteens
+  const results = [];
+  CANTEENS.forEach(canteen => {
+    canteen.items.forEach(item => {
+      const itemLower = item.toLowerCase();
+      // Check if all search words are in the item name
+      const matchesAllWords = words.every(word => itemLower.includes(word));
+      if(matchesAllWords) {
+        results.push({ item, canteen: canteen.name, canteenId: canteen.id, icon: canteen.icon });
+      }
+    });
+  });
+
+  // Display results
+  if(results.length === 0) {
+    resultsDiv.innerHTML = '<div style="padding:20px;text-align:center;color:#9998aa;">No items found</div>';
+  } else {
+    resultsDiv.innerHTML = results.map((r, idx) => `
+      <div style="
+        padding:14px 16px;
+        border-bottom:1px solid rgba(255,159,74,0.1);
+        cursor:pointer;
+        transition:all 0.2s ease;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+      " onmouseover="this.style.background='rgba(255,159,74,0.08)'" onmouseout="this.style.background='transparent'" onclick="orderItem('${r.item}', ${r.canteenId})">
+        <div style="flex:1;">
+          <div style="font-weight:700;color:#e7e4f0;margin-bottom:4px;">${r.item}</div>
+          <div style="font-size:12px;color:#9998aa;">${r.icon} ${r.canteen}</div>
+        </div>
+        <div style="color:#9998aa;font-size:12px;">Click to order →</div>
+      </div>
+    `).join('');
+  }
+  
+  resultsDiv.style.display = 'block';
+}
+
+// Order item from search
+function orderItem(itemName, canteenId) {
+  const token = localStorage.getItem('student_token');
+  if(!token || token === 'undefined') {
+    localStorage.setItem('redirectAfterLogin', 'menu.html?canteen=' + canteenId + '&search=' + encodeURIComponent(itemName));
+    window.location = 'login.html';
+    return;
+  }
+  localStorage.setItem('searchItem', itemName);
+  window.location = 'menu.html?canteen=' + canteenId;
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+    document.getElementById('searchResults').style.display = 'none';
+  }
+});
+
 // inject shake keyframe
 const ks=document.createElement('style');
 ks.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
