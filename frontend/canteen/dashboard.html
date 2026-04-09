@@ -802,7 +802,15 @@ function orderCard(o, qPos){
         <div class="meta-chip"><span>🛘</span> ${o.items_count} item${o.items_count>1?'s':''}</div>
         <div class="meta-chip"><span>📅</span> ${o.order_placed || 'Just now'}</div>
         <div class="meta-chip"><span>🕐</span> ${waitMins < 1 ? 'Just now' : waitMins + 'm ago'}</div>
-        <div class="meta-chip"><span>💰</span> ₹${(o.price||0).toFixed(0)}</div>
+        ${o.late_penalty > 0 && o.status === 'COMPLETED'
+          ? `<div class="meta-chip" style="flex-direction:column;gap:3px;align-items:flex-start;">
+               <span style="color:#9998aa;font-size:10px;">Order Total</span>
+               <span style="color:#ffe393;font-weight:800;">💰 ₹${(o.price||0).toFixed(0)}</span>
+               <span style="color:#ff6b6b;font-size:10px;font-weight:700;">💳 −₹${o.late_penalty} credited to student</span>
+               <span style="color:#4fffb0;font-weight:800;font-size:13px;">Net: ₹${((o.price||0) - o.late_penalty).toFixed(0)}</span>
+             </div>`
+          : `<div class="meta-chip"><span>💰</span> ₹${(o.price||0).toFixed(0)}</div>`
+        }
       </div>
       ${timerDisplay}
     </div>

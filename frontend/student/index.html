@@ -1503,60 +1503,89 @@ function createCreditsModal(){
   const modal = document.createElement('div');
   modal.id = 'creditsModal';
   modal.style.cssText = `
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.7);
-    z-index:10000;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.72); z-index:10000;
+    align-items:center; justify-content:center; padding:20px;
   `;
   modal.innerHTML = `
     <div style="
       background:#13121c;
-      border:1px solid rgba(255,159,74,0.3);
-      border-radius:24px;
-      padding:32px;
-      max-width:500px;
-      width:100%;
+      border:1px solid rgba(255,159,74,0.35);
+      border-radius:24px; padding:32px;
+      max-width:400px; width:100%;
       animation:slideUp 0.3s ease;
     ">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-        <h2 style="font-size:22px;font-weight:800;color:#e7e4f0;">💳 Your Credits & Orders</h2>
+        <h2 style="font-size:20px;font-weight:800;color:#e7e4f0;">💳 Your Wallet</h2>
         <button onclick="closeCreditsModal()" style="
-          background:none;
-          border:none;
-          color:#9998aa;
-          font-size:24px;
-          cursor:pointer;
+          background:none; border:none; color:#9998aa; font-size:24px; cursor:pointer;
         ">✕</button>
       </div>
-      
+
+      <!-- Credit Balance Card -->
       <div style="
-        background:rgba(255,159,74,0.1);
-        border:1px solid rgba(255,159,74,0.3);
-        border-radius:16px;
-        padding:16px;
-        margin-bottom:24px;
-        text-align:center;
+        background:linear-gradient(135deg,rgba(255,159,74,0.15),rgba(255,214,10,0.08));
+        border:1px solid rgba(255,159,74,0.4);
+        border-radius:18px; padding:28px; text-align:center; margin-bottom:20px;
       ">
-        <div style="color:#9998aa;font-size:12px;margin-bottom:6px;">Available Credits</div>
-        <div style="font-size:32px;font-weight:900;background:linear-gradient(90deg,#ff9f4a,#ffe393);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+        <div style="color:#9998aa;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
+          Available Credits
+        </div>
+        <div style="
+          font-size:48px; font-weight:900;
+          background:linear-gradient(90deg,#ff9f4a,#ffe393);
+          -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+          line-height:1;
+        ">
           ₹<span id="modalCreditsValue">0</span>
         </div>
-        <div style="color:#9998aa;font-size:11px;margin-top:6px;">Earned from late canteen orders</div>
+        <div style="color:#9998aa;font-size:12px;margin-top:10px;line-height:1.5;">
+          Earned when canteen delivers your order late<br>
+          <span style="color:#4fffb0;font-weight:700;">₹1 per minute of delay</span>
+        </div>
       </div>
-      
-      <div style="margin-bottom:16px;">
-        <div style="color:#9998aa;font-size:12px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:1.2px;">Recent Orders</div>
-        <div id="ordersListModal" style="max-height:300px;overflow-y:auto;">Loading...</div>
+
+      <!-- Info row -->
+      <div style="
+        display:flex; gap:10px; margin-bottom:20px;
+      ">
+        <div style="
+          flex:1; background:rgba(79,255,176,0.07);
+          border:0.5px solid rgba(79,255,176,0.2);
+          border-radius:12px; padding:12px; text-align:center;
+        ">
+          <div style="font-size:20px; margin-bottom:4px;">⏰</div>
+          <div style="color:#9998aa;font-size:10px;">Auto-credited when late</div>
+        </div>
+        <div style="
+          flex:1; background:rgba(107,184,255,0.07);
+          border:0.5px solid rgba(107,184,255,0.2);
+          border-radius:12px; padding:12px; text-align:center;
+        ">
+          <div style="font-size:20px; margin-bottom:4px;">💰</div>
+          <div style="color:#9998aa;font-size:10px;">Use on future orders</div>
+        </div>
       </div>
-      
+
+      <!-- See Orders Button -->
+      <button onclick="closeCreditsModal(); openOrdersModal();" style="
+        width:100%; padding:14px;
+        background:rgba(201,124,255,0.12);
+        border:0.5px solid rgba(201,124,255,0.3);
+        color:#c97cff;
+        font-family:'Space Grotesk',sans-serif;
+        font-size:13px; font-weight:700;
+        border-radius:12px; cursor:pointer;
+        transition:all 0.25s;
+      " onmouseover="this.style.background='rgba(201,124,255,0.22)'"
+         onmouseout="this.style.background='rgba(201,124,255,0.12)'">
+        📋 View Recent Orders
+      </button>
+
       <style>
         @keyframes slideUp {
-          from { opacity:0;transform:translateY(24px) }
-          to { opacity:1;transform:translateY(0) }
+          from { opacity:0; transform:translateY(24px) }
+          to   { opacity:1; transform:translateY(0) }
         }
       </style>
     </div>
@@ -1567,21 +1596,8 @@ function createCreditsModal(){
 }
 
 async function loadCredits(){
-  try {
-    const res = await fetch(`${API}/student/credits`, { 
-      headers: { Authorization: `Bearer ${localStorage.getItem('student_token')}` }
-    });
-    if(!res.ok) throw new Error('Failed to load credits');
-    const data = await res.json();
-    // Update every credits display badge on the page
-    document.querySelectorAll('#creditsDisplay').forEach(el => {
-      el.textContent = `💳 ₹${data.credits || 0}`;
-    });
-    const mc = document.getElementById('modalCreditsValue');
-    if (mc) mc.textContent = data.credits || 0;
-  } catch(e) {
-    console.error('Credits error:', e);
-  }
+  // Use the unified refresh which also updates the nav badge and shows toast if credits changed
+  await silentRefreshCredits();
 }
 
 /* ── ORDERS MODAL ── */
@@ -1721,22 +1737,85 @@ function showOrderItemsById(orderId) {
 }
 
 
-// Load credits on page load
-window.addEventListener('load', async () => {
+// ── Credit auto-refresh + change notification ───────────────────────────────
+let _lastKnownCredits = null; // track previous value to detect changes
+
+async function silentRefreshCredits() {
   const token = localStorage.getItem('student_token');
-  if(token) {
-    try {
-      const res = await fetch(`${API}/student/credits`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if(res.ok) {
-        const data = await res.json();
-        const creditsDisplay = document.getElementById('creditsDisplay');
-        if(creditsDisplay) creditsDisplay.textContent = `💳 ₹${data.credits || 0}`;
-      }
-    } catch(e) {
-      console.error('Credits load failed', e);
+  if (!token) return;
+  try {
+    const res = await fetch(`${API}/student/credits`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const current = parseFloat(data.credits) || 0;
+
+    // Update nav badge
+    document.querySelectorAll('#creditsDisplay').forEach(el => {
+      el.textContent = `💳 ₹${current}`;
+    });
+    // Update modal if open
+    const mc = document.getElementById('modalCreditsValue');
+    if (mc) mc.textContent = current;
+
+    // Toast only when credits actually increase (not on first load)
+    if (_lastKnownCredits !== null && current > _lastKnownCredits) {
+      const gained = (current - _lastKnownCredits).toFixed(0);
+      showCreditToast(`🎉 ₹${gained} credited to your wallet! (late delivery bonus)`);
     }
+    _lastKnownCredits = current;
+  } catch(e) {
+    console.error('Credits auto-refresh failed:', e);
+  }
+}
+
+function showCreditToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = `
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+    z-index:99999;
+    background:linear-gradient(135deg,#1a3a1a,#0d2b1a);
+    border:1px solid rgba(79,255,176,0.5);
+    color:#4fffb0;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px; font-weight:700;
+    padding:14px 24px;
+    border-radius:14px;
+    box-shadow:0 4px 30px rgba(79,255,176,0.25);
+    text-align:center; white-space:nowrap;
+    animation:creditToastIn 0.4s ease;
+    pointer-events:none;
+  `;
+  t.textContent = msg;
+  t.innerHTML += `<style>
+    @keyframes creditToastIn {
+      from { opacity:0; transform:translateX(-50%) translateY(20px); }
+      to   { opacity:1; transform:translateX(-50%) translateY(0); }
+    }
+  </style>`;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'opacity 0.4s';
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 450);
+  }, 4000);
+}
+
+// Run on load + every 30 seconds
+window.addEventListener('load', () => {
+  const token = localStorage.getItem('student_token');
+  if (token) {
+    silentRefreshCredits();                      // immediate
+    setInterval(silentRefreshCredits, 30000);    // then every 30s
+  }
+});
+
+// Also refresh when tab becomes visible again (user switches back)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    const token = localStorage.getItem('student_token');
+    if (token) silentRefreshCredits();
   }
 });
 
