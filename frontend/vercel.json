@@ -1,39 +1,39 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/home",
-      "destination": "/home.html"
-    },
-    {
-      "source": "/order-status",
-      "destination": "/order_status.html"
-    },
-    {
-      "source": "/canteen",
-      "destination": "/canteen/index.html"
-    },
-    {
-      "source": "/canteen/login",
-      "destination": "/canteen/login.html"
-    },
-    {
-      "source": "/canteen/register",
-      "destination": "/canteen/register.html"
-    },
-    {
-      "source": "/canteen/dashboard",
-      "destination": "/canteen/dashboard.html"
-    },
-    {
-      "source": "/canteen/order-detail",
-      "destination": "/canteen/order_detail.html"
-    },
-    {
-      "source": "/canteen/order-status",
-      "destination": "/canteen/order_status.html"
-    }
+  "name": "bu-eats",
+  "buildCommand": "",
+  "routes": [
+    { "src": "/",                       "dest": "/student/index.html"       },
+    { "src": "/index.html",             "dest": "/student/index.html"       },
+
+    { "src": "/login",                  "dest": "/student/login.html"       },
+    { "src": "/login.html",             "dest": "/student/login.html"       },
+
+    { "src": "/register",               "dest": "/student/register.html"    },
+    { "src": "/register.html",          "dest": "/student/register.html"    },
+
+    { "src": "/menu",                   "dest": "/student/menu.html"        },
+    { "src": "/menu.html",              "dest": "/student/menu.html"        },
+
+    { "src": "/order_status",           "dest": "/student/order_status.html"},
+    { "src": "/order_status.html",      "dest": "/student/order_status.html"},
+
+    { "src": "/staff",                  "dest": "/canteen/login.html"       },
+    { "src": "/staff/login",            "dest": "/canteen/login.html"       },
+    { "src": "/staff/login.html",       "dest": "/canteen/login.html"       },
+
+    { "src": "/staff/register",         "dest": "/canteen/register.html"    },
+    { "src": "/staff/register.html",    "dest": "/canteen/register.html"    },
+
+    { "src": "/staff/dashboard",        "dest": "/canteen/dashboard.html"   },
+    { "src": "/staff/dashboard.html",   "dest": "/canteen/dashboard.html"   },
+
+    { "src": "/staff/order_detail",     "dest": "/canteen/order_detail.html"},
+    { "src": "/staff/order_detail.html","dest": "/canteen/order_detail.html"},
+
+    { "src": "/staff/order_status",     "dest": "/canteen/order_status.html"},
+    { "src": "/staff/order_status.html","dest": "/canteen/order_status.html"},
+
+    { "src": "/(.*)",                   "dest": "/$1"                       }
   ]
 }
