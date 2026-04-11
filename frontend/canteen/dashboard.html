@@ -579,8 +579,13 @@
         <p id="statusDesc" style="font-size:13px; max-width:500px;">Accepting live orders. The system is automatically ranking incoming tickets chronologically while prioritizing fast-prep snacks over large meals to prevent traffic congestion.</p>
       </div>
     </div>
-    <div style="background:rgba(201,124,255,0.08); border:0.5px solid rgba(201,124,255,0.25); padding:10px 16px; border-radius:12px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber);">
-      Automated Smart Queue ⚡
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button onclick="toggleCanteenStatus()" id="statusToggleBtn" style="padding:10px 16px; border-radius:12px; background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3); color:#ff6b6b; font-family:'Manrope', sans-serif; font-size:12px; font-weight:800; cursor:pointer; transition:all 0.2s; white-space:nowrap;">
+        🛑 Stop Taking Orders
+      </button>
+      <div style="background:rgba(201,124,255,0.08); border:0.5px solid rgba(201,124,255,0.25); padding:10px 16px; border-radius:12px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber);">
+        Smart Queue ⚡
+      </div>
     </div>
   </div>
 
@@ -980,6 +985,38 @@ setInterval(() => {
     }
   });
 }, 1000);
+
+/* ── Canteen open/close toggle (local UI only) ── */
+let canteenOpen = true;
+function toggleCanteenStatus() {
+  canteenOpen = !canteenOpen;
+  const icon  = document.getElementById('statusIndicator');
+  const title = document.getElementById('statusTitle');
+  const desc  = document.getElementById('statusDesc');
+  const btn   = document.getElementById('statusToggleBtn');
+  
+  if (canteenOpen) {
+    icon.textContent = '🟢';
+    icon.style.filter = 'drop-shadow(0 0 10px rgba(79,255,176,0.4))';
+    title.innerHTML = 'Canteen Operations: <span style="color:var(--green);">ACTIVE</span>';
+    desc.textContent = 'Accepting live orders. The system is automatically ranking incoming tickets chronologically while prioritizing fast-prep snacks over large meals to prevent traffic congestion.';
+    btn.innerHTML = '🛑 Stop Taking Orders';
+    btn.style.background = 'rgba(255,107,107,0.1)';
+    btn.style.borderColor = 'rgba(255,107,107,0.3)';
+    btn.style.color = '#ff6b6b';
+    showMsg('✅ Canteen is now open to students!', 'success');
+  } else {
+    icon.textContent = '🔴';
+    icon.style.filter = 'drop-shadow(0 0 10px rgba(255,107,107,0.4))';
+    title.innerHTML = 'Canteen Operations: <span style="color:#ff6b6b;">CLOSED</span>';
+    desc.textContent = 'No new orders are being accepted from students right now. Complete remaining backlogged orders and close out for the day.';
+    btn.innerHTML = '✅ Resume Orders';
+    btn.style.background = 'rgba(79,255,176,0.1)';
+    btn.style.borderColor = 'rgba(79,255,176,0.3)';
+    btn.style.color = 'var(--green)';
+    showMsg('⚠️ Canteen closed. No new orders accepted.', 'error');
+  }
+}
 
 /* ── Auto-refresh every 10s ── */
 loadOrders();
