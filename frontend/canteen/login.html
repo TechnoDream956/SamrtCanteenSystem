@@ -173,10 +173,10 @@
   <div class="divider"></div>
 
   <div class="card-footer">
-    New staff member? <a href="register.html">Create account →</a>
+    New staff member? <a href="/staff/register">Create account →</a>
   </div>
   <div class="card-footer" style="margin-top:8px;">
-    <a href="../student/index.html">← Back to Student Site</a>
+    <a href="/">← Back to Student Site</a>
   </div>
 </div>
 
@@ -186,7 +186,7 @@
 // Redirect if already logged in as canteen staff
 const u = JSON.parse(localStorage.getItem('staff_user') || 'null');
 if (u && u.role === 'canteen' && localStorage.getItem('staff_token')) {
-  window.location.href = 'dashboard.html';
+  window.location.href = '/staff/dashboard';
 }
 
 // Load canteens on page load
@@ -270,7 +270,7 @@ async function doLogin(){
     localStorage.setItem('staff_user',  JSON.stringify(data.user));
 
     showMsg('✅ Success! Redirecting to dashboard…', 'success');
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    setTimeout(() => { window.location.href = '/staff/dashboard'; }, 800);
 
   } catch(e) {
     showMsg('❌ Server unreachable. Is the backend running?', 'error');

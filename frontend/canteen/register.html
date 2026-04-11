@@ -173,7 +173,7 @@
   <div class="msg" id="msgEl"></div>
 
   <div class="divider"></div>
-  <div class="card-footer">Already have an account? <a href="login.html">Sign in →</a></div>
+  <div class="card-footer">Already have an account? <a href="/staff/login">Sign in →</a></div>
 </div>
 
 <script src="../common/config.js"></script>
@@ -245,7 +245,7 @@ async function doRegister(){
     const data = await res.json();
     if (!res.ok) { showMsg(`❌ ${data.error || 'Registration failed'}`, 'error'); return; }
     showMsg('✅ Account created! Redirecting to login…', 'success');
-    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+    setTimeout(() => { window.location.href = '/staff/login'; }, 1500);
   } catch(e) {
     showMsg('❌ Server unreachable. Is the backend running?', 'error');
   } finally {
