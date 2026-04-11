@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Status — B.U Eats</title>
+  <link rel="stylesheet" href="../common/style.css" />
+  <script src="../common/config.js"></script>
+  <script src="../common/app.js"></script>
+  <script>protectPage("student");</script>
+  
+  <!-- Background Audio - Persistent Across Pages -->
+  <audio id="bgMusic" autoplay loop style="display:none;">
+    <source src="../assets/background-music.mp3" type="audio/mpeg">
+  </audio>
+  
+  <script>
+    // Restore audio state from previous page
+    const bgAudio = document.getElementById('bgMusic');
+    const audioState = sessionStorage.getItem('audioState');
+    const audioTime = parseFloat(sessionStorage.getItem('audioTime')) || 0;
+    
+    bgAudio.volume = 0.2;
+    bgAudio.currentTime = audioTime;
+    
+    if(audioState === 'playing') {
+      bgAudio.play().catch(err => console.log('Autoplay blocked'));
+    }
+    
+    // Save audio state when leaving page
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('audioState', bgAudio.paused ? 'paused' : 'playing');
+      sessionStorage.setItem('audioTime', bgAudio.currentTime);
+    });
+  </script>
+  
+  <style>
+    .status-page {
+      min-height: 100vh;
+      padding-top: 100px;
+      padding-bottom: 60px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .status-wrap { width: 100%; max-width: 580px; }
+
+    /* Live badge */
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fca5a5;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    .live-dot {
+      width: 8px; height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: liveBlink 1s ease-in-out infinite;
+    }
+    @keyframes liveBlink {
+      0%,100%{ opacity:1; transform:scale(1); }
+      50%    { opacity:0.3; transform:scale(0.7); }
+    }
+
+    .page-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 38px; font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 6px;
+    }
+
+    .page-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 36px; }
+
+    /* Progress tracker */
+    .progress-track {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .progress-track::before {
+      content: '';
+      position: absolute;
+      top: 20px; left: 20px; right: 20px;
+      height: 2px;
+      background: var(--glass-border);
+      z-index: 0;
+    }
+
+    .progress-fill {
+      position: absolute;
+      top: 20px; left: 20px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), var(--amber));
+      border-radius: 2px;
+      z-index: 0;
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+      width: 0%;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 1;
+      transition: all 0.4s ease;
+    }
+
+    .step-circle {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+      border: 2px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .progress-step.active   .step-circle { border-color: var(--orange); background: rgba(255,107,53,0.15); }
+    .progress-step.current  .step-circle {
+      border-color: var(--orange);
+      background: linear-gradient(135deg, var(--orange), var(--amber));
+      box-shadow: 0 0 20px rgba(255,107,53,0.5);
+      transform: scale(1.15);
+    }
+
+    .step-label {
+      font-size: 10px; font-weight: 600; color: var(--text-muted);
+      text-align: center; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    .progress-step.active  .step-label { color: var(--orange); }
+    .progress-step.current .step-label { color: var(--amber); font-weight: 700; }
+
+    .step-time {
+      font-size: 9px; font-weight: 500; color: var(--text-muted);
+      margin-top: 2px; letter-spacing: 0px; opacity: 0.7;
+    }
+    .progress-step.active .step-time { color: rgba(255,107,53,0.8); opacity: 1; }
+    .progress-step.current .step-time { color: var(--amber); opacity: 1; font-weight: 600; }
+
+    /* Status card */
+    .status-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(16px);
+      transition: border-color 0.5s;
+    }
+
+    .big-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .status-emoji { font-size: 52px; animation: statusBounce 2s ease-in-out infinite; }
+    @keyframes statusBounce {
+      0%,100% { transform: translateY(0); }
+      50%     { transform: translateY(-8px); }
+    }
+
+    .status-text-wrap h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px; font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .status-text-wrap p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Info grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .info-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .info-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .info-value { font-size: 22px; font-weight: 800; }
+
+    /* Order items */
+    .items-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+
+    .items-title {
+      font-size: 14px; font-weight: 700; color: var(--text-muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    /* Action buttons */
+    .btn-back {
+      width: 100%;
+      padding: 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; font-weight: 600;
+      border-radius: 14px; cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: block; text-align: center;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+
+    /* Countdown timer */
+    .countdown-area {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      text-align: center;
+      display: none;
+      transition: border-color 0.5s;
+    }
+    .countdown-label {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .countdown-digits {
+      font-family: 'Outfit', sans-serif;
+      font-size: 52px; font-weight: 900;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, var(--orange), var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all 0.4s;
+    }
+    .countdown-digits.warning { background: none; -webkit-text-fill-color: #fb923c; color: #fb923c; }
+    .countdown-digits.danger  { background: none; -webkit-text-fill-color: #ef4444; color: #ef4444;
+      animation: countPulse 0.8s ease-in-out infinite; }
+    .countdown-digits.late    { background: none; -webkit-text-fill-color: #ef4444; color: #ef4444; }
+    @keyframes countPulse {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.04); }
+    }
+    .countdown-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* Alert banners */
+    .alert-banner {
+      border-radius: 16px;
+      padding: 14px 20px;
+      margin-bottom: 14px;
+      font-size: 13px; font-weight: 700;
+      display: none;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .alert-warn {
+      background: rgba(251,146,60,0.14);
+      border: 1px solid rgba(251,146,60,0.45);
+      color: #fb923c;
+    }
+    .alert-danger {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.5);
+      color: #fca5a5;
+      animation: pulse 0.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; box-shadow: 0 0 0 rgba(239,68,68,0); }
+      50%     { opacity:0.9; box-shadow: 0 0 18px rgba(239,68,68,0.3); }
+    }
+    .alert-credits {
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.4);
+      color: #4ade80;
+      font-size: 15px;
+      animation: creditsPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes creditsPop {
+      from { opacity:0; transform: scale(0.92) translateY(8px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-logo">
+    <div class="logo-icon">🍽️</div>
+    <div>
+      <div class="logo-text">B.U Eats</div>
+      <div class="logo-subtitle">Campus Food</div>
+    </div>
+  </a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button onclick="window.location='index.html'" style="
+      padding:8px 16px;background:rgba(255,159,74,0.12);border:1px solid rgba(255,159,74,0.3);
+      color:#ff9f4a;border-radius:50px;cursor:pointer;font-family:'Poppins',sans-serif;
+      font-size:13px;font-weight:600;transition:all 0.25s;" onmouseover="this.style.background='rgba(255,159,74,0.2)'" onmouseout="this.style.background='rgba(255,159,74,0.12)'">← Back</button>
+    <button class="btn-logout" onclick="logout()" style="
+      padding:8px 20px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);
+      color:#fca5a5;border-radius:50px;cursor:pointer;font-family:'Poppins',sans-serif;
+      font-size:13px;font-weight:600;">Sign Out</button>
+  </div>
+</nav>
+
+<div class="status-page">
+  <div class="status-wrap container">
+
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE TRACKING
+    </div>
+
+    <div class="page-title">Your Order</div>
+    <div class="page-sub">Updates every 3 seconds automatically.</div>
+
+    <!-- Progress bar -->
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+      <div class="progress-step" id="step-WAITING">
+        <div class="step-circle">⏳</div>
+        <div class="step-label">Waiting</div>
+        <div class="step-time" id="time-WAITING">—</div>
+      </div>
+      <div class="progress-step" id="step-ACCEPTED">
+        <div class="step-circle">✅</div>
+        <div class="step-label">Accepted</div>
+        <div class="step-time" id="time-ACCEPTED">—</div>
+      </div>
+      <div class="progress-step" id="step-PREPARING">
+        <div class="step-circle">👨‍🍳</div>
+        <div class="step-label">Preparing</div>
+        <div class="step-time" id="time-PREPARING">—</div>
+      </div>
+      <div class="progress-step" id="step-READY">
+        <div class="step-circle">🔔</div>
+        <div class="step-label">Ready!</div>
+        <div class="step-time" id="time-READY">—</div>
+      </div>
+      <div class="progress-step" id="step-COMPLETED">
+        <div class="step-circle">🎉</div>
+        <div class="step-label">Done</div>
+        <div class="step-time" id="time-COMPLETED">—</div>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div class="status-card" id="statusCard">
+      <div class="big-status">
+        <div class="status-emoji" id="statusEmoji">⏳</div>
+        <div class="status-text-wrap">
+          <h2 id="status">Waiting for canteen...</h2>
+          <p id="statusDesc">Your order has been placed and is waiting to be accepted.</p>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <div class="info-label">Total Price</div>
+          <div class="info-value text-gradient" id="price">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">Est. Time</div>
+          <div class="info-value" id="expected">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order items -->
+    <div class="items-card">
+      <div class="items-title">📋 Order Items</div>
+      <div id="items" style="color:var(--text-muted);font-size:14px;">Loading...</div>
+    </div>
+
+    <!-- Countdown Timer -->
+    <div class="countdown-area" id="countdownArea">
+      <div class="countdown-label">⏱ Preparation Time Remaining</div>
+      <div class="countdown-digits" id="countdownDigits">--:--</div>
+      <div class="countdown-sub" id="countdownSub">Staff promised this time when accepting your order</div>
+    </div>
+
+    <!-- Alert banners -->
+    <div class="alert-banner alert-warn"   id="alertWarn"></div>
+    <div class="alert-banner alert-danger" id="alertDanger"></div>
+    <div class="alert-banner alert-credits" id="alertCredits"></div>
+
+    <a href="index.html" class="btn-back">← Back to Canteens</a>
+
+  </div>
+</div>
+
+<script>
+const STATUS_INFO = {
+  WAITING:   { emoji:"⏳", desc:"Your order is waiting to be accepted by the canteen.", fill:"0%"   },
+  ACCEPTED:  { emoji:"✅", desc:"The canteen has accepted your order!",                  fill:"25%"  },
+  PREPARING: { emoji:"👨‍🍳", desc:"Your food is being freshly prepared right now.",        fill:"50%"  },
+  READY:     { emoji:"🔔", desc:"Your order is READY! Go pick it up at the counter.",    fill:"75%"  },
+  COMPLETED: { emoji:"🎉", desc:"Order completed. Enjoy your meal! 😋",                  fill:"100%" }
+};
+
+const STEPS = ["WAITING","ACCEPTED","PREPARING","READY","COMPLETED"];
+
+let lastStatus  = null;
+let countdownInt = null;  // setInterval handle for countdown
+
+function formatTime(unix_timestamp) {
+  if (!unix_timestamp) return "—";
+  const date = new Date(unix_timestamp * 1000);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const mins = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${mins}`;
+}
+
+function updateUI(o) {
+  const info      = STATUS_INFO[o.status] || STATUS_INFO.WAITING;
+  const stepIdx   = STEPS.indexOf(o.status);
+
+  // Emoji + text
+  document.getElementById("statusEmoji").textContent = info.emoji;
+  document.getElementById("status").textContent      = o.status;
+  document.getElementById("statusDesc").textContent  = info.desc;
+  document.getElementById("price").textContent       = "₹" + o.price;
+  document.getElementById("expected").textContent    = o.expected_time + " mins";
+
+  // Progress fill
+  document.getElementById("progressFill").style.width = info.fill;
+
+  // Step highlights & timestamps
+  STEPS.forEach((s, i) => {
+    const el = document.getElementById("step-" + s);
+    if (!el) return;
+    el.classList.toggle("active",  i <= stepIdx);
+    el.classList.toggle("current", i === stepIdx);
+    
+    // Update timestamps
+    let timeStr = "—";
+    if (s === "WAITING" && o.created_time) {
+      timeStr = formatTime(o.created_time);
+    } else if (s === "ACCEPTED" && o.accepted_time) {
+      timeStr = formatTime(o.accepted_time);
+    } else if (s === "PREPARING" && o.accepted_time) {
+      timeStr = formatTime(o.accepted_time);
+    } else if (s === "READY" && o.ready_time) {
+      timeStr = formatTime(o.ready_time);
+    } else if (s === "COMPLETED" && o.completed_time) {
+      timeStr = formatTime(o.completed_time);
+    }
+    const timeEl = document.getElementById("time-" + s);
+    if (timeEl) timeEl.textContent = timeStr;
+  });
+
+  // Items
+  if (o.items) {
+    document.getElementById("items").innerHTML = o.items.map(i =>
+      `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;">
+         <span>• ${i.name}</span>
+         <span style="color:var(--amber);font-weight:700;">₹${i.price}</span>
+       </div>`
+    ).join("");
+  }
+
+  // Card glow on READY
+  const card = document.getElementById("statusCard");
+  if (o.status === "READY") {
+    card.style.borderColor = "#22c55e";
+    card.style.boxShadow   = "0 0 40px rgba(34,197,94,0.2)";
+  } else if (o.status === "COMPLETED") {
+    card.style.borderColor = "#ffd60a";
+    card.style.boxShadow   = "0 0 40px rgba(255,214,10,0.2)";
+  } else {
+    card.style.borderColor = "";
+    card.style.boxShadow   = "";
+  }
+
+  // ── Countdown + Alerts ────────────────────────────────────────────────
+  const countdownArea   = document.getElementById("countdownArea");
+  const alertWarn       = document.getElementById("alertWarn");
+  const alertDanger     = document.getElementById("alertDanger");
+  const alertCredits    = document.getElementById("alertCredits");
+
+  // Clear any running counter
+  if (countdownInt) { clearInterval(countdownInt); countdownInt = null; }
+
+  // Hide everything first
+  countdownArea.style.display = "none";
+  alertWarn.style.display     = "none";
+  alertDanger.style.display   = "none";
+  alertCredits.style.display  = "none";
+
+  if ((o.status === "ACCEPTED" || o.status === "PREPARING") && o.accepted_time && o.expected_time) {
+    // Deadline = when staff accepted + prep time they promised
+    const deadline = o.accepted_time + (o.expected_time * 60);
+    countdownArea.style.display = "block";
+    startCountdown(deadline);
+
+  } else if (o.status === "COMPLETED" && o.late_penalty > 0) {
+    // Show credits earned
+    alertCredits.style.display = "block";
+    alertCredits.innerHTML     = `🎉 You earned <strong>₹${o.late_penalty}</strong> credits because your order was delivered late! Check your wallet ★`;
+
+  } else if (o.status === "READY") {
+    // Order is ready — clear everything (no penalty if ready on time)
+    if (o.late_penalty > 0) {
+      alertCredits.style.display = "block";
+      alertCredits.innerHTML     = `💳 Earned <strong>₹${o.late_penalty}</strong> credits due to late preparation!`;
+    }
+  }
+
+  // Refresh credits badge in nav (if present)
+  refreshNavCredits(o.late_penalty, o.status);
+
+  // Toast only once per status change
+  if (o.status !== lastStatus) {
+    if (lastStatus !== null) showToast(info.emoji + " " + info.desc);
+    lastStatus = o.status;
+  }
+}
+
+// ── Countdown function ────────────────────────────────────────────────────────
+function startCountdown(deadline) {
+  const digits    = document.getElementById("countdownDigits");
+  const subText   = document.getElementById("countdownSub");
+  const alertWarn = document.getElementById("alertWarn");
+  const alertDang = document.getElementById("alertDanger");
+
+  function tick() {
+    const remaining = deadline - Date.now() / 1000;
+    const absR      = Math.abs(remaining);
+    const m = Math.floor(absR / 60);
+    const s = Math.floor(absR % 60);
+    const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`;
+
+    if (remaining <= 0) {
+      // Late
+      const lateMins = Math.floor(absR / 60);
+      const penalty  = lateMins + 1;   // always at least ₹1 when past deadline
+      digits.className = "countdown-digits late";
+      digits.textContent = "+" + timeStr;
+      subText.textContent = "\u26a0\ufe0f Order is running LATE — credits are accumulating!";
+      alertDang.style.display = "block";
+      alertDang.innerHTML = `⌛ Order is <strong>${lateMins > 0 ? lateMins + ' min ' : ''}${Math.floor(absR%60)}s</strong> late! ` +
+                            `You're earning <strong>\u20b9${penalty}+</strong> in credits automatically!`;
+      alertWarn.style.display = "none";
+    } else if (remaining <= 60) {
+      // < 1 min — danger
+      digits.className = "countdown-digits danger";
+      digits.textContent = timeStr;
+      subText.textContent = "\uD83D\uDEA8 Almost there! Order due any second.";
+      alertDang.style.display = "block";
+      alertDang.innerHTML = `\uD83D\uDEA8 Under <strong>1 minute</strong> left! If late, you'll earn \u20b91+ in credits.`;
+      alertWarn.style.display = "none";
+    } else if (remaining <= 180) {
+      // < 3 min — warning
+      digits.className = "countdown-digits warning";
+      digits.textContent = timeStr;
+      subText.textContent = "\u26a1 Order should be ready very soon!";
+      alertWarn.style.display = "block";
+      alertWarn.innerHTML = `\u23f0 Only <strong>${Math.ceil(remaining/60)} minute${Math.ceil(remaining/60)>1?'s':''}</strong> left ` +
+                            `— keep an eye out!`;
+      alertDang.style.display = "none";
+    } else {
+      // Plenty of time
+      digits.className = "countdown-digits";
+      digits.textContent = timeStr;
+      subText.textContent = "Staff promised this time when accepting your order";
+      alertWarn.style.display = "none";
+      alertDang.style.display = "none";
+    }
+  }
+
+  tick();
+  countdownInt = setInterval(tick, 1000);
+}
+
+// ── Refresh credits badge in navbar ──────────────────────────────────────────
+let lastCreditCheck = 0;
+function refreshNavCredits(penalty, status) {
+  if (status !== "COMPLETED") return;
+  if (penalty <= 0) return;
+  const now = Date.now();
+  if (now - lastCreditCheck < 10000) return;   // debounce
+  lastCreditCheck = now;
+  fetch(API + "/student/credits", { headers: authHeaders("student") })
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById("creditsDisplay");
+      if (el) el.textContent = "\u{1F4B3} \u20b9" + (d.credits || 0);
+    }).catch(() => {});
+}
+
+// ── Polling ───────────────────────────────────────────────────────────────────
+// Override pollStudent to use updateUI
+const orderId = localStorage.getItem("student_order");
+if (orderId) {
+  const poll = () => {
+    fetch(API + "/order/status/" + orderId, { headers: authHeaders("student") })
+    .then(r => r.json())
+    .then(o => { if (o.status) updateUI(o); })
+    .catch(() => {});
+  };
+  poll();
+  setInterval(poll, 3000);
+} else {
+  document.getElementById("status").textContent = "No active order found.";
+}
+
+// Music toggle button
+let isMusicPlaying = true;
+const MAX_VOLUME = 0.2;
+
+function toggleMusic() {
+  const audio = document.getElementById('bgMusic');
+  const icon = document.getElementById('musicIcon');
+  
+  if(audio.paused) {
+    audio.volume = MAX_VOLUME;
+    audio.play().catch(e => console.log('Play failed:', e));
+    icon.textContent = '🔊';
+    isMusicPlaying = true;
+  } else {
+    audio.pause();
+    icon.textContent = '🔇';
+    isMusicPlaying = false;
+  }
+}
+
+</script>
+
+<!-- Music Player Toggle Button -->
+<button onclick="toggleMusic()" style="position: fixed; bottom: 20px; right: 20px; z-index: 100; background: rgba(255, 159, 74, 0.9); border: none; color: white; font-size: 20px; cursor: pointer; padding: 12px 16px; border-radius: 50px; backdrop-filter: blur(10px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease;">
+  <span id="musicIcon">🔊</span>
+</button>
+
+</body>
+</html>

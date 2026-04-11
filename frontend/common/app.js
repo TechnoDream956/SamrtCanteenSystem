@@ -3,40 +3,62 @@
 //   <script src="../common/config.js"></script>
 //   <script src="../common/app.js"></script>
 
-// ── Auth helpers ──────────────────────────────────────────────────────────────
-function authHeaders() {
+// ── Auth helpers (ROLE-AWARE: works for both student & staff) ─────────────────
+function authHeaders(role = "student") {
+    const key = `${role}_token`;
     return {
         "Content-Type":  "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("token")
+        "Authorization": "Bearer " + localStorage.getItem(key)
     };
 }
 
-function protectPage(requiredRole) {
-    const token = localStorage.getItem("token");
-    const user  = JSON.parse(localStorage.getItem("user") || "null");
+function protectPage(requiredRole = "student", redirectUrl = "../student/login.html") {
+    const key_token = `${requiredRole}_token`;
+    const key_user  = `${requiredRole}_user`;
+    
+    const token = localStorage.getItem(key_token);
+    const user  = JSON.parse(localStorage.getItem(key_user) || "null");
 
     if (!token || token === "undefined") {
-        window.location.href = "../login.html";
+        window.location.href = redirectUrl;
         return;
     }
     if (!user || !user.role) {
-        localStorage.clear();
-        window.location.href = "../login.html";
+        localStorage.removeItem(key_token);
+        localStorage.removeItem(key_user);
+        window.location.href = redirectUrl;
         return;
     }
     if (requiredRole && user.role !== requiredRole) {
         alert("Unauthorized access");
-        localStorage.clear();
-        window.location.href = "../login.html";
+        localStorage.removeItem(key_token);
+        localStorage.removeItem(key_user);
+        window.location.href = redirectUrl;
         return;
     }
 }
 
-function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("order");
-    window.location = "../login.html";
+function logout(role = "student", redirectUrl = "../student/login.html") {
+    const key_token = `${role}_token`;
+    const key_user  = `${role}_user`;
+    const key_order = `${role}_order`;
+    
+    localStorage.removeItem(key_token);
+    localStorage.removeItem(key_user);
+    localStorage.removeItem(key_order);
+    window.location = redirectUrl;
+}
+
+// Helper to get current user (role-aware)
+function getCurrentUser(role = "student") {
+    const key_user = `${role}_user`;
+    return JSON.parse(localStorage.getItem(key_user) || "null");
+}
+
+// Helper to get current token (role-aware)
+function getCurrentToken(role = "student") {
+    const key_token = `${role}_token`;
+    return localStorage.getItem(key_token);
 }
 
 // ── Cart ──────────────────────────────────────────────────────────────────────
@@ -102,7 +124,7 @@ function checkout() {
 
     fetch(API + "/order/create", {
         method:  "POST",
-        headers: authHeaders(),
+        headers: authHeaders("student"),
         body:    JSON.stringify({ canteen_id: canteenId, items: cart })
     })
     .then(r => r.json())
@@ -112,7 +134,7 @@ function checkout() {
             if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
             return;
         }
-        localStorage.setItem("order", d.order_id);
+        localStorage.setItem("student_order", d.order_id);
         window.location = "order_status.html";
     })
     .catch(() => {
@@ -256,6 +278,6 @@ function showToast(msg, type = "success") {
 setInterval(() => {
     const token = localStorage.getItem("token");
     if (!token && window.location.pathname.includes("menu.html")) {
-        window.location = "../login.html";
+        window.location = "../student/login.html";
     }
 }, 15000);

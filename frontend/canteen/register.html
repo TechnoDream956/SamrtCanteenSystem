@@ -1,590 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Staff Register — B.U Eats</title>
-  <script src="../common/config.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B.U Eats | Canteen Staff Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0d16;
-      --bg-card: #1f1e2b;
-      --primary: #c97cff;
-      --primary-2: #6b6bff;
-      --secondary: #c97cff;
-      --amber: #ffe393;
-      --on-surface: #e7e4f0;
-      --muted: #acaab5;
-      --outline: #484751;
+      --bg: #0a0a14; --card: #13121e;
+      --primary: #ff9f4a; --amber: #ffe393; --purple: #c97cff;
+      --muted: #9998aa; --text: #e7e4f0; --outline: rgba(72,71,81,0.4);
     }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
-
     body {
       font-family: 'Manrope', sans-serif;
-      background: var(--bg);
-      color: var(--on-surface);
+      background: var(--bg); color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
-      cursor: none
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
     }
-
-    #cursor-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--primary);
-      border-radius: 50%;
-      position: fixed;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 9999;
-      transition: transform .1s ease
-    }
-
-    #cursor-ring {
-      width: 36px;
-      height: 36px;
-      border: 1.5px solid rgba(201, 124, 255, .5);
-      border-radius: 50%;
-      position: fixed;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 9998;
-      transition: width .3s, height .3s, left .12s, top .12s, opacity .3s
-    }
-
-    .bg-orbs {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden
-    }
-
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: .6;
-      animation: orbFloat ease-in-out infinite
-    }
-
-    .orb-1 {
-      width: 400px;
-      height: 400px;
-      background: rgba(150, 80, 255, .08);
-      top: -100px;
-      left: -100px;
-      animation-duration: 12s
-    }
-
-    .orb-2 {
-      width: 350px;
-      height: 350px;
-      background: rgba(201, 124, 255, .06);
-      bottom: -100px;
-      right: -100px;
-      animation-duration: 15s
-    }
-
-    @keyframes orbFloat {
-
-      0%,
-      100% {
-        transform: translateY(0) scale(1)
-      }
-
-      50% {
-        transform: translateY(-20px) scale(1.05)
-      }
-    }
-
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background-image: linear-gradient(rgba(201, 124, 255, .02) 1px, transparent 1px), linear-gradient(90deg, rgba(201, 124, 255, .02) 1px, transparent 1px);
-      background-size: 40px 40px
+      position: fixed; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,159,74,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,159,74,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
+    .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .orb-1 { width: 500px; height: 500px; background: rgba(255,140,0,0.07); top:-200px; left:-150px; animation: oF 12s ease-in-out infinite; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(201,124,255,0.06); bottom:-150px; right:-100px; animation: oF 15s ease-in-out infinite reverse; }
+    @keyframes oF { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
 
-    .auth-page {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
-      position: relative;
-      z-index: 1
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 440px;
+      background: var(--card);
+      border: 0.5px solid var(--outline);
+      border-radius: 24px; padding: 36px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      animation: slideIn 0.5s ease both;
     }
+    @keyframes slideIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
 
-    .auth-visual {
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 38%;
-      background: rgba(19, 18, 28, .5);
-      backdrop-filter: blur(20px);
-      border-right: .5px solid rgba(72, 71, 81, .3);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      overflow: hidden
-    }
-
-    @media(max-width:1000px) {
-      .auth-visual {
-        display: none
-      }
-
-      .auth-form-wrap {
-        margin-left: 0 !important;
-        padding-left: 0 !important
-      }
-    }
-
-    .visual-big-text {
-      font-size: 80px;
-      margin-bottom: 20px;
-      filter: drop-shadow(0 0 20px rgba(201, 124, 255, .4))
-    }
-
-    .visual-big-sub {
-      font-family: 'Space Grotesk', sans-serif;
+    .card-header { text-align: center; margin-bottom: 28px; }
+    .logo-wrap {
+      width: 56px; height: 56px; margin: 0 auto 14px;
+      background: linear-gradient(135deg,#c97cff,#6b6bff);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
       font-size: 26px;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--primary), var(--amber));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 48px;
-      text-align: center
+      box-shadow: 0 0 28px rgba(201,124,255,0.4);
     }
+    h1 { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:800; margin-bottom:6px; }
+    h1 span { background:linear-gradient(90deg,#c97cff,#ff9f4a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .subtitle { font-size:12px; color:var(--muted); }
 
-    .steps-list {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      width: 100%;
-      max-width: 320px
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-bottom: 16px; }
+    label { display:block; font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:7px; }
+
+    input, select {
+      width:100%; padding:12px 15px;
+      background:rgba(255,255,255,0.05);
+      border:0.5px solid var(--outline);
+      border-radius:11px;
+      color:var(--text); font-family:'Manrope',sans-serif; font-size:14px;
+      outline:none; transition:all 0.25s;
+      appearance:none; -webkit-appearance:none;
     }
-
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px
-    }
-
-    .step-num {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      color: #fff;
-      box-shadow: 0 0 20px rgba(201, 124, 255, .3);
-      flex-shrink: 0
-    }
-
-    .step-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--on-surface);
-      margin-bottom: 4px
-    }
-
-    .step-desc {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.5
-    }
-
-    .auth-form-wrap {
-      width: 100%;
-      max-width: 480px;
-      margin-left: 38%;
-      padding-left: 60px
-    }
-
-    .form-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      margin-bottom: 32px
-    }
-
-    .form-logo-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 0 20px rgba(201, 124, 255, .3)
-    }
-
-    .form-logo-text {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--on-surface)
-    }
-
-    .form-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 36px;
-      font-weight: 800;
-      line-height: 1.1;
-      margin-bottom: 6px;
-      letter-spacing: -1px
-    }
-
-    .form-title span {
-      background: linear-gradient(90deg, var(--primary), var(--amber));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text
-    }
-
-    .form-subtitle {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 28px
-    }
-
-    .auth-card {
-      background: rgba(31, 30, 43, .6);
-      backdrop-filter: blur(20px);
-      border: .5px solid rgba(72, 71, 81, .4);
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .4)
-    }
-
-    .notice {
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 12px;
-      line-height: 1.6;
-      background: rgba(201, 124, 255, .07);
-      border: .5px solid rgba(201, 124, 255, .2);
-      color: #d9a8ff;
-      margin-bottom: 20px
-    }
-
-    .name-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px
-    }
-
-    .input-group {
-      margin-bottom: 18px
-    }
-
-    .input-group label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin-bottom: 8px
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, .03);
-      border: .5px solid rgba(72, 71, 81, .5);
-      border-radius: 12px;
-      color: var(--on-surface);
-      font-family: 'Manrope', sans-serif;
-      font-size: 14px;
-      transition: all .3s ease;
-      outline: none;
-      appearance: none;
-      -webkit-appearance: none
-    }
-
     select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239998aa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 40px;
-      cursor: none
+      background-repeat:no-repeat; background-position:right 14px center; padding-right:40px;
     }
+    select option { background:var(--card); }
+    input::placeholder { color:rgba(255,255,255,0.2); }
+    input:focus, select:focus { border-color:var(--purple); background:rgba(201,124,255,0.06); box-shadow:0 0 0 3px rgba(201,124,255,0.1); }
 
-    select option {
-      background: var(--bg-card)
+    .pass-wrap { position:relative; }
+    .pass-wrap input { padding-right:44px; }
+    .eye-btn { position:absolute; right:13px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px; }
+    .eye-btn:hover { color:var(--primary); }
+
+    .btn-submit {
+      width:100%; padding:13px;
+      background:linear-gradient(135deg,#c97cff,#6b6bff);
+      border:none; border-radius:11px;
+      color:#fff; font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:800;
+      cursor:pointer; transition:all 0.3s;
+      position:relative; overflow:hidden;
+      box-shadow:0 6px 24px rgba(201,124,255,0.35);
+      margin-top:6px;
     }
+    .btn-submit::before { content:''; position:absolute; top:0; left:-100%; width:200%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); animation:shimmer 2.5s infinite; }
+    @keyframes shimmer { 0%{left:-100%} 100%{left:100%} }
+    .btn-submit:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(201,124,255,0.5); }
+    .btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+    .btn-submit span { position:relative; z-index:1; }
 
-    input::placeholder {
-      color: rgba(255, 255, 255, .2)
-    }
+    .msg { padding:11px 16px; border-radius:10px; font-size:13px; font-weight:600; margin-top:12px; text-align:center; display:none; }
+    .msg.error   { background:rgba(239,68,68,0.12); color:#fca5a5; border:0.5px solid rgba(239,68,68,0.3); }
+    .msg.success { background:rgba(79,255,176,0.12); color:#4fffb0; border:0.5px solid rgba(79,255,176,0.3); }
 
-    input:focus,
-    select:focus {
-      border-color: var(--primary);
-      background: rgba(201, 124, 255, .05);
-      box-shadow: 0 0 20px rgba(201, 124, 255, .12)
-    }
+    .card-footer { text-align:center; margin-top:18px; font-size:12px; color:var(--muted); }
+    .card-footer a { color:var(--primary); text-decoration:none; font-weight:700; }
+    .divider { height:0.5px; background:var(--outline); margin:18px 0; }
 
-    .pass-wrap {
-      position: relative
-    }
-
-    .pass-wrap input {
-      padding-right: 44px
-    }
-
-    .eye-btn {
-      position: absolute;
-      right: 13px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: none;
-      font-size: 15px;
-      transition: color .2s
-    }
-
-    .eye-btn:hover {
-      color: var(--primary)
-    }
-
-    .btn-register {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 15px;
-      font-weight: 800;
-      cursor: none;
-      transition: all .3s ease;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 6px 24px rgba(150, 80, 255, .35);
-      margin-top: 6px
-    }
-
-    .btn-register::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 200%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .15), transparent);
-      animation: shimmer 2.5s infinite
-    }
-
-    @keyframes shimmer {
-      0% {
-        left: -100%
-      }
-
-      100% {
-        left: 100%
-      }
-    }
-
-    .btn-register:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 32px rgba(201, 124, 255, .5)
-    }
-
-    .btn-register:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-      transform: none
-    }
-
-    .btn-register span {
-      position: relative;
-      z-index: 1
-    }
-
-    .msg {
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 14px;
-      text-align: center;
-      display: none
-    }
-
-    .msg.error {
-      background: rgba(239, 68, 68, .12);
-      color: #fca5a5;
-      border: .5px solid rgba(239, 68, 68, .3)
-    }
-
-    .msg.success {
-      background: rgba(79, 255, 176, .12);
-      color: #4fffb0;
-      border: .5px solid rgba(79, 255, 176, .3)
-    }
-
-    .divider {
-      height: .5px;
-      background: rgba(72, 71, 81, .4);
-      margin: 20px 0
-    }
-
-    .card-footer {
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted)
-    }
-
-    .card-footer a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 700
+    .notice {
+      padding:10px 14px; border-radius:10px; font-size:11px;
+      background:rgba(255,159,74,0.07); border:0.5px solid rgba(255,159,74,0.2);
+      color:var(--amber); margin-bottom:18px; line-height:1.5;
     }
   </style>
 </head>
-
 <body>
-  <div id="cursor-dot"></div>
-  <div id="cursor-ring"></div>
-  <div class="bg-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="logo-wrap">👨‍🍳</div>
+    <h1>Create <span>Staff</span> Account</h1>
+    <div class="subtitle">Register as canteen staff to manage orders</div>
   </div>
 
-  <div class="auth-visual">
-    <div class="visual-big-text">👨‍🍳</div>
-    <div class="visual-big-sub">Join as<br />Canteen Staff</div>
-    <div class="steps-list">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div>
-          <div class="step-title">Create Staff Account</div>
-          <div class="step-desc">Register with your canteen and set up your credentials.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div>
-          <div class="step-title">Manage Orders</div>
-          <div class="step-desc">Accept, prepare and complete student orders in real time.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div>
-          <div class="step-title">Track Your Canteen</div>
-          <div class="step-desc">View live queue stats and daily revenue on your dashboard.</div>
-        </div>
-      </div>
+  <div class="notice">
+    ⚠️ Staff accounts require a canteen selection. Your account will be linked to that canteen permanently.
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" id="fname" placeholder="Ravi" autocomplete="given-name"/>
+    </div>
+    <div class="form-group">
+      <label>Last Name</label>
+      <input type="text" id="lname" placeholder="Kumar" autocomplete="family-name"/>
     </div>
   </div>
 
-  <div class="auth-page">
-    <div class="auth-form-wrap">
-      <a href="../home.html" class="form-logo">
-        <div class="form-logo-icon">🍽️</div>
-        <span class="form-logo-text">B.U Eats</span>
-      </a>
-      <div class="form-title">Create your<br /><span>Staff account</span></div>
-      <div class="form-subtitle">Register as canteen staff to manage orders and your dashboard.</div>
-      <div class="auth-card">
-        <div class="notice">⚠️ Staff accounts are permanently linked to your canteen. Choose carefully.</div>
-        <div class="name-row">
-          <div class="input-group"><label>First Name</label><input type="text" id="fname" placeholder="Ravi"
-              autocomplete="given-name" /></div>
-          <div class="input-group"><label>Last Name</label><input type="text" id="lname" placeholder="Kumar"
-              autocomplete="family-name" /></div>
-        </div>
-        <div class="input-group">
-          <label>Your Canteen</label>
-          <select id="canteenId">
-            <option value="">— Select your canteen —</option>
-            <option value="1">🍜 Maggi Hotspot (Canteen 1)</option>
-            <option value="2">🍛 Southern Stories (Canteen 2)</option>
-            <option value="3">⚡ SnapEats (Canteen 3)</option>
-            <option value="4">🌌 Infinity Kitchen (Canteen 4)</option>
-          </select>
-        </div>
-        <div class="input-group"><label>Staff Email</label><input type="email" id="email"
-            placeholder="staff@example.com" autocomplete="email" /></div>
-        <div class="input-group"><label>Password</label>
-          <div class="pass-wrap"><input type="password" id="password" placeholder="Create a strong password" /><button
-              class="eye-btn" onclick="togglePass('password','e1')" id="e1" type="button">👁</button></div>
-        </div>
-        <div class="input-group"><label>Confirm Password</label>
-          <div class="pass-wrap"><input type="password" id="confirmPass" placeholder="Repeat your password" /><button
-              class="eye-btn" onclick="togglePass('confirmPass','e2')" id="e2" type="button">👁</button></div>
-        </div>
-        <button class="btn-register" id="regBtn" onclick="doRegister()"><span id="btnText">👨‍🍳 Create Staff
-            Account</span></button>
-        <div class="msg" id="msgEl"></div>
-        <div class="divider"></div>
-        <div class="card-footer">Already have an account? <a href="login.html">Sign in →</a></div>
-      </div>
+  <div class="form-group">
+    <label>Your Canteen</label>
+    <select id="canteenId">
+      <option value="">— Loading canteens… —</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Staff Email</label>
+    <input type="email" id="email" placeholder="staff@example.com" autocomplete="email"/>
+  </div>
+
+  <div class="form-group">
+    <label>Password</label>
+    <div class="pass-wrap">
+      <input type="password" id="password" placeholder="Create password"/>
+      <button class="eye-btn" onclick="togglePass('password','e1')" id="e1" type="button">👁</button>
     </div>
   </div>
 
-  <script src="../common/app.js"></script>
-  <script>
-    const dot = document.getElementById('cursor-dot'), ring = document.getElementById('cursor-ring');
-    document.addEventListener('mousemove', e => { dot.style.left = e.clientX - 4 + 'px'; dot.style.top = e.clientY - 4 + 'px'; ring.style.left = e.clientX - 18 + 'px'; ring.style.top = e.clientY - 18 + 'px' });
-    document.querySelectorAll('button,a,input,select').forEach(el => {
-      el.addEventListener('mouseenter', () => { ring.style.width = '50px'; ring.style.height = '50px'; ring.style.borderColor = 'rgba(201,124,255,.8)' });
-      el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; ring.style.borderColor = 'rgba(201,124,255,.5)' });
-    });
-    function togglePass(id, btnId) { const i = document.getElementById(id), b = document.getElementById(btnId); i.type = i.type === 'password' ? 'text' : 'password'; b.textContent = i.type === 'password' ? '👁' : '🙈' }
-    async function doRegister() {
-      const fname = document.getElementById('fname').value.trim(), lname = document.getElementById('lname').value.trim(), canteenId = document.getElementById('canteenId').value, email = document.getElementById('email').value.trim().toLowerCase(), pass = document.getElementById('password').value, conf = document.getElementById('confirmPass').value, btn = document.getElementById('regBtn');
-      if (!fname || !lname || !canteenId || !email || !pass) return showMsg('⚠️ Please fill all fields.', 'error');
-      if (pass !== conf) return showMsg('❌ Passwords do not match.', 'error');
-      if (pass.length < 6) return showMsg('❌ Password must be at least 6 characters.', 'error');
-      btn.disabled = true; document.getElementById('btnText').textContent = '⏳ Creating account…';
-      try {
-        const res = await fetch(`${API}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: `${fname} ${lname}`, email, password: pass, role: 'canteen', canteen_id: parseInt(canteenId) }) });
-        const data = await res.json();
-        if (!res.ok) { showMsg(`❌ ${data.error || 'Registration failed'}`, 'error'); return }
-        showMsg('✅ Account created! Redirecting to login…', 'success');
-        setTimeout(() => { window.location.href = 'login.html' }, 1500);
-      } catch (e) { showMsg('❌ Connection failed. Is the backend running?', 'error') }
-      finally { btn.disabled = false; document.getElementById('btnText').textContent = '👨‍🍳 Create Staff Account' }
+  <div class="form-group">
+    <label>Confirm Password</label>
+    <div class="pass-wrap">
+      <input type="password" id="confirmPass" placeholder="Repeat password"/>
+      <button class="eye-btn" onclick="togglePass('confirmPass','e2')" id="e2" type="button">👁</button>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="regBtn" onclick="doRegister()">
+    <span id="btnText">👨‍🍳 Create Staff Account</span>
+  </button>
+
+  <div class="msg" id="msgEl"></div>
+
+  <div class="divider"></div>
+  <div class="card-footer">Already have an account? <a href="login.html">Sign in →</a></div>
+</div>
+
+<script src="../common/config.js"></script>
+<script src="../common/app.js"></script>
+<script>
+// Load canteens on page load
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadCanteens();
+});
+
+async function loadCanteens() {
+  try {
+    const res = await fetch(`${API}/canteens`);
+    const data = await res.json();
+    const select = document.getElementById('canteenId');
+    
+    select.innerHTML = '<option value="">— Select your canteen —</option>';
+    
+    if (data.canteens && data.canteens.length > 0) {
+      data.canteens.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+      });
+    } else {
+      select.innerHTML = '<option value="">No canteens available</option>';
     }
-    function showMsg(text, type) { const m = document.getElementById('msgEl'); m.textContent = text; m.className = `msg ${type}`; m.style.display = 'block' }
-  </script>
-</body>
+  } catch(e) {
+    console.error('Failed to load canteens:', e);
+    document.getElementById('canteenId').innerHTML = '<option value="">Error loading canteens</option>';
+  }
+}
 
+function togglePass(id, btnId){
+  const inp = document.getElementById(id);
+  const btn = document.getElementById(btnId);
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+async function doRegister(){
+  const fname     = document.getElementById('fname').value.trim();
+  const lname     = document.getElementById('lname').value.trim();
+  const canteenId = document.getElementById('canteenId').value;
+  const email     = document.getElementById('email').value.trim().toLowerCase();
+  const pass      = document.getElementById('password').value;
+  const conf      = document.getElementById('confirmPass').value;
+  const btn       = document.getElementById('regBtn');
+
+  if (!fname || !lname || !canteenId || !email || !pass) return showMsg('⚠️ Please fill all fields.','error');
+  if (pass !== conf) return showMsg('❌ Passwords do not match.','error');
+  if (pass.length < 6) return showMsg('❌ Password must be at least 6 characters.','error');
+
+  btn.disabled = true;
+  document.getElementById('btnText').textContent = '⏳ Creating account…';
+
+  try {
+    const res  = await fetch(`${API}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `${fname} ${lname}`,
+        email, password: pass,
+        role: 'canteen',
+        canteen_id: parseInt(canteenId)
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg(`❌ ${data.error || 'Registration failed'}`, 'error'); return; }
+    showMsg('✅ Account created! Redirecting to login…', 'success');
+    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+  } catch(e) {
+    showMsg('❌ Server unreachable. Is the backend running?', 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnText').textContent = '👨‍🍳 Create Staff Account';
+  }
+}
+
+function showMsg(text, type){
+  const m = document.getElementById('msgEl');
+  m.textContent = text;
+  m.className = `msg ${type}`;
+  m.style.display = 'block';
+}
+</script>
+</body>
 </html>
