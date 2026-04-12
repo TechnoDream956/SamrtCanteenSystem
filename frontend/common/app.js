@@ -129,6 +129,8 @@ function checkout() {
     })
     .then(r => {
         if (r.status === 401 || r.status === 422) {
+            localStorage.removeItem("student_token");
+            localStorage.removeItem("student_user");
             window.location = "login.html";
             return null;
         }

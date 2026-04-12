@@ -1646,6 +1646,12 @@ async function fetchAndRenderOrders() {
     const res = await fetch(`${API}/student/orders`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    if (res.status === 401 || res.status === 422) {
+      localStorage.removeItem("student_token");
+      localStorage.removeItem("student_user");
+      window.location = "login.html";
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const orders = await res.json();
 
@@ -1749,6 +1755,13 @@ async function silentRefreshCredits() {
     const res = await fetch(`${API}/student/credits`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    if (res.status === 401 || res.status === 422) {
+      localStorage.removeItem("student_token");
+      localStorage.removeItem("student_user");
+      // Don't redirect automatically on background refresh to avoid annoying the user
+      // but the next interaction will force it.
+      return;
+    }
     if (!res.ok) return;
     const data = await res.json();
     const current = parseFloat(data.credits) || 0;

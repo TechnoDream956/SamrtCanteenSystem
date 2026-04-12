@@ -470,9 +470,13 @@ const s=document.createElement('style');
 s.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
 document.head.appendChild(s);
 
-// If already logged in as student, redirect to menu
-if(localStorage.getItem('student_token')&&localStorage.getItem('student_token')!=='undefined'){
+// If already logged in as student, redirect to dashboard
+const existingToken = localStorage.getItem('student_token');
+if(existingToken && existingToken !=='undefined' && existingToken !== 'null') {
   window.location='index.html';
+} else {
+  // Clear any garbage if hit this page
+  localStorage.removeItem('student_token');
 }
 
 // Music toggle button
