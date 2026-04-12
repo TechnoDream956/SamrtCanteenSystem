@@ -16,6 +16,9 @@ app.config["JWT_SECRET_KEY"] = (
     os.environ.get("API_SECRET") or
     "local-dev-secret-change-in-prod"
 )
+# Set token expiry to 24 hours so sessions don't expire mid-use
+import datetime as _dt
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = _dt.timedelta(hours=24)
 jwt = JWTManager(app)
 
 # ── Database: PostgreSQL on Railway, SQLite locally ───────────────────────────
@@ -477,7 +480,7 @@ def create_order():
 
     cur.execute(
         f"INSERT INTO orders VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph},{ph})",
-        (oid, d["canteen_id"], int(user_id),
+        (oid, int(d["canteen_id"]), int(user_id),
          json.dumps(items), len(items),
          total_price, total_time,
          "WAITING", time.time(), None, None, None, 0)

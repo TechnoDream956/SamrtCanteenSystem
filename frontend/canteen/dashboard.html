@@ -707,20 +707,37 @@ let currentFilter = 'ALL';
 /* ── Load orders ── */
 async function loadOrders(){
   const btn = document.getElementById('refreshBtn');
-  btn.classList.add('spinning');
+  if (btn) btn.classList.add('spinning');
+  console.log("[DASHBOARD] Fetching orders for staff...");
 
   try {
     const res = await fetch(`${API}/canteen/orders`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (res.status === 401) { doLogout(); return; }
-    if (!res.ok) throw new Error('Server error');
+    console.log("[DASHBOARD] Fetch status:", res.status);
+    if (res.status === 401 || res.status === 422) { 
+      console.warn("[DASHBOARD] Session expired or unauthorized.");
+      doLogout(); 
+      return; 
+    }
+    if (!res.ok) throw new Error('Server returned error status: ' + res.status);
 
-    allOrders = await res.json();
+    const data = await res.json();
+    console.log("[DASHBOARD] Orders received:", data);
+
+    // check for auth error in body as well
+    if (data.msg && (data.msg.toLowerCase().includes('expired') || data.msg.toLowerCase().includes('invalid'))) {
+      console.warn("[DASHBOARD] Auth message in body:", data.msg);
+      doLogout(); 
+      return;
+    }
+
+    allOrders = data;
     renderOrders();
     updateStats();
   } catch(e) {
+    console.error("[DASHBOARD] Load orders failed:", e);
     document.getElementById('orderQueue').innerHTML = `
       <div class="error-state">
         <div>⚠️ Could not load orders. Check your connection.</div>
@@ -904,6 +921,7 @@ async function updateStatus(orderId, action, prepTime = null){
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(body)
     });
+    if (res.status === 401 || res.status === 422) { doLogout(); return; }
     if (!res.ok) throw new Error('Failed');
     showToast('✅ Status updated!', 'success');
     await loadOrders();

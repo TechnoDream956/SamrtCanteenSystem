@@ -618,17 +618,47 @@ function refreshNavCredits(penalty, status) {
 // ── Polling ───────────────────────────────────────────────────────────────────
 // Override pollStudent to use updateUI
 const orderId = localStorage.getItem("student_order");
-if (orderId) {
+console.log("[POLLING] Starting status polling for order:", orderId);
+
+if (orderId && orderId !== "undefined" && orderId !== "null") {
+  let pollInterval = null;
   const poll = () => {
-    fetch(API + "/order/status/" + orderId, { headers: authHeaders("student") })
-    .then(r => r.json())
-    .then(o => { if (o.status) updateUI(o); })
-    .catch(() => {});
+    fetch(API + "/order/status/" + orderId, { 
+      headers: authHeaders("student") 
+    })
+    .then(r => {
+      console.log("[POLLING] Fetch status:", r.status);
+      if (r.status === 401 || r.status === 422) {
+        console.warn("[POLLING] Session expired or invalid token.");
+        if (pollInterval) clearInterval(pollInterval);
+        document.getElementById("status").textContent = "Session Expired";
+        document.getElementById("statusDesc").textContent = "Your session has expired. Please log in again.";
+        setTimeout(() => { window.location = "login.html"; }, 2500);
+        return null;
+      }
+      return r.json();
+    })
+    .then(o => {
+      if (!o) return;
+      console.log("[POLLING] Data received:", o);
+      if (o.status) {
+        updateUI(o);
+      } else if (o.error || o.msg) {
+        console.error("[POLLING] API Error:", o.error || o.msg);
+        document.getElementById("status").textContent = "Error";
+        document.getElementById("statusDesc").textContent = o.error || o.msg;
+      }
+    })
+    .catch(err => {
+      console.error("[POLLING] Network Error:", err);
+    });
   };
   poll();
-  setInterval(poll, 3000);
+  pollInterval = setInterval(poll, 3000);
 } else {
+  console.warn("[POLLING] No orderId found in localStorage.");
   document.getElementById("status").textContent = "No active order found.";
+  document.getElementById("statusDesc").textContent = "Browse canteens to place a new order.";
 }
 
 // Music toggle button

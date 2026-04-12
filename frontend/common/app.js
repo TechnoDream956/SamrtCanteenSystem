@@ -117,7 +117,7 @@ function checkout() {
     }
 
     const params   = new URLSearchParams(window.location.search);
-    const canteenId = params.get("canteen");
+    const canteenId = parseInt(params.get("canteen")) || 1;
     const btn       = document.getElementById("checkoutBtn");
 
     if (btn) { btn.disabled = true; btn.textContent = "Placing order..."; }
@@ -127,10 +127,22 @@ function checkout() {
         headers: authHeaders("student"),
         body:    JSON.stringify({ canteen_id: canteenId, items: cart })
     })
-    .then(r => r.json())
+    .then(r => {
+        if (r.status === 401 || r.status === 422) {
+            window.location = "login.html";
+            return null;
+        }
+        return r.json();
+    })
     .then(d => {
-        if (d.error) {
-            showToast("❌ " + d.error, "error");
+        if (!d) return;
+        if (d.error || d.msg) {
+            showToast("❌ " + (d.error || d.msg), "error");
+            if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
+            return;
+        }
+        if (!d.order_id) {
+            showToast("❌ Failed to create order", "error");
             if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
             return;
         }
@@ -141,113 +153,6 @@ function checkout() {
         showToast("❌ Could not connect to server.", "error");
         if (btn) { btn.disabled = false; btn.textContent = "Place Order"; }
     });
-}
-
-// ── Student order status polling ──────────────────────────────────────────────
-function pollStudent() {
-    const id = localStorage.getItem("order");
-    if (!id) return;
-
-    const poll = () => {
-        fetch(API + "/order/status/" + id, { headers: authHeaders() })
-        .then(r => r.json())
-        .then(o => {
-            if (!o.status) return;
-
-            const statusEl  = document.getElementById("status");
-            const priceEl   = document.getElementById("price");
-            const expectedEl= document.getElementById("expected");
-            const itemsEl   = document.getElementById("items");
-
-            if (statusEl)   statusEl.textContent  = o.status;
-            if (priceEl)    priceEl.textContent    = "₹" + o.price;
-            if (expectedEl) expectedEl.textContent = o.expected_time + " mins";
-
-            if (itemsEl && o.items) {
-                itemsEl.innerHTML = o.items.map(i =>
-                    `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">• ${i.name} — ₹${i.price}</div>`
-                ).join("");
-            }
-
-            // Update progress bar
-            const steps  = ["WAITING","ACCEPTED","PREPARING","READY","COMPLETED"];
-            const stepIdx = steps.indexOf(o.status);
-            document.querySelectorAll(".progress-step").forEach((el, i) => {
-                el.classList.toggle("active",    i <= stepIdx);
-                el.classList.toggle("current",   i === stepIdx);
-            });
-
-            if (o.status === "COMPLETED") {
-                showToast("🎉 Your order is ready! Go pick it up.");
-            }
-        })
-        .catch(() => {});
-    };
-
-    poll();
-    setInterval(poll, 3000);
-}
-
-// ── Canteen dashboard polling ─────────────────────────────────────────────────
-function loadOrders() {
-    const poll = () => {
-        fetch(API + "/canteen/orders", { headers: authHeaders() })
-        .then(r => r.json())
-        .then(data => {
-            if (!Array.isArray(data)) return;
-
-            const ordersEl = document.getElementById("orders");
-            if (!ordersEl) return;
-
-            if (data.length === 0) {
-                ordersEl.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.3);padding:60px 20px;">
-                  <div style="font-size:48px;margin-bottom:12px;">🍽️</div>
-                  <p>No orders yet. Waiting for hungry students...</p></div>`;
-                return;
-            }
-
-            ordersEl.innerHTML = data.map(o => `
-              <div class="card" style="${o.queue_position === 1 ? 'border-color:#ff6b35;box-shadow:0 0 20px rgba(255,107,53,0.3);' : ''}">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                  <span style="font-weight:700;font-size:16px;">Order #${o.order_id}</span>
-                  <span class="status ${o.status}">${o.status}</span>
-                </div>
-                <p style="font-size:13px;color:rgba(240,240,255,0.5);">
-                  Queue: <b style="color:#ffd60a;">#${o.queue_position}</b> &nbsp;|&nbsp;
-                  Priority: ${o.priority} &nbsp;|&nbsp;
-                  Total: <b style="color:#10b981;">₹${o.price}</b>
-                </p>
-                <div style="margin:12px 0;">
-                  ${o.items.map(i => `<span style="display:inline-block;padding:3px 10px;background:rgba(255,255,255,0.06);border-radius:20px;font-size:12px;margin:3px;">${i.name}</span>`).join("")}
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-                  <button onclick="update(${o.order_id},'accept')"   style="background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Accept</button>
-                  <button onclick="update(${o.order_id},'preparing')"style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);color:#c4b5fd;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Preparing</button>
-                  <button onclick="update(${o.order_id},'ready')"    style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4);color:#86efac;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Ready</button>
-                  <button onclick="update(${o.order_id},'complete')" style="background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:#4ade80;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600;">Completed</button>
-                </div>
-              </div>`).join("");
-        })
-        .catch(() => {});
-    };
-
-    poll();
-    setInterval(poll, 3000);
-}
-
-// ── Update order status ───────────────────────────────────────────────────────
-function update(id, type) {
-    const endpoints = {
-        accept:    "/order/accept",
-        preparing: "/order/preparing",
-        ready:     "/order/ready",
-        complete:  "/order/complete"
-    };
-    fetch(API + endpoints[type], {
-        method:  "POST",
-        headers: authHeaders(),
-        body:    JSON.stringify({ order_id: id })
-    }).then(() => loadOrders()).catch(() => {});
 }
 
 // ── Toast notifications ───────────────────────────────────────────────────────
