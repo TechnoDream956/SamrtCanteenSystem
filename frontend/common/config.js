@@ -9,7 +9,7 @@
  * You only need to change ONE line here and everything else updates automatically.
  */
 
-const RAILWAY_URL = "https://smartcanteensystem-1.onrender.com"; 
+const RAILWAY_URL = "https://samrtcanteensystem.onrender.com"; 
 
 // Auto-select: use localhost:5001 if testing locally, otherwise use Render URL
 const h = window.location.hostname;
