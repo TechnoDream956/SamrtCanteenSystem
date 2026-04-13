@@ -330,42 +330,22 @@ def send_otp():
         otp = str(random.randint(100000, 999999))
         otp_store[email] = {"otp": otp, "expires": time.time() + 600, "verified": False}
 
-        # If SMTP not configured — instant dev mode
-        if not SMTP_EMAIL or not SMTP_PASSWORD:
-            print(f"[OTP] No SMTP configured — dev mode. OTP={otp}")
-            return jsonify({"msg": "DEV MODE: no SMTP configured",
-                            "dev_mode": True, "otp": otp}), 200
-
-        # Try real email — always fall back with OTP if it fails
-        print(f"\n[OTP REQUEST] Sending to {email}, OTP={otp}")
+        print(f"\n[OTP REQUEST] Sending to {email}")
         try:
             success, error_msg = send_email(email, otp)
         except Exception as ex:
             success, error_msg = False, str(ex)
 
         if success:
-            return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False}), 200
+            return jsonify({"msg": f"OTP sent to {email}"}), 200
 
-        print(f"[OTP REQUEST] Email failed: {error_msg} — returning fallback OTP")
-        return jsonify({
-            "msg": "Email delivery failed — use the code below to continue.",
-            "dev_mode": True,
-            "otp": otp,
-            "details": error_msg
-        }), 200
+        print(f"[OTP REQUEST] Email failed: {error_msg}")
+        return jsonify({"error": "Failed to send OTP. Please try again later.",
+                        "details": error_msg}), 500
 
     except Exception as e:
-        # Last-resort safety net — never return 500 for send-otp
         print(f"[OTP] Unexpected error: {e}")
-        otp = str(random.randint(100000, 999999))
-        otp_store.setdefault(
-            (request.json or {}).get("email", ""), {}
-        )
-        return jsonify({
-            "msg": "Fallback OTP (server error caught)",
-            "dev_mode": True,
-            "otp": otp
-        }), 200
+        return jsonify({"error": "An unexpected error occurred. Please try again."}), 500
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
 @app.route("/verify-otp", methods=["POST"])
