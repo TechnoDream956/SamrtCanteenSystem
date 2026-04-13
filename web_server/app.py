@@ -264,7 +264,7 @@ def send_email_brevo(to_addr, otp):
     """Send OTP via Brevo transactional email HTTP API."""
     import json as _json
     payload = _json.dumps({
-        "sender":      {"name": "B.U Eats", "email": "noreply@bueatsbennett.com"},
+        "sender":      {"name": "B.U Eats", "email": "bueatsoncampus@gmail.com"},
         "to":          [{"email": to_addr}],
         "subject":     f"\U0001F37D B.U Eats — Your Verification Code: {otp}",
         "htmlContent": OTP_HTML.format(otp=otp)
