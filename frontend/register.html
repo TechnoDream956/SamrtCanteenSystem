@@ -787,7 +787,7 @@
           document.getElementById('devOtpNotice').style.display = 'block';
           document.getElementById('devOtpNotice').innerHTML =
             `🧪 <b>Dev Mode:</b> OTP is <b style="font-size:16px;letter-spacing:3px;color:#ff9f4a">${data.otp}</b><br/>
-         <span style="color:#9998aa;font-size:10px;">Set SMTP_EMAIL + SMTP_PASSWORD on Render for real emails.</span>`;
+         <span style="color:#9998aa;font-size:10px;">Add BREVO_API_KEY in Render Environment for real emails.</span>`;
         } else {
           msgEl.className = 'msg msg-success';
           msgEl.textContent = '📧 OTP sent! Check your ' + email + ' inbox (and spam folder).';
