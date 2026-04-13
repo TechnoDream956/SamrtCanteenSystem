@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register — B.U Eats</title>
-  <script src="common/config.js?v=9"></script>
+  <script src="common/config.js?v=10"></script>
   <meta name="description" content="Create your B.U Eats account and start ordering food from campus canteens." />
   <style>
     :root {
@@ -476,6 +476,9 @@
           </div>
           <div style="font-size:11px;color:#acaab5;margin-top:6px;">&#x1F512; Only @bennett.edu.in emails accepted
             &bull; Enrollment no. auto-extracted</div>
+          <div style="font-size:9px;color:rgba(172,170,181,0.5);margin-top:4px;text-align:right;">
+            API: <span id="apiDebug" style="text-decoration:underline;">checking...</span>
+          </div>
           <div id="devOtpNotice"
             style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,227,147,0.08);border:0.5px solid rgba(255,227,147,0.2);border-radius:8px;font-size:11px;color:#ffe393;">
           </div>
@@ -737,6 +740,11 @@
           btn.disabled = false;
         });
     }
+
+    // Diagnostic indicator
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('apiDebug').textContent = API;
+    });
 
     /* ── OTP Logic (email-based) ── */
     let emailVerified = false;
