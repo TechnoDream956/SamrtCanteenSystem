@@ -3,6 +3,12 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 import time, json, os, math
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 app = Flask(__name__)
 
@@ -272,16 +278,19 @@ def send_email(to_addr, otp):
             print(f"[OTP EMAIL] Login successful, sending email...")
             s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
             print(f"[OTP EMAIL] Email sent successfully to {to_addr}")
-        return True
+        return True, None
     except smtplib.SMTPAuthenticationError as e:
-        print(f"[OTP EMAIL] AUTH ERROR (invalid credentials): {e}")
-        return False
+        err = f"Authentication Failed: {str(e)}"
+        print(f"[OTP EMAIL] {err}")
+        return False, err
     except smtplib.SMTPException as e:
-        print(f"[OTP EMAIL] SMTP ERROR: {e}")
-        return False
+        err = f"SMTP Error: {str(e)}"
+        print(f"[OTP EMAIL] {err}")
+        return False, err
     except Exception as e:
-        print(f"[OTP EMAIL] GENERAL ERROR: {type(e).__name__}: {e}")
-        return False
+        err = f"General Error: {type(e).__name__}: {str(e)}"
+        print(f"[OTP EMAIL] {err}")
+        return False, err
 
 # ── SEND OTP (email-based) ──────────────────────────────────────────────────────
 @app.route("/send-otp", methods=["POST"])
@@ -300,11 +309,21 @@ def send_otp():
     
     # Try to send real email
     print(f"\n[OTP REQUEST] Email: {email}, OTP: {otp}")
-    if send_email(email, otp):
+    success, error_msg = send_email(email, otp)
+    if success:
         return jsonify({"msg": f"OTP sent to {email}", "dev_mode": False}), 200
     else:
-        print(f"[OTP REQUEST] Email send failed - check logs above")
-        return jsonify({"error": "Failed to send OTP - check server logs", "debug": "See backend logs"}), 500
+        print(f"[OTP REQUEST] Email send failed: {error_msg}")
+        # FALLBACK: Return the OTP in the response so registration can still proceed
+        # This is extremely helpful for local development or if SMTP is temporarily down.
+        return jsonify({
+            "msg": "Email delivery failed, but you can use this fallback code.",
+            "error": "Failed to send email",
+            "details": error_msg,
+            "dev_mode": True,
+            "otp": otp,
+            "debug_hint": "Check SMTP settings. For now, use the OTP shown here to continue."
+        }), 200
 
 # ── VERIFY OTP ────────────────────────────────────────────────────────────────
 @app.route("/verify-otp", methods=["POST"])
@@ -812,5 +831,5 @@ def test_smtp():
 
 # ── Run locally ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port, debug=False)

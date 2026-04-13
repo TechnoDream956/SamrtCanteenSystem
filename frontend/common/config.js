@@ -9,12 +9,11 @@
  * You only need to change ONE line here and everything else updates automatically.
  */
 
-const RAILWAY_URL = "https://smartcanteensystem-1.onrender.com";  // ✅ Render backend
+const RAILWAY_URL = "https://smartcanteensystem-1.onrender.com"; 
 
-// Auto-select: use Railway URL in production, localhost in dev
-const API = RAILWAY_URL
-  ? RAILWAY_URL
-  : "http://127.0.0.1:5000";
+// Auto-select: use localhost:5001 if testing locally, otherwise use Render URL
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const API = isLocal ? "http://127.0.0.1:5001" : RAILWAY_URL;
 
 // Freeze to prevent accidental mutation anywhere
 Object.freeze({ API });
