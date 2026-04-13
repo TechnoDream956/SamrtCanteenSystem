@@ -207,7 +207,7 @@ seed()
 import random, smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import datetime
+import datetime, urllib.request, urllib.error
 
 def get_next_order_id():
     """Get the next sequential order ID."""
@@ -242,55 +242,81 @@ def format_timestamp(ts):
 
 otp_store = {}
 
-SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
+SMTP_EMAIL    = os.environ.get("SMTP_EMAIL", "")   # kept for legacy fallback
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")  # kept for legacy fallback
 
-def send_email(to_addr, otp):
-    msg            = MIMEMultipart("alternative")
-    msg["Subject"] = f"🍽️ B.U Eats — Your Verification Code: {otp}"
-    msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
-    msg["To"]      = to_addr
+OTP_HTML = """
+<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-size:48px;">&#x1F37D;&#xFE0F;</div>
+    <h2 style="color:#ff9f4a;margin:8px 0;font-size:22px;">B.U Eats Verification</h2>
+    <p style="color:#9998aa;font-size:13px;">Use the code below to verify your email</p>
+  </div>
+  <div style="background:#1e1d2e;border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
+    <div style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ffe393;font-family:monospace;">{otp}</div>
+    <p style="color:#9998aa;font-size:12px;margin-top:8px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>. Do not share with anyone.</p>
+  </div>
+  <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
+</div>"""
 
-    html = f"""
-    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0f0f1a;border-radius:16px;">
-      <div style="text-align:center;margin-bottom:24px;">
-        <div style="font-size:48px;">&#x1F37D;&#xFE0F;</div>
-        <h2 style="color:#ff9f4a;margin:8px 0;font-size:22px;">B.U Eats Verification</h2>
-        <p style="color:#9998aa;font-size:13px;">Use the code below to verify your email</p>
-      </div>
-      <div style="background:#1e1d2e;border-radius:12px;padding:24px;text-align:center;margin:20px 0;">
-        <div style="font-size:42px;font-weight:900;letter-spacing:10px;color:#ffe393;font-family:monospace;">{otp}</div>
-        <p style="color:#9998aa;font-size:12px;margin-top:8px;">Valid for <b style="color:#ff9f4a;">10 minutes</b>. Do not share with anyone.</p>
-      </div>
-      <p style="color:#9998aa;font-size:11px;text-align:center;">If you didn't request this, ignore this email.</p>
-    </div>"""
+def send_email_brevo(to_addr, otp):
+    """Send OTP via Brevo transactional email HTTP API."""
+    import json as _json
+    payload = _json.dumps({
+        "sender":      {"name": "B.U Eats", "email": "noreply@bueatsbennett.com"},
+        "to":          [{"email": to_addr}],
+        "subject":     f"\U0001F37D B.U Eats — Your Verification Code: {otp}",
+        "htmlContent": OTP_HTML.format(otp=otp)
+    }).encode("utf-8")
 
-    msg.attach(MIMEText(html, "html"))
-    
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=payload,
+        headers={
+            "accept":       "application/json",
+            "api-key":      BREVO_API_KEY,
+            "content-type": "application/json"
+        },
+        method="POST"
+    )
     try:
-        print(f"[OTP EMAIL] Connecting to SMTP: smtp.gmail.com:587")
-        print(f"[OTP EMAIL] Sender email: {SMTP_EMAIL}")
-        print(f"[OTP EMAIL] Recipient: {to_addr}")
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
-            s.starttls()
-            print(f"[OTP EMAIL] TLS started, attempting login...")
-            s.login(SMTP_EMAIL, SMTP_PASSWORD)
-            print(f"[OTP EMAIL] Login successful, sending email...")
-            s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
-            print(f"[OTP EMAIL] Email sent successfully to {to_addr}")
-        return True, None
-    except smtplib.SMTPAuthenticationError as e:
-        err = f"Authentication Failed: {str(e)}"
-        print(f"[OTP EMAIL] {err}")
-        return False, err
-    except smtplib.SMTPException as e:
-        err = f"SMTP Error: {str(e)}"
-        print(f"[OTP EMAIL] {err}")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            print(f"[BREVO] Email sent to {to_addr}, status={resp.status}")
+            return True, None
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        err  = f"Brevo HTTP {e.code}: {body}"
+        print(f"[BREVO] {err}")
         return False, err
     except Exception as e:
-        err = f"General Error: {type(e).__name__}: {str(e)}"
-        print(f"[OTP EMAIL] {err}")
+        err = f"Brevo Error: {type(e).__name__}: {e}"
+        print(f"[BREVO] {err}")
         return False, err
+
+def send_email_smtp(to_addr, otp):
+    """Legacy Gmail SMTP fallback."""
+    msg            = MIMEMultipart("alternative")
+    msg["Subject"] = f"\U0001F37D B.U Eats — Your Verification Code: {otp}"
+    msg["From"]    = f"B.U Eats <{SMTP_EMAIL}>"
+    msg["To"]      = to_addr
+    msg.attach(MIMEText(OTP_HTML.format(otp=otp), "html"))
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as s:
+            s.starttls()
+            s.login(SMTP_EMAIL, SMTP_PASSWORD)
+            s.sendmail(SMTP_EMAIL, to_addr, msg.as_string())
+        return True, None
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
+
+def send_email(to_addr, otp):
+    """Try Brevo first, fall back to SMTP if configured."""
+    if BREVO_API_KEY:
+        return send_email_brevo(to_addr, otp)
+    if SMTP_EMAIL and SMTP_PASSWORD:
+        return send_email_smtp(to_addr, otp)
+    return False, "No email provider configured"
 
 # ── SEND OTP (email-based) ──────────────────────────────────────────────────────
 @app.route("/send-otp", methods=["POST"])
