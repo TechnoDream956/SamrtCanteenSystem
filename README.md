@@ -24,5 +24,5 @@ A full-stack food ordering platform built for Bennett University campus, featuri
 
 ## Author
 
-**Arpit Sehrawat** — [@TechnoDream956](https://github.com/TechnoDream956)
+**Arpit Sehrawat** — [@TechnoDream956](https://github.com/TechnoDream956)/n
 Bennett University | Cloud & Backend Developer
